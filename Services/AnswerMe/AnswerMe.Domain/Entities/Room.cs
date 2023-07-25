@@ -15,7 +15,7 @@ namespace AnswerMe.Domain.Entities
 
         public string Name { get; set; } = null!;
 
-        public string? GroupImage { get; set; }
+        public string? RoomImage { get; set; }
 
     }
 }

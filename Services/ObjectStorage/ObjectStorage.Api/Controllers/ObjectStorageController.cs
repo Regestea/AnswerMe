@@ -29,95 +29,42 @@ namespace ObjectStorage.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Test(IFormFile file)
         {
-            //await _blobClientFactory.BlobStorageClient(ContainerName.image).CreateIfNotExistsAsync(PublicAccessType.Blob);
+            // Get the BlobClient and block size
+            var blobClient = _blobClientFactory.BlobStorageClient(ContainerName.image);
+            var blockClient = blobClient.GetBlockBlobClient(Guid.NewGuid().ToString() + Path.GetExtension(file.FileName));
+            var blockSize = 1 * 1024 * 1024;
 
-            string fileExtension = Path.GetExtension(file.FileName);
+            // Create a list to track the block IDs
+            var blockIds = new List<string>();
 
-            //// remove the dot from the file extension (e.g. "jpg")
-            string fileFormat = fileExtension.Substring(1);
+            // Open a stream to the file
+            using var stream = file.OpenReadStream();
 
-            var fileName = Guid.NewGuid() + $".{fileFormat}";
-
-            //BlobClient client = _blobClientFactory.BlobStorageClient(ContainerName.image).GetBlobClient(fileName);
-
-
-
-            //await using (Stream? data = file.OpenReadStream())
-            //{
-            //    // Upload the file async
-            //    await client.UploadAsync(data);
-            //}
-
-            //await _blobClientFactory.BlobTableClient(TableName.image).CreateIfNotExistsAsync();
-
-            //var tableClient =
-            //    await _blobClientFactory.BlobTableClient(TableName.image).AddEntityAsync(new ObjectFile
-            //    {
-            //        RowKey = fileName,
-            //        PartitionKey = ContainerName.image.ToString(),
-            //        UserId = Guid.NewGuid(),
-            //        FileName = fileName,
-            //        ContainerName = ContainerName.image,
-            //        FileFormat = fileFormat,
-            //        HaveUse = false,
-            //        Timestamp = DateTimeOffset.Now,
-            //        Token = "some thing token"
-
-            //    });
-
-
-            var blockClient = _blobClientFactory.BlobStorageClient(ContainerName.image).GetBlockBlobClient(fileName);
-
-            // local variable to track the current number of bytes read into buffer
-            int bytesRead = 1024*1024;
-
-            // track the current block number as the code iterates through the file
+            // Read the file in chunks and upload each chunk to Azure Blob Storage
+            var buffer = new byte[blockSize];
+            int bytesRead;
             int blockNumber = 0;
+            long fileSize = file.Length;
 
-            int size = (int)(file.Length / 20)+1;
-
-            // Create list to track blockIds, it will be needed after the loop
-            List<string> blockList = new List<string>();
-
-            do
+            while ((bytesRead = await stream.ReadAsync(buffer, 0, blockSize)) > 0)
             {
-                // increment block number by 1 each iteration
+                // Increment the block number and create a new block ID
                 blockNumber++;
+                var blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes(blockNumber.ToString("0000000")));
 
-                // set block ID as a string and convert it to Base64 which is the required format
-                string blockId = $"{blockNumber:0000000}";
-                string base64BlockId = Convert.ToBase64String(Encoding.UTF8.GetBytes(blockId));
+                // Upload the block to Azure Blob Storage
+                await blockClient.StageBlockAsync(blockId, new MemoryStream(buffer, 0, bytesRead), null);
+                Console.WriteLine(blockId);
+                blockIds.Add(blockId);
 
-                // create buffer and retrieve chunk
-                byte[] buffer = new byte[size];
+                // Calculate and output the percentage of uploaded data
+                var uploadedSize = blockNumber * blockSize;
+                var percentage = (double)uploadedSize / fileSize * 100;
+                Console.WriteLine($"Uploaded {percentage:f0}% of the file.");
+            }
 
-                var stream = file.OpenReadStream();
-
-                bytesRead = await stream.ReadAsync(buffer, 0, size);
-
-
-
-                // Upload buffer chunk to Azure
-                //await blob.PutBlockAsync(base64BlockId, new MemoryStream(buffer, 0, bytesRead), null);
-                await blockClient.StageBlockAsync(base64BlockId, new MemoryStream(buffer, 0, bytesRead), null);
-                // add the current blockId into our list
-                blockList.Add(base64BlockId);
-
-                // While bytesRead == size it means there is more data left to read and process
-
-              
-
-                long uploadedSize = blockNumber * size;
-                double percentage = (double)uploadedSize / file.Length;
-                Console.WriteLine($"Uploaded {percentage}% of the file.");
-
-
-
-            } while (bytesRead <= size);
-
-            // add the blockList to the Azure which allows the resource to stick together the chunks
-            await blockClient.CommitBlockListAsync(blockList);
-
+            // Commit the block list to Azure Blob Storage
+            await blockClient.CommitBlockListAsync(blockIds);
 
             return Ok();
         }

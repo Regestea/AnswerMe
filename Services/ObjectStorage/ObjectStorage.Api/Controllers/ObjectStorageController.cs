@@ -27,24 +27,21 @@ namespace ObjectStorage.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Test(IFormFile file)
+        public async Task<IActionResult> Upload(Stream stream, string fileName)
         {
             // Get the BlobClient and block size
             var blobClient = _blobClientFactory.BlobStorageClient(ContainerName.image);
-            var blockClient = blobClient.GetBlockBlobClient(Guid.NewGuid().ToString() + Path.GetExtension(file.FileName));
+            var blockClient = blobClient.GetBlockBlobClient(Guid.NewGuid().ToString() + Path.GetExtension(fileName));
             var blockSize = 1 * 1024 * 1024;
 
             // Create a list to track the block IDs
             var blockIds = new List<string>();
 
-            // Open a stream to the file
-            using var stream = file.OpenReadStream();
-
-            // Read the file in chunks and upload each chunk to Azure Blob Storage
+            // Read the stream in chunks and upload each chunk to Azure Blob Storage
             var buffer = new byte[blockSize];
             int bytesRead;
             int blockNumber = 0;
-            long fileSize = file.Length;
+            long fileSize = stream.Length;
 
             while ((bytesRead = await stream.ReadAsync(buffer, 0, blockSize)) > 0)
             {

@@ -27,6 +27,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnswerMe.Infrastructure", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ObjectStorage.Api", "Services\ObjectStorage\ObjectStorage.Api\ObjectStorage.Api.csproj", "{FCB5BC8C-18C0-4C3B-9716-E2D833746A26}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObjectStorage.Api.Test", "Services\ObjectStorage\ObjectStorage.Api.Test\ObjectStorage.Api.Test.csproj", "{0E2EC366-855A-4E49-BF22-603A16FB2C7C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,10 @@ Global
 		{FCB5BC8C-18C0-4C3B-9716-E2D833746A26}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FCB5BC8C-18C0-4C3B-9716-E2D833746A26}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FCB5BC8C-18C0-4C3B-9716-E2D833746A26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E2EC366-855A-4E49-BF22-603A16FB2C7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E2EC366-855A-4E49-BF22-603A16FB2C7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E2EC366-855A-4E49-BF22-603A16FB2C7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E2EC366-855A-4E49-BF22-603A16FB2C7C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -75,6 +81,7 @@ Global
 		{0381EAB2-ACC5-4D68-888E-D46EAACDE51A} = {47B99B9C-83B5-44ED-8B36-D200AA20CADE}
 		{1BB0E5D5-A3F0-4271-BF63-93DC384B960A} = {47B99B9C-83B5-44ED-8B36-D200AA20CADE}
 		{FCB5BC8C-18C0-4C3B-9716-E2D833746A26} = {A6E0672C-0B6D-441A-AAE0-E51D9BD0D0FE}
+		{0E2EC366-855A-4E49-BF22-603A16FB2C7C} = {A6E0672C-0B6D-441A-AAE0-E51D9BD0D0FE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0E247C9F-032F-4F9E-84A3-79DB72D4D4CE}

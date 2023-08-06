@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using ObjectStorage.Api.Context;
+using ObjectStorage.Api.Services;
+using ObjectStorage.Api.Services.InterFaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IBlobClientFactory, BlobClientFactory>();
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 
 
 var app = builder.Build();

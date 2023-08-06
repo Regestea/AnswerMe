@@ -11,6 +11,8 @@ using Azure.Storage.Blobs.Specialized;
 using static System.Reflection.Metadata.BlobBuilder;
 using System.Drawing;
 using System.IO;
+using System.Net;
+using ObjectStorage.Api.Services.InterFaces;
 
 
 namespace ObjectStorage.Api.Controllers
@@ -19,50 +21,30 @@ namespace ObjectStorage.Api.Controllers
     [ApiController]
     public class ObjectStorageController : ControllerBase
     {
-        private readonly IBlobClientFactory _blobClientFactory;
+        private readonly IFileUploadService _fileUploadService;
 
-        public ObjectStorageController(IBlobClientFactory blobClientFactory)
+        public ObjectStorageController(IFileUploadService fileUploadService)
         {
-            _blobClientFactory = blobClientFactory;
+            _fileUploadService = fileUploadService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> Upload(Stream stream, string fileName)
+        // add validation for file Name and stream to upload only valid format not exe or .....
+        // add cancel token for this upload async
+        public async Task<IActionResult> Upload(Stream stream, string fileName, CancellationToken cancellationToken = default)
         {
-            // Get the BlobClient and block size
-            var blobClient = _blobClientFactory.BlobStorageClient(ContainerName.image);
-            var blockClient = blobClient.GetBlockBlobClient(Guid.NewGuid().ToString() + Path.GetExtension(fileName));
-            var blockSize = 1 * 1024 * 1024;
-
-            // Create a list to track the block IDs
-            var blockIds = new List<string>();
-
-            // Read the stream in chunks and upload each chunk to Azure Blob Storage
-            var buffer = new byte[blockSize];
-            int bytesRead;
-            int blockNumber = 0;
-            long fileSize = stream.Length;
-
-            while ((bytesRead = await stream.ReadAsync(buffer, 0, blockSize)) > 0)
+            // Upload the object asynchronously with a cancellation token
+            try
             {
-                // Increment the block number and create a new block ID
-                blockNumber++;
-                var blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes(blockNumber.ToString("0000000")));
-
-                // Upload the block to Azure Blob Storage
-                await blockClient.StageBlockAsync(blockId, new MemoryStream(buffer, 0, bytesRead), null);
-                Console.WriteLine(blockId);
-                blockIds.Add(blockId);
-
-                // Calculate and output the percentage of uploaded data
-                var uploadedSize = blockNumber * blockSize;
-                var percentage = (double)uploadedSize / fileSize * 100;
-                Console.WriteLine($"Uploaded {percentage:f0}% of the file.");
+                await _fileUploadService.UploadObjectAsync(ContainerName.image, fileName, stream, AccessTier.Cold, cancellationToken);
+            }
+            catch (TaskCanceledException)
+            {
+                // Handle cancellation of the upload operation
+                return StatusCode((int)HttpStatusCode.RequestTimeout, "The upload operation was cancelled.");
             }
 
-            // Commit the block list to Azure Blob Storage
-            await blockClient.CommitBlockListAsync(blockIds);
-
+            // Return a successful result
             return Ok();
         }
     }

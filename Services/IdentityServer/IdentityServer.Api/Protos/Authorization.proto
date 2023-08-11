@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option csharp_namespace = "IdentityServer.Api.Protos";
+
+service AuthorizationService {
+
+	rpc ValidateJwtBearerToken (ValidateTokenRequest) returns (ValidateTokenResponse);	  
+
+}
+
+
+message ValidateTokenRequest {
+	string Token = 1;
+}
+
+message ValidateTokenResponse {
+	bool valid = 1;
+    string Roles = 2;
+}

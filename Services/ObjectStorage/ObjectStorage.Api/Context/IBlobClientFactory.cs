@@ -7,5 +7,5 @@ namespace ObjectStorage.Api.Context;
 public interface IBlobClientFactory
 {
     BlobContainerClient BlobStorageClient(ContainerName containerName);
-    TableClient BlobTableClient(TableName tableName);
+    TableClient BlobTableClient();
 }

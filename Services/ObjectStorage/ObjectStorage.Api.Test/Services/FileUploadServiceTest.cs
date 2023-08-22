@@ -3,9 +3,11 @@ using Moq;
 using ObjectStorage.Api.Context;
 using ObjectStorage.Api.Entities;
 using Azure.Storage.Blobs.Models;
+using Models.Shared.RepositoriesResponseTypes;
 using ObjectStorage.Api.Services;
 using Xunit.Abstractions;
 using ObjectStorage.Api.Test.DataGenerator;
+using Models.Shared.Responses.ObjectStorage;
 
 namespace ObjectStorage.Api.Test.Services;
 
@@ -30,7 +32,7 @@ public class FileUploadServiceTest
             .Returns(() => new BlobContainerClient(BlobTestServer, ContainerName.image.ToString()));
 
         var fileStream = TextToImageStream.ConvertTextToImageStream("test image");
-
+       
         var fileUploadService = new FileUploadService(mockBlobClientFactory.Object);
 
         // Act
@@ -40,11 +42,11 @@ public class FileUploadServiceTest
 
         // Assert
         Assert.NotNull(result);
-        Assert.IsType<string>(result);
+        Assert.IsType<CreateResponse<UploadObjectResponse>>(result);
 
         // Clean up
         var blobClient = new BlobContainerClient(BlobTestServer, ContainerName.image.ToString());
-        await blobClient.DeleteBlobIfExistsAsync(result);
+        await blobClient.DeleteBlobIfExistsAsync(result.AsT0.Value.RowKey + result.AsT0.Value.FileFormat);
     }
 
     [Fact]
@@ -64,14 +66,13 @@ public class FileUploadServiceTest
 
         var uploadResult = await fileUploadService.UploadObjectAsync(ContainerName.image, "Test.png", fileStream, AccessTier.Archive,
             CancellationToken.None);
-        var deleteResult = await fileUploadService.DeleteObjectAsync(ContainerName.image, uploadResult);
+        var deleteResult = await fileUploadService.DeleteObjectAsync(ContainerName.image, uploadResult.AsT0.Value.RowKey+uploadResult.AsT0.Value.FileFormat);
 
         // Assert
         Assert.NotNull(uploadResult);
-        Assert.IsType<string>(uploadResult);
+        Assert.IsType<CreateResponse<UploadObjectResponse>>(uploadResult);
         Assert.NotNull(deleteResult);
-        Assert.IsType<bool>(deleteResult);
-        Assert.Equal(true, deleteResult);
+        Assert.IsType<DeleteResponse>(deleteResult);
     }
 
 }

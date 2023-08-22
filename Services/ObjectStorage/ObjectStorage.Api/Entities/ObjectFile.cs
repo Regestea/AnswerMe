@@ -19,13 +19,7 @@ namespace ObjectStorage.Api.Entities
         public ETag ETag { get; set; }
 
         [Required]
-        public ContainerName ContainerName { get; set; }
-
-        [Required]
         public string FileFormat { get; set; } = null!;
-
-        [Required]
-        public string FileName { get; set; } = null!;
 
         [Required]
         public bool HaveUse { get; set; }
@@ -37,7 +31,7 @@ namespace ObjectStorage.Api.Entities
         public string Token { get; set; } = null!;
 
         [NotMapped]
-        public string FullPath => $"{ContainerName}" + "/" + $"{FileName}";
+        public string FullPath => $"{PartitionKey}/{RowKey}.{FileFormat}";
 
     }
 }

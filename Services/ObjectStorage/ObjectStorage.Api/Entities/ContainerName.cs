@@ -3,6 +3,8 @@
 public enum ContainerName
 {
     video,
+    audio,
     image,
-    other
+    other,
+    profile
 }

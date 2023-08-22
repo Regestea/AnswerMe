@@ -6,10 +6,13 @@ using System.Text;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow;
+using Models.Shared.RepositoriesResponseTypes;
+using Models.Shared.Responses.ObjectStorage;
+using OneOf.Types;
 
 namespace ObjectStorage.Api.Services
 {
-    public class FileUploadService: IFileUploadService
+    public class FileUploadService : IFileUploadService
     {
         private readonly IBlobClientFactory _blobClientFactory;
 
@@ -17,15 +20,16 @@ namespace ObjectStorage.Api.Services
         {
             _blobClientFactory = blobClientFactory;
         }
-   
-        public async Task<string?> UploadObjectAsync(ContainerName containerName, string fileName, Stream stream,
+
+        public async Task<CreateResponse<UploadObjectResponse>> UploadObjectAsync(ContainerName containerName, string fileName, Stream stream,
             AccessTier accessTier, CancellationToken cancellationToken = default)
         {
 
-            string blobFileName = Guid.NewGuid() + Path.GetExtension(fileName);
+            string blobFileName = Guid.NewGuid().ToString();
+            string fileFormat = Path.GetExtension(fileName);
             // Get the BlobClient and block size
             var blobClient = _blobClientFactory.BlobStorageClient(containerName);
-            var blockClient = blobClient.GetBlockBlobClient(blobFileName);
+            var blockClient = blobClient.GetBlockBlobClient(blobFileName + fileFormat);
 
             var blockSize = 4 * 1024 * 1024;
 
@@ -37,7 +41,7 @@ namespace ObjectStorage.Api.Services
             int bytesRead;
             int blockNumber = 0;
             long fileSize = stream.Length;
-            
+
             while ((bytesRead = await stream.ReadAsync(buffer, 0, blockSize, cancellationToken)) > 0)
             {
                 // Increment the block number and create a new block ID
@@ -52,18 +56,20 @@ namespace ObjectStorage.Api.Services
 
             // Commit the block list to Azure Blob Storage
             var response = await blockClient.CommitBlockListAsync(blockIds, null, null, null, accessTier, cancellationToken);
-            if (!response.HasValue)
+
+            if (cancellationToken.IsCancellationRequested)
             {
-                return null;
+                return new Error<string>("Upload has been canceled");
             }
-            return blobFileName;
+
+            return new Success<UploadObjectResponse>(new UploadObjectResponse() { RowKey = blobFileName, FileFormat = fileFormat });
         }
 
-        public async Task<bool> DeleteObjectAsync(ContainerName containerName, string fileName)
+        public async Task<DeleteResponse> DeleteObjectAsync(ContainerName containerName, string fileName)
         {
-            var response = await _blobClientFactory.BlobStorageClient(containerName)
+            await _blobClientFactory.BlobStorageClient(containerName)
                 .DeleteBlobIfExistsAsync(fileName);
-            return response;
+            return new Success();
         }
     }
 }

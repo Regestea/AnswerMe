@@ -4,9 +4,11 @@ using ObjectStorage.Api.Context;
 using ObjectStorage.Api.Entities;
 using Azure.Storage.Blobs.Models;
 using Models.Shared.RepositoriesResponseTypes;
+using Models.Shared.Requests.ObjectStorage;
 using ObjectStorage.Api.Services;
 using Xunit.Abstractions;
 using ObjectStorage.Api.Test.DataGenerator;
+using ObjectStorage.Api.Test.DataConvertor;
 using Models.Shared.Responses.ObjectStorage;
 
 namespace ObjectStorage.Api.Test.Services;
@@ -32,7 +34,7 @@ public class FileUploadServiceTest
             .Returns(() => new BlobContainerClient(BlobTestServer, ContainerName.image.ToString()));
 
         var fileStream = TextToImageStream.ConvertTextToImageStream("test image");
-       
+
         var fileUploadService = new FileUploadService(mockBlobClientFactory.Object);
 
         // Act
@@ -45,8 +47,45 @@ public class FileUploadServiceTest
         Assert.IsType<CreateResponse<UploadObjectResponse>>(result);
 
         // Clean up
-        var blobClient = new BlobContainerClient(BlobTestServer, ContainerName.image.ToString());
-        await blobClient.DeleteBlobIfExistsAsync(result.AsT0.Value.RowKey + result.AsT0.Value.FileFormat);
+        //var blobClient = new BlobContainerClient(BlobTestServer, ContainerName.image.ToString());
+        //await blobClient.DeleteBlobIfExistsAsync(result.AsT0.Value.RowKey + result.AsT0.Value.FileFormat);
+    }
+
+    [Fact]
+    public async Task UploadChunk_Should_UploadChunkToBlobStorage()
+    {
+        // Arrange
+        var mockBlobClientFactory = new Mock<IBlobClientFactory>();
+
+        mockBlobClientFactory.Setup(f => f.BlobStorageClient(ContainerName.image))
+            .Returns(() => new BlobContainerClient(BlobTestServer, ContainerName.image.ToString()));
+
+        var fileStream = TextToImageStream.ConvertTextToImageStream("test image");
+
+        var fileUploadService = new FileUploadService(mockBlobClientFactory.Object);
+
+        var fileName = Guid.NewGuid().ToString();
+
+        var chunks = await fileStream.ConvertStreamToChunksAsync(10);
+
+        // Act
+
+        for (int i = 0; i < chunks.Count; i++)
+        {
+            var result = await fileUploadService.UploadChunkAsync(ContainerName.image, fileName, ".png", new FileChunkRequest()
+            {
+                Data = chunks[i],
+                ChunkNumber = i,
+                LastChunk = chunks[i] == chunks.Last()
+                //LastChunk = i == chunks.Count-1
+            }, AccessTier.Archive);
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsType<CreateResponse<UploadObjectResponse>>(result);
+        }
+
+
+
     }
 
     [Fact]
@@ -66,7 +105,7 @@ public class FileUploadServiceTest
 
         var uploadResult = await fileUploadService.UploadObjectAsync(ContainerName.image, "Test.png", fileStream, AccessTier.Archive,
             CancellationToken.None);
-        var deleteResult = await fileUploadService.DeleteObjectAsync(ContainerName.image, uploadResult.AsT0.Value.RowKey+uploadResult.AsT0.Value.FileFormat);
+        var deleteResult = await fileUploadService.DeleteObjectAsync(ContainerName.image, uploadResult.AsT0.Value.RowKey + uploadResult.AsT0.Value.FileFormat);
 
         // Assert
         Assert.NotNull(uploadResult);

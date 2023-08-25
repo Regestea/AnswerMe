@@ -7,8 +7,11 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Models.Shared.RepositoriesResponseTypes;
+using Models.Shared.Requests.ObjectStorage;
 using Models.Shared.Responses.ObjectStorage;
 using OneOf.Types;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Net;
 
 namespace ObjectStorage.Api.Services
 {
@@ -63,6 +66,42 @@ namespace ObjectStorage.Api.Services
             }
 
             return new Success<UploadObjectResponse>(new UploadObjectResponse() { RowKey = blobFileName, FileFormat = fileFormat });
+        }
+
+        public async Task<CreateResponse<UploadObjectResponse>> UploadChunkAsync(ContainerName containerName, string? fileName,string fileFormat, FileChunkRequest chunkRequest,
+            AccessTier accessTier, CancellationToken cancellationToken = default)
+        {
+            
+            // Get the BlobClient
+            var blobClient = _blobClientFactory.BlobStorageClient(containerName);
+
+            if (string.IsNullOrEmpty(fileName))
+            {
+                fileName=Guid.NewGuid().ToString();
+
+            }
+
+            var blockClient = blobClient.GetBlockBlobClient(fileName + fileFormat);
+            var blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes(chunkRequest.ChunkNumber.ToString("0000000")));
+
+            await blockClient.StageBlockAsync(blockId,new MemoryStream(chunkRequest.Data), cancellationToken: cancellationToken);
+
+            if (chunkRequest.LastChunk)
+            {
+                var blockIds = new List<string>();
+                for (int i = 0; i <= chunkRequest.ChunkNumber; i++)
+                {
+                    blockIds.Add(Convert.ToBase64String(Encoding.UTF8.GetBytes(i.ToString("0000000"))));
+                }
+                var response = await blockClient.CommitBlockListAsync(blockIds, null, null, null, accessTier, cancellationToken);
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return new Error<string>("Upload has been canceled");
+            }
+
+            return new Success<UploadObjectResponse>(new UploadObjectResponse() { RowKey = fileName, FileFormat = fileFormat });
         }
 
         public async Task<DeleteResponse> DeleteObjectAsync(ContainerName containerName, string fileName)

@@ -5,7 +5,7 @@ namespace ObjectStorage.Api.DTOs
 {
     public class FileChunkDto
     {
-        public AccessTier AccessTier { get; set; }
+        public string AccessTier { get; set; }
         public string FileFormat { get; set; }
         public string FileName { get; set; }
         public int TotalChunks { get; set; }

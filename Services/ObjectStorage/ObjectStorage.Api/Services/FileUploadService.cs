@@ -40,11 +40,11 @@ namespace ObjectStorage.Api.Services
             if (fileChunkDto.LastChunk)
             {
                 var blockIds = new List<string>();
-                for (int i = 0; i <= fileChunkDto.TotalChunks; i++)
+                for (int i = 0; i < fileChunkDto.TotalChunks; i++)
                 {
                     blockIds.Add(Convert.ToBase64String(Encoding.UTF8.GetBytes(i.ToString("0000000"))));
                 }
-                await blockClient.CommitBlockListAsync(blockIds, null, null, null, fileChunkDto.AccessTier, cancellationToken);
+                await blockClient.CommitBlockListAsync(blockIds, null, null, null, (AccessTier)fileChunkDto.AccessTier, cancellationToken);
 
             }
 

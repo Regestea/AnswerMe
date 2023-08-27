@@ -13,6 +13,7 @@ using Azure.Core;
 using System.Threading;
 using Azure;
 using Azure.Data.Tables;
+using IdentityServer.Shared.Client.DTOs;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 using Models.Shared.Responses.ObjectStorage;
@@ -39,23 +40,32 @@ namespace ObjectStorage.Api.Controllers
 
 
         [HttpPost]
-        [AuthorizeByIdentityServer]
+        //[AuthorizeByIdentityServer]
         public async Task<IActionResult> UploadChunk([FromBody] FileChunkRequest request, CancellationToken cancellationToken = default)
         {
-            var requestToken = _jwtTokenRepository.GetJwtToken();
-            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+            //var requestToken = _jwtTokenRepository.GetJwtToken();
+            //var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+
+            if (request.CurrentChunk==9)
+            {
+                Console.WriteLine("dd");
+            }
+
+            var loggedInUser = new UserDto() { id = Guid.Parse("b39c91c0-c518-42da-8d56-c18b51dd7394") };
 
             var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
             var stashChunkDetail = blobTableClient
-                .QueryAsync<StashChunkDetail>(x => x.RowKey == request.UploadToken.ToString() && x.UserId == loggedInUser.id)
-                .GetAsyncEnumerator(cancellationToken)
-                .Current;
+                .Query<StashChunkDetail>(x => x.RowKey == request.UploadToken.ToString()
+                                              //&& x.UserId == loggedInUser.id
+                                              )
+                .SingleOrDefault();
 
+          
             if (stashChunkDetail != null)
             {
                 var currentChunkSize = request.Data.SizeMB();
-                var isSizeOutOfDeal = stashChunkDetail.FileSizeMB + currentChunkSize > stashChunkDetail.FileSizeMB;
+                var isSizeOutOfDeal = stashChunkDetail.TotalUploadedSizeMB + currentChunkSize > stashChunkDetail.FileSizeMB;
                 var containerName = Enum.Parse<ContainerName>(stashChunkDetail.PartitionKey);
 
                 if (isSizeOutOfDeal)
@@ -91,7 +101,8 @@ namespace ObjectStorage.Api.Controllers
                     LastChunk = request.LastChunk,
                     Data = request.Data,
                     AccessTier = stashChunkDetail.AccessTier,
-                    CurrentChunk = request.CurrentChunk
+                    CurrentChunk = request.CurrentChunk,
+                    TotalChunks = stashChunkDetail.TotalChunks
                 };
 
                 await _fileUploadService.UploadChunkAsync(fileChunkDto, cancellationToken);
@@ -116,7 +127,7 @@ namespace ObjectStorage.Api.Controllers
 
                     // ReSharper disable once MethodSupportsCancellation
                     await _blobClientFactory.BlobTableClient(TableName.StashChunkDetail)
-                        .DeleteEntityAsync(null, fileChunkDto.FileName);
+                        .DeleteEntityAsync(fileChunkDto.ContainerName.ToString(), fileChunkDto.FileName);
 
                     return Ok(new TokenResponse() { Token = objectIndex.Token });
                 }
@@ -127,7 +138,7 @@ namespace ObjectStorage.Api.Controllers
                 // ReSharper disable once MethodSupportsCancellation
                 await blobTableClient.UpdateEntityAsync(stashChunkDetail, ETag.All);
 
-                return Ok(new ChunkUploadResponse()
+                return StatusCode(StatusCodes.Status201Created, new ChunkUploadResponse()
                 {
                     TotalUploadedChunks = stashChunkDetail.TotalUploadedChunks,
                     TotalUploadedSizeMB = stashChunkDetail.TotalUploadedSizeMB
@@ -140,11 +151,12 @@ namespace ObjectStorage.Api.Controllers
 
 
         [HttpPost("Profile")]
-        [AuthorizeByIdentityServer]
+        //[AuthorizeByIdentityServer]
         public async Task<IActionResult> RequestUploadProfileImageToken([FromBody] ImageUploadRequest request)
         {
-            var requestToken = _jwtTokenRepository.GetJwtToken();
-            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+            //var requestToken = _jwtTokenRepository.GetJwtToken();
+            //var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+            var loggedInUser = new UserDto(){id = Guid.Parse("b39c91c0-c518-42da-8d56-c18b51dd7394") };
 
             var stashChunkDetail = new StashChunkDetail()
             {
@@ -152,14 +164,15 @@ namespace ObjectStorage.Api.Controllers
                 PartitionKey = ContainerName.profile.ToString(),
                 RowKey = Guid.NewGuid().ToString(),
                 UserId = loggedInUser.id,
-                AccessTier = AccessTier.Hot,
+                AccessTier = AccessTier.Archive.ToString(),
                 ETag = ETag.All,
-                FileSizeMB = request.FileSizeMB,
+                FileSizeMB = request.FileSizeMB+0.01,
                 Timestamp = DateTimeOffset.UtcNow,
                 TotalChunks = request.TotalChunks,
                 TotalUploadedChunks = 0,
                 TotalUploadedSizeMB = 0
             };
+            AccessTier accessTier = (AccessTier)stashChunkDetail.AccessTier;
             var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
             await blobTableClient.AddEntityAsync(stashChunkDetail);
@@ -182,9 +195,9 @@ namespace ObjectStorage.Api.Controllers
                 PartitionKey = ContainerName.image.ToString(),
                 RowKey = Guid.NewGuid().ToString(),
                 UserId = loggedInUser.id,
-                AccessTier = AccessTier.Hot,
+                AccessTier = AccessTier.Archive.ToString(),
                 ETag = ETag.All,
-                FileSizeMB = request.FileSizeMB,
+                FileSizeMB = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
                 TotalChunks = request.TotalChunks,
                 TotalUploadedChunks = 0,
@@ -211,9 +224,9 @@ namespace ObjectStorage.Api.Controllers
                 PartitionKey = ContainerName.audio.ToString(),
                 RowKey = Guid.NewGuid().ToString(),
                 UserId = loggedInUser.id,
-                AccessTier = AccessTier.Hot,
+                AccessTier = AccessTier.Archive.ToString(),
                 ETag = ETag.All,
-                FileSizeMB = request.FileSizeMB,
+                FileSizeMB = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
                 TotalChunks = request.TotalChunks,
                 TotalUploadedChunks = 0,
@@ -240,9 +253,9 @@ namespace ObjectStorage.Api.Controllers
                 PartitionKey = ContainerName.video.ToString(),
                 RowKey = Guid.NewGuid().ToString(),
                 UserId = loggedInUser.id,
-                AccessTier = AccessTier.Hot,
+                AccessTier = AccessTier.Archive.ToString(),
                 ETag = ETag.All,
-                FileSizeMB = request.FileSizeMB,
+                FileSizeMB = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
                 TotalChunks = request.TotalChunks,
                 TotalUploadedChunks = 0,
@@ -269,9 +282,9 @@ namespace ObjectStorage.Api.Controllers
                 PartitionKey = ContainerName.other.ToString(),
                 RowKey = Guid.NewGuid().ToString(),
                 UserId = loggedInUser.id,
-                AccessTier = AccessTier.Hot,
+                AccessTier = AccessTier.Archive.ToString(),
                 ETag = ETag.All,
-                FileSizeMB = request.FileSizeMB,
+                FileSizeMB = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
                 TotalChunks = request.TotalChunks,
                 TotalUploadedChunks = 0,

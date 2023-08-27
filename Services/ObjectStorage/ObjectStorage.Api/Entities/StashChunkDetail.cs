@@ -12,7 +12,7 @@ namespace ObjectStorage.Api.Entities
         public int TotalChunks { get; set; }
         public string FileFormat { get; set; } = null!;
         public Guid UserId { get; set; }
-        public AccessTier AccessTier { get; set; }
+        public string AccessTier { get; set; }
         public string PartitionKey { get; set; }
         public string RowKey { get; set; }
         public DateTimeOffset? Timestamp { get; set; }

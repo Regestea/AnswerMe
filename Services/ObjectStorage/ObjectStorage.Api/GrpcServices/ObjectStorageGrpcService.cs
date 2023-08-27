@@ -23,7 +23,7 @@ namespace ObjectStorage.Api.GrpcServices
         {
             Guid userId = Guid.Parse(request.UserId);
 
-            var tableClient = _blobClientFactory.BlobTableClient();
+            var tableClient = _blobClientFactory.BlobTableClient(TableName.IndexObjectFile);
 
             var objectFile = tableClient
                 .Query<ObjectFile>(x => x.HaveUse == false && x.UserId == userId && x.Token == request.Token)
@@ -46,7 +46,7 @@ namespace ObjectStorage.Api.GrpcServices
             Guid userId = Guid.Parse(request.UserId);
             var path = request.FilePath.Split("/");
 
-            var tableClient = _blobClientFactory.BlobTableClient();
+            var tableClient = _blobClientFactory.BlobTableClient(TableName.IndexObjectFile);
             var response = tableClient.Query<ObjectFile>(x => x.PartitionKey == path[0] && x.RowKey == path[1] && x.UserId == userId).SingleOrDefault();
             if (response != null)
             {

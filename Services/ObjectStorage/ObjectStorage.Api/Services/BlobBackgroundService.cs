@@ -36,7 +36,8 @@ namespace ObjectStorage.Api.Services
         {
             var scope = _serviceProvider.CreateScope();
             var _BlobClient = scope.ServiceProvider.GetRequiredService<IBlobClientFactory>();
-            await _BlobClient.BlobTableClient().CreateIfNotExistsAsync();
+            await _BlobClient.BlobTableClient(TableName.StashChunkDetail).CreateIfNotExistsAsync();
+            await _BlobClient.BlobTableClient(TableName.IndexObjectFile).CreateIfNotExistsAsync();
             await _BlobClient.BlobStorageClient(ContainerName.image).CreateIfNotExistsAsync();
             await _BlobClient.BlobStorageClient(ContainerName.audio).CreateIfNotExistsAsync();
             await _BlobClient.BlobStorageClient(ContainerName.video).CreateIfNotExistsAsync();
@@ -48,7 +49,8 @@ namespace ObjectStorage.Api.Services
         {
 
             var scope = _serviceProvider.CreateScope();
-            var _BlobIndexClient = scope.ServiceProvider.GetRequiredService<IBlobClientFactory>().BlobTableClient();
+            var _BlobIndexClient = scope.ServiceProvider.GetRequiredService<IBlobClientFactory>().BlobTableClient(TableName.IndexObjectFile);
+            var _BlobStashChunkDetailClient = scope.ServiceProvider.GetRequiredService<IBlobClientFactory>().BlobTableClient(TableName.StashChunkDetail);
             var _fileUploadService = scope.ServiceProvider.GetRequiredService<IFileUploadService>();
             var now = DateTimeOffset.UtcNow;
 
@@ -56,6 +58,23 @@ namespace ObjectStorage.Api.Services
 
             var filesToDelete = _BlobIndexClient
                 .Query<ObjectFile>(x => x.Timestamp <= oneDayAgo && x.HaveUse == false).ToList();
+            var stashChunkDetailsToDelete = _BlobStashChunkDetailClient
+                .Query<StashChunkDetail>(x => x.Timestamp <= oneDayAgo ).ToList();
+
+            if (stashChunkDetailsToDelete.Any())
+            {
+                foreach (StashChunkDetail stashChunkDetail in stashChunkDetailsToDelete)
+                {
+                    await _fileUploadService.DeleteObjectAsync(Enum.Parse<ContainerName>(stashChunkDetail.PartitionKey),
+                        stashChunkDetail.RowKey +"."+stashChunkDetail.FileFormat);
+                }
+
+                foreach (StashChunkDetail stashChunkDetail in stashChunkDetailsToDelete)
+                {
+                    await _BlobStashChunkDetailClient.DeleteEntityAsync(stashChunkDetail.PartitionKey, stashChunkDetail.RowKey, cancellationToken: stoppingToken);
+                }
+                stashChunkDetailsToDelete.Clear();
+            }
 
             if (filesToDelete.Any())
             {

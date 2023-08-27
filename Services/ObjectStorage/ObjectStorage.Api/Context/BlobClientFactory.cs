@@ -9,18 +9,15 @@ namespace ObjectStorage.Api.Context
     {
         private readonly BlobServiceClient _blobServiceClient;
         private readonly TableServiceClient _tableServiceClient;
-        private readonly string _tableName;
-       
+
         public BlobClientFactory(IConfiguration configuration)
         {
             string blobConnectionString = configuration.GetSection("BlobStorage:BlobConnectionString").Value ??
                                           throw new InvalidOperationException();
             string tableConnectionString = configuration.GetSection("BlobStorage:BlobConnectionString").Value ??
                                           throw new InvalidOperationException();
-            _tableName = configuration.GetSection("BlobStorage:IndexTable").Value ??
-                         throw new InvalidOperationException();
             _blobServiceClient = new BlobServiceClient(blobConnectionString);
-            _tableServiceClient= new TableServiceClient(blobConnectionString);
+            _tableServiceClient= new TableServiceClient(tableConnectionString);
         }
 
         public BlobContainerClient BlobStorageClient(ContainerName containerName)
@@ -30,9 +27,9 @@ namespace ObjectStorage.Api.Context
             return containerClient;
         }
 
-        public TableClient BlobTableClient()
+        public TableClient BlobTableClient(TableName tableName)
         {
-            TableClient tableClient = _tableServiceClient.GetTableClient(_tableName);
+            TableClient tableClient = _tableServiceClient.GetTableClient(tableName.ToString());
 
             return tableClient;
         }

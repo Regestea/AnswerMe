@@ -11,14 +11,19 @@ using ObjectStorage.Api.Services.InterFaces;
 using Security.Shared.Extensions;
 using Azure.Core;
 using System.Threading;
+using Azure;
+using Azure.Data.Tables;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
-
+using Models.Shared.Responses.ObjectStorage;
+using ObjectStorage.Api.DTOs;
+using ObjectStorage.Api.Extensions;
 
 namespace ObjectStorage.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+
     public class ObjectStorageController : ControllerBase
     {
         private readonly IFileUploadService _fileUploadService;
@@ -32,251 +37,251 @@ namespace ObjectStorage.Api.Controllers
             _jwtTokenRepository = jwtTokenRepository;
         }
 
-        //[HttpPost("UploadStream")]
-        //public async Task<IActionResult> UploadStream()
-        //{
-        //    var body = HttpContext.Request.Body;
-        //    var type = Request.ContentType;
-        //    var uploadResponse =  _fileUploadService.UploadObjectAsync(ContainerName.profile, "my.png", HttpContext.Request.Body, AccessTier.Premium);
-        //    return Ok();
-        //}
 
-        [HttpPost("UploadStream")]
-        public async Task<IActionResult> UploadLargeFile([FromForm]string? fileName)
-        {
-            var request = HttpContext.Request;
-
-            if (!request.HasFormContentType ||
-                !MediaTypeHeaderValue.TryParse(request.ContentType, out var mediaTypeHeader) ||
-                string.IsNullOrEmpty(mediaTypeHeader.Boundary.Value))
-            {
-                return new UnsupportedMediaTypeResult();
-            }
-
-            var reader = new MultipartReader(mediaTypeHeader.Boundary.Value, request.Body);
-            var section = await reader.ReadNextSectionAsync();
-
-            while (section != null)
-            {
-                var hasContentDispositionHeader = ContentDispositionHeaderValue.TryParse(section.ContentDisposition,
-                    out var contentDisposition);
-
-                if (hasContentDispositionHeader && contentDisposition.DispositionType.Equals("form-data") &&
-                    !string.IsNullOrEmpty(contentDisposition.FileName.Value))
-                {
-
-                    // Upload the stream to the blob
-                    using (var memoryStream = new MemoryStream())
-                    {
-                        await section.Body.CopyToAsync(memoryStream);
-                        memoryStream.Seek(0, SeekOrigin.Begin);
-                        //await _blobClientFactory.BlobStorageClient(ContainerName.image).UploadBlobAsync("test.png",memoryStream);
-                        await _fileUploadService.UploadObjectAsync(ContainerName.profile, "some.png", memoryStream,
-                            AccessTier.Hot);
-                    }
-
-                    return Ok();
-                }
-
-                section = await reader.ReadNextSectionAsync();
-            }
-
-            return BadRequest("No files data in the request.");
-        }
-
-        [HttpPost("Profile")]
+        [HttpPost]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> UploadProfileImage([FromForm] ImageUploadRequest request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UploadChunk([FromBody] FileChunkRequest request, CancellationToken cancellationToken = default)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
-            try
+            var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
+
+            var stashChunkDetail = blobTableClient
+                .QueryAsync<StashChunkDetail>(x => x.RowKey == request.UploadToken.ToString() && x.UserId == loggedInUser.id)
+                .GetAsyncEnumerator(cancellationToken)
+                .Current;
+
+            if (stashChunkDetail != null)
             {
-                var uploadResponse = await _fileUploadService.UploadObjectAsync(ContainerName.profile, request.FileName, request.Stream, AccessTier.Premium, cancellationToken);
-                if (uploadResponse.IsT0)
+                var currentChunkSize = request.Data.SizeMB();
+                var isSizeOutOfDeal = stashChunkDetail.FileSizeMB + currentChunkSize > stashChunkDetail.FileSizeMB;
+                var containerName = Enum.Parse<ContainerName>(stashChunkDetail.PartitionKey);
+
+                if (isSizeOutOfDeal)
+                {
+                    //delete table 
+                    // ReSharper disable once MethodSupportsCancellation
+                    await blobTableClient.DeleteEntityAsync(stashChunkDetail.PartitionKey, stashChunkDetail.RowKey);
+
+                    //delete commit data form blob storage
+                    await _fileUploadService.DeleteObjectAsync(containerName, stashChunkDetail.RowKey);
+
+                    return BadRequest($"the size of chunks is more than {stashChunkDetail.FileSizeMB} MB");
+                }
+
+                if (request.CurrentChunk > stashChunkDetail.TotalChunks || request.CurrentChunk < 0)
+                {
+                    //delete table 
+                    // ReSharper disable once MethodSupportsCancellation
+                    //await blobTableClient.DeleteEntityAsync(stashChunkDetail.PartitionKey, stashChunkDetail.RowKey);
+
+                    //delete commit data form blob storage
+                    //await _fileUploadService.DeleteObjectAsync(containerName, stashChunkDetail.RowKey);
+
+                    return BadRequest($"total chunks should be between 0 and {stashChunkDetail.TotalChunks}");
+                }
+
+
+                var fileChunkDto = new FileChunkDto()
+                {
+                    FileFormat = stashChunkDetail.FileFormat,
+                    ContainerName = containerName,
+                    FileName = stashChunkDetail.RowKey,
+                    LastChunk = request.LastChunk,
+                    Data = request.Data,
+                    AccessTier = stashChunkDetail.AccessTier,
+                    CurrentChunk = request.CurrentChunk
+                };
+
+                await _fileUploadService.UploadChunkAsync(fileChunkDto, cancellationToken);
+
+                if (request.LastChunk)
                 {
                     var objectIndex = new ObjectFile()
                     {
-                        PartitionKey = ContainerName.profile.ToString(),
-                        RowKey = uploadResponse.AsT0.Value.RowKey,
-                        FileFormat = uploadResponse.AsT0.Value.FileFormat,
+                        PartitionKey = fileChunkDto.ContainerName.ToString(),
+                        RowKey = fileChunkDto.FileName,
+                        FileFormat = fileChunkDto.FileFormat,
                         UserId = loggedInUser.id,
                         HaveUse = false,
                         Timestamp = DateTimeOffset.UtcNow,
                         Token = TokenGenerator.GenerateNewRngCrypto(),
+                        ETag = ETag.All
                     };
 
-                    await _blobClientFactory.BlobTableClient().AddEntityAsync(objectIndex, cancellationToken);
+                    // ReSharper disable once MethodSupportsCancellation
+                    await _blobClientFactory.BlobTableClient(TableName.IndexObjectFile)
+                        .AddEntityAsync(objectIndex);
 
-     
-                    return Ok(new TokenResponse(){Token = objectIndex.Token});
+                    // ReSharper disable once MethodSupportsCancellation
+                    await _blobClientFactory.BlobTableClient(TableName.StashChunkDetail)
+                        .DeleteEntityAsync(null, fileChunkDto.FileName);
+
+                    return Ok(new TokenResponse() { Token = objectIndex.Token });
                 }
 
-                throw new TaskCanceledException();
+                stashChunkDetail.TotalUploadedChunks += 1;
+                stashChunkDetail.TotalUploadedSizeMB += request.Data.SizeMB();
+
+                // ReSharper disable once MethodSupportsCancellation
+                await blobTableClient.UpdateEntityAsync(stashChunkDetail, ETag.All);
+
+                return Ok(new ChunkUploadResponse()
+                {
+                    TotalUploadedChunks = stashChunkDetail.TotalUploadedChunks,
+                    TotalUploadedSizeMB = stashChunkDetail.TotalUploadedSizeMB
+                });
             }
-            catch (TaskCanceledException)
+
+            return BadRequest("Please Request New Upload Token");
+        }
+
+
+
+        [HttpPost("Profile")]
+        [AuthorizeByIdentityServer]
+        public async Task<IActionResult> RequestUploadProfileImageToken([FromBody] ImageUploadRequest request)
+        {
+            var requestToken = _jwtTokenRepository.GetJwtToken();
+            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+
+            var stashChunkDetail = new StashChunkDetail()
             {
-                // Handle cancellation of the upload operation
-                return StatusCode((int)HttpStatusCode.RequestTimeout, "The upload operation was cancelled.");
-            }
+                FileFormat = request.FileFormat,
+                PartitionKey = ContainerName.profile.ToString(),
+                RowKey = Guid.NewGuid().ToString(),
+                UserId = loggedInUser.id,
+                AccessTier = AccessTier.Hot,
+                ETag = ETag.All,
+                FileSizeMB = request.FileSizeMB,
+                Timestamp = DateTimeOffset.UtcNow,
+                TotalChunks = request.TotalChunks,
+                TotalUploadedChunks = 0,
+                TotalUploadedSizeMB = 0
+            };
+            var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
+
+            await blobTableClient.AddEntityAsync(stashChunkDetail);
+
+            return Ok(new TokenResponse() { Token = stashChunkDetail.RowKey });
         }
 
 
 
         [HttpPost("Image")]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> UploadImage([FromForm] ImageUploadRequest request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RequestUploadImageToken([FromBody] ImageUploadRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
-            try
+            var stashChunkDetail = new StashChunkDetail()
             {
-                var uploadResponse = await _fileUploadService.UploadObjectAsync(ContainerName.image, request.FileName, request.Stream, AccessTier.Hot, cancellationToken);
-                if (uploadResponse.IsT0)
-                {
-                    var objectIndex = new ObjectFile()
-                    {
-                        PartitionKey = ContainerName.image.ToString(),
-                        RowKey = uploadResponse.AsT0.Value.RowKey,
-                        FileFormat = uploadResponse.AsT0.Value.FileFormat,
-                        UserId = loggedInUser.id,
-                        HaveUse = false,
-                        Timestamp = DateTimeOffset.UtcNow,
-                        Token = TokenGenerator.GenerateNewRngCrypto(),
-                    };
+                FileFormat = request.FileFormat,
+                PartitionKey = ContainerName.image.ToString(),
+                RowKey = Guid.NewGuid().ToString(),
+                UserId = loggedInUser.id,
+                AccessTier = AccessTier.Hot,
+                ETag = ETag.All,
+                FileSizeMB = request.FileSizeMB,
+                Timestamp = DateTimeOffset.UtcNow,
+                TotalChunks = request.TotalChunks,
+                TotalUploadedChunks = 0,
+                TotalUploadedSizeMB = 0
+            };
+            var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
-                    await _blobClientFactory.BlobTableClient().AddEntityAsync(objectIndex, cancellationToken);
+            await blobTableClient.AddEntityAsync(stashChunkDetail);
 
-
-                    return Ok(new TokenResponse() { Token = objectIndex.Token });
-                }
-
-                throw new TaskCanceledException();
-            }
-            catch (TaskCanceledException)
-            {
-                // Handle cancellation of the upload operation
-                return StatusCode((int)HttpStatusCode.RequestTimeout, "The upload operation was cancelled.");
-            }
+            return Ok(new TokenResponse() { Token = stashChunkDetail.RowKey });
         }
 
 
         [HttpPost("Audio")]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> UploadProfileImage([FromForm] AudioUploadRequest request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RequestUploadProfileImageToken([FromBody] AudioUploadRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
-            try
+            var stashChunkDetail = new StashChunkDetail()
             {
-                var uploadResponse = await _fileUploadService.UploadObjectAsync(ContainerName.audio, request.FileName, request.Stream, AccessTier.Premium, cancellationToken);
-                if (uploadResponse.IsT0)
-                {
-                    var objectIndex = new ObjectFile()
-                    {
-                        PartitionKey = ContainerName.audio.ToString(),
-                        RowKey = uploadResponse.AsT0.Value.RowKey,
-                        FileFormat = uploadResponse.AsT0.Value.FileFormat,
-                        UserId = loggedInUser.id,
-                        HaveUse = false,
-                        Timestamp = DateTimeOffset.UtcNow,
-                        Token = TokenGenerator.GenerateNewRngCrypto(),
-                    };
+                FileFormat = request.FileFormat,
+                PartitionKey = ContainerName.audio.ToString(),
+                RowKey = Guid.NewGuid().ToString(),
+                UserId = loggedInUser.id,
+                AccessTier = AccessTier.Hot,
+                ETag = ETag.All,
+                FileSizeMB = request.FileSizeMB,
+                Timestamp = DateTimeOffset.UtcNow,
+                TotalChunks = request.TotalChunks,
+                TotalUploadedChunks = 0,
+                TotalUploadedSizeMB = 0
+            };
+            var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
-                    await _blobClientFactory.BlobTableClient().AddEntityAsync(objectIndex, cancellationToken);
+            await blobTableClient.AddEntityAsync(stashChunkDetail);
 
-
-                    return Ok(new TokenResponse() { Token = objectIndex.Token });
-                }
-
-                throw new TaskCanceledException();
-            }
-            catch (TaskCanceledException)
-            {
-                // Handle cancellation of the upload operation
-                return StatusCode((int)HttpStatusCode.RequestTimeout, "The upload operation was cancelled.");
-            }
+            return Ok(new TokenResponse() { Token = stashChunkDetail.RowKey });
         }
 
 
         [HttpPost("Video")]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> UploadVideo([FromForm] VideoUploadRequest request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RequestUploadVideoToken([FromBody] VideoUploadRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
-            try
+            var stashChunkDetail = new StashChunkDetail()
             {
-                var uploadResponse = await _fileUploadService.UploadObjectAsync(ContainerName.video, request.FileName, request.Stream, AccessTier.Cold, cancellationToken);
-                if (uploadResponse.IsT0)
-                {
-                    var objectIndex = new ObjectFile()
-                    {
-                        PartitionKey = ContainerName.video.ToString(),
-                        RowKey = uploadResponse.AsT0.Value.RowKey,
-                        FileFormat = uploadResponse.AsT0.Value.FileFormat,
-                        UserId = loggedInUser.id,
-                        HaveUse = false,
-                        Timestamp = DateTimeOffset.UtcNow,
-                        Token = TokenGenerator.GenerateNewRngCrypto(),
-                    };
+                FileFormat = request.FileFormat,
+                PartitionKey = ContainerName.video.ToString(),
+                RowKey = Guid.NewGuid().ToString(),
+                UserId = loggedInUser.id,
+                AccessTier = AccessTier.Hot,
+                ETag = ETag.All,
+                FileSizeMB = request.FileSizeMB,
+                Timestamp = DateTimeOffset.UtcNow,
+                TotalChunks = request.TotalChunks,
+                TotalUploadedChunks = 0,
+                TotalUploadedSizeMB = 0
+            };
+            var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
-                    await _blobClientFactory.BlobTableClient().AddEntityAsync(objectIndex, cancellationToken);
+            await blobTableClient.AddEntityAsync(stashChunkDetail);
 
-
-                    return Ok(new TokenResponse() { Token = objectIndex.Token });
-                }
-
-                throw new TaskCanceledException();
-            }
-            catch (TaskCanceledException)
-            {
-                // Handle cancellation of the upload operation
-                return StatusCode((int)HttpStatusCode.RequestTimeout, "The upload operation was cancelled.");
-            }
+            return Ok(new TokenResponse() { Token = stashChunkDetail.RowKey });
         }
 
 
         [HttpPost("Other")]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> UploadOther([FromForm] OtherUploadRequest request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RequestUploadOtherToken([FromBody] OtherUploadRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
-            try
+            var stashChunkDetail = new StashChunkDetail()
             {
-                var uploadResponse = await _fileUploadService.UploadObjectAsync(ContainerName.other, request.FileName, request.Stream, AccessTier.Cold, cancellationToken);
-                if (uploadResponse.IsT0)
-                {
-                    var objectIndex = new ObjectFile()
-                    {
-                        PartitionKey = ContainerName.other.ToString(),
-                        RowKey = uploadResponse.AsT0.Value.RowKey,
-                        FileFormat = uploadResponse.AsT0.Value.FileFormat,
-                        UserId = loggedInUser.id,
-                        HaveUse = false,
-                        Timestamp = DateTimeOffset.UtcNow,
-                        Token = TokenGenerator.GenerateNewRngCrypto(),
-                    };
+                FileFormat = request.FileFormat,
+                PartitionKey = ContainerName.other.ToString(),
+                RowKey = Guid.NewGuid().ToString(),
+                UserId = loggedInUser.id,
+                AccessTier = AccessTier.Hot,
+                ETag = ETag.All,
+                FileSizeMB = request.FileSizeMB,
+                Timestamp = DateTimeOffset.UtcNow,
+                TotalChunks = request.TotalChunks,
+                TotalUploadedChunks = 0,
+                TotalUploadedSizeMB = 0
+            };
+            var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
-                    await _blobClientFactory.BlobTableClient().AddEntityAsync(objectIndex, cancellationToken);
+            await blobTableClient.AddEntityAsync(stashChunkDetail);
 
-
-                    return Ok(new TokenResponse() { Token = objectIndex.Token });
-                }
-
-                throw new TaskCanceledException();
-            }
-            catch (TaskCanceledException)
-            {
-                // Handle cancellation of the upload operation
-                return StatusCode((int)HttpStatusCode.RequestTimeout, "The upload operation was cancelled.");
-            }
+            return Ok(new TokenResponse() { Token = stashChunkDetail.RowKey });
         }
     }
 }

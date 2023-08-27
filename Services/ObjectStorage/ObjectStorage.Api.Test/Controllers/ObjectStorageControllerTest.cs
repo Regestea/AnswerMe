@@ -1,25 +1,95 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Azure.Core;
+using Grpc.Core;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
+using Models.Shared.Requests.ObjectStorage;
+using Models.Shared.Responses.Shared;
+using ObjectStorage.Api.Test.DataConvertor;
 using ObjectStorage.Api.Test.DataGenerator;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Xunit.Abstractions;
 
 namespace ObjectStorage.Api.Test.Controllers
 {
     public class ObjectStorageControllerTest 
     {
+        private readonly ITestOutputHelper _testOutputHelper;
         private readonly HttpClient _httpClient;
 
-        public ObjectStorageControllerTest()
+        public ObjectStorageControllerTest(ITestOutputHelper testOutputHelper)
         {
+            _testOutputHelper = testOutputHelper;
             var webAppFactory = new WebApplicationFactory<Program>();
             _httpClient = webAppFactory.CreateDefaultClient();
+        }
+
+        [Fact]
+        public async Task Should_Upload_ProfileImage_ByChunk()
+        {
+            var fileStream = TextToImageStream.ConvertTextToImageStream("test image");
+            var chunks = await fileStream.ConvertStreamToChunksAsync(10);
+
+            TokenResponse? token = null;
+
+            for (int i = 0; i < chunks.Count; i++)
+            {
+                if (token == null)
+                {
+                    var request = new ImageUploadRequest
+                    {
+                        FileSizeMB = ConvertBytesToMegabytes(fileStream.Length),
+                        FileFormat = "jpg"
+                    };
+                    var jsonContent = JsonSerializer.Serialize(request);
+                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                    var tokenResponse = await _httpClient.PostAsync("/api/ObjectStorage/Profile", content);
+                    var responseJsonContent = await tokenResponse.Content.ReadAsStringAsync();
+                     token = JsonSerializer.Deserialize<TokenResponse>(responseJsonContent, new JsonSerializerOptions{
+                        DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+                        WriteIndented = true,
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                        PropertyNameCaseInsensitive = true,
+                    });
+
+                    _testOutputHelper.WriteLine(token.Token);
+                }
+
+                var chunkRequest = new FileChunkRequest()
+                {
+                    Data = chunks[i],
+                    LastChunk = chunks[i] == chunks.Last(),
+                    CurrentChunk = i,
+                    UploadToken = Guid.Parse(token.Token)
+                };
+                var cjsonContent = JsonSerializer.Serialize(chunkRequest);
+                var ccontent = new StringContent(cjsonContent, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("/api/ObjectStorage/", ccontent);
+                var cresponseJsonContent = await response.Content.ReadAsStringAsync();
+
+             
+                    _testOutputHelper.WriteLine(response.StatusCode.ToString());
+                    _testOutputHelper.WriteLine(cresponseJsonContent);
+                
+                
+
+            }
+
+
+        }
+        public double ConvertBytesToMegabytes(long bytes)
+        {
+            return (double)bytes / (1024 * 1024);
         }
 
         [Fact]

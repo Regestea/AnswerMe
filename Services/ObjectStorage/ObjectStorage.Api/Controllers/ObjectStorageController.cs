@@ -40,28 +40,19 @@ namespace ObjectStorage.Api.Controllers
 
 
         [HttpPost]
-        //[AuthorizeByIdentityServer]
+        [AuthorizeByIdentityServer]
         public async Task<IActionResult> UploadChunk([FromBody] FileChunkRequest request, CancellationToken cancellationToken = default)
         {
-            //var requestToken = _jwtTokenRepository.GetJwtToken();
-            //var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
-
-            if (request.CurrentChunk==9)
-            {
-                Console.WriteLine("dd");
-            }
-
-            var loggedInUser = new UserDto() { id = Guid.Parse("b39c91c0-c518-42da-8d56-c18b51dd7394") };
+            var requestToken = _jwtTokenRepository.GetJwtToken();
+            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
             var stashChunkDetail = blobTableClient
-                .Query<StashChunkDetail>(x => x.RowKey == request.UploadToken.ToString()
-                                              //&& x.UserId == loggedInUser.id
-                                              )
+                .Query<StashChunkDetail>(x => x.RowKey == request.UploadToken.ToString() && x.UserId == loggedInUser.id)
                 .SingleOrDefault();
 
-          
+
             if (stashChunkDetail != null)
             {
                 var currentChunkSize = request.Data.SizeMB();
@@ -77,19 +68,12 @@ namespace ObjectStorage.Api.Controllers
                     //delete commit data form blob storage
                     await _fileUploadService.DeleteObjectAsync(containerName, stashChunkDetail.RowKey);
 
-                    return BadRequest($"the size of chunks is more than {stashChunkDetail.FileSizeMB} MB");
+                    return BadRequest($"the size of chunks is more than {stashChunkDetail.FileSizeMB} MB please request new upload token");
                 }
 
-                if (request.CurrentChunk > stashChunkDetail.TotalChunks || request.CurrentChunk < 0)
+                if (request.CurrentChunk < 0)
                 {
-                    //delete table 
-                    // ReSharper disable once MethodSupportsCancellation
-                    //await blobTableClient.DeleteEntityAsync(stashChunkDetail.PartitionKey, stashChunkDetail.RowKey);
-
-                    //delete commit data form blob storage
-                    //await _fileUploadService.DeleteObjectAsync(containerName, stashChunkDetail.RowKey);
-
-                    return BadRequest($"total chunks should be between 0 and {stashChunkDetail.TotalChunks}");
+                    return BadRequest($"total chunks should be between 0 and {int.MaxValue}");
                 }
 
 
@@ -102,7 +86,6 @@ namespace ObjectStorage.Api.Controllers
                     Data = request.Data,
                     AccessTier = stashChunkDetail.AccessTier,
                     CurrentChunk = request.CurrentChunk,
-                    TotalChunks = stashChunkDetail.TotalChunks
                 };
 
                 await _fileUploadService.UploadChunkAsync(fileChunkDto, cancellationToken);
@@ -151,12 +134,11 @@ namespace ObjectStorage.Api.Controllers
 
 
         [HttpPost("Profile")]
-        //[AuthorizeByIdentityServer]
+        [AuthorizeByIdentityServer]
         public async Task<IActionResult> RequestUploadProfileImageToken([FromBody] ImageUploadRequest request)
         {
-            //var requestToken = _jwtTokenRepository.GetJwtToken();
-            //var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
-            var loggedInUser = new UserDto(){id = Guid.Parse("b39c91c0-c518-42da-8d56-c18b51dd7394") };
+            var requestToken = _jwtTokenRepository.GetJwtToken();
+            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var stashChunkDetail = new StashChunkDetail()
             {
@@ -166,9 +148,8 @@ namespace ObjectStorage.Api.Controllers
                 UserId = loggedInUser.id,
                 AccessTier = AccessTier.Archive.ToString(),
                 ETag = ETag.All,
-                FileSizeMB = request.FileSizeMB+0.01,
+                FileSizeMB = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
-                TotalChunks = request.TotalChunks,
                 TotalUploadedChunks = 0,
                 TotalUploadedSizeMB = 0
             };
@@ -199,7 +180,6 @@ namespace ObjectStorage.Api.Controllers
                 ETag = ETag.All,
                 FileSizeMB = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
-                TotalChunks = request.TotalChunks,
                 TotalUploadedChunks = 0,
                 TotalUploadedSizeMB = 0
             };
@@ -228,7 +208,6 @@ namespace ObjectStorage.Api.Controllers
                 ETag = ETag.All,
                 FileSizeMB = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
-                TotalChunks = request.TotalChunks,
                 TotalUploadedChunks = 0,
                 TotalUploadedSizeMB = 0
             };
@@ -257,7 +236,6 @@ namespace ObjectStorage.Api.Controllers
                 ETag = ETag.All,
                 FileSizeMB = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
-                TotalChunks = request.TotalChunks,
                 TotalUploadedChunks = 0,
                 TotalUploadedSizeMB = 0
             };
@@ -286,7 +264,6 @@ namespace ObjectStorage.Api.Controllers
                 ETag = ETag.All,
                 FileSizeMB = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
-                TotalChunks = request.TotalChunks,
                 TotalUploadedChunks = 0,
                 TotalUploadedSizeMB = 0
             };

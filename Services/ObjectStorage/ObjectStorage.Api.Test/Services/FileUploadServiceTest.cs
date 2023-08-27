@@ -25,6 +25,20 @@ public class FileUploadServiceTest
     }
 
     [Fact]
+    public async Task TTT()
+    {
+        var mockBlobClientFactory = new Mock<IBlobClientFactory>();
+
+        mockBlobClientFactory.Setup(f => f.BlobStorageClient(ContainerName.image))
+            .Returns(() => new BlobContainerClient(BlobTestServer, ContainerName.image.ToString()));
+
+        var data = mockBlobClientFactory.Object.BlobTableClient(TableName.StashChunkDetail)
+            .Query<StashChunkDetail>(x => x.RowKey == "0667d0d3-ecbd-42b8-835c-831c5868ae44");
+
+        _testOutputHelper.WriteLine("hello");
+    }
+
+    [Fact]
     public async Task UploadChunk_Should_UploadChunkToBlobStorage()
     {
         // Arrange
@@ -34,12 +48,13 @@ public class FileUploadServiceTest
             .Returns(() => new BlobContainerClient(BlobTestServer, ContainerName.image.ToString()));
 
         var fileStream = TextToImageStream.ConvertTextToImageStream("test image");
+        var chunks = await fileStream.ConvertStreamToChunksAsync(1);
 
         var fileUploadService = new FileUploadService(mockBlobClientFactory.Object);
 
         var fileName = Guid.NewGuid().ToString();
 
-        var chunks = await fileStream.ConvertStreamToChunksAsync(1);
+       
 
         // Act
         var aa = chunks.First().SizeMB();

@@ -9,7 +9,6 @@ namespace ObjectStorage.Api.Entities
         public double FileSizeMB { get; set; }
         public double TotalUploadedSizeMB { get; set; }
         public int TotalUploadedChunks { get; set; }
-        public int TotalChunks { get; set; }
         public string FileFormat { get; set; } = null!;
         public Guid UserId { get; set; }
         public string AccessTier { get; set; }

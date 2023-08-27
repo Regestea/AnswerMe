@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Responses\User\" />
+    <PackageReference Include="OneOf" Version="3.0.255" />
+    <PackageReference Include="OneOf.SourceGenerator" Version="3.0.255" />
   </ItemGroup>
 
 </Project>

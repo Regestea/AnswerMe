@@ -40,7 +40,7 @@ namespace ObjectStorage.Api.Services
             if (fileChunkDto.LastChunk)
             {
                 var blockIds = new List<string>();
-                for (int i = 0; i < fileChunkDto.TotalChunks; i++)
+                for (int i = 0; i <= fileChunkDto.TotalUploadedChunks; i++)
                 {
                     blockIds.Add(Convert.ToBase64String(Encoding.UTF8.GetBytes(i.ToString("0000000"))));
                 }

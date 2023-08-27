@@ -29,7 +29,7 @@ builder.Services.AddSwagger(options =>
 );
 builder.Services.AddScoped<IBlobClientFactory, BlobClientFactory>();
 builder.Services.AddScoped<IFileUploadService, FileUploadService>();
-//builder.Services.AddHostedService<BlobBackgroundService>();
+builder.Services.AddHostedService<BlobBackgroundService>();
 
 var app = builder.Build();
 

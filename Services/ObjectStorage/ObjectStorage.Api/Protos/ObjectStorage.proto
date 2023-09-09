@@ -17,7 +17,8 @@ message GetObjectPathRequest {
 
 message GetObjectPathResponse {
 	string FilePath = 1;
-	string FileType = 2;
+	string FileFormat = 2;
+	string BlurHash = 3;
 }
 
 //DeleteObjectByPath

@@ -18,7 +18,6 @@ namespace ObjectStorage.Api.GrpcServices
             _blobClientFactory = blobClientFactory;
         }
 
-
         public override async Task<GetObjectPathResponse> GetObjectPathByToken(GetObjectPathRequest request, ServerCallContext context)
         {
             Guid userId = Guid.Parse(request.UserId);
@@ -33,12 +32,19 @@ namespace ObjectStorage.Api.GrpcServices
             {
                 objectFile.HaveUse = true;
                 objectFile.Token = "";
+                var blurHash = "";
+
                 await tableClient.UpdateEntityAsync(objectFile, ETag.All);
 
-                return new GetObjectPathResponse() { FilePath = objectFile.FullPath, FileType = objectFile.PartitionKey };
+                if (!string.IsNullOrWhiteSpace(objectFile.BlurHash))
+                {
+                    blurHash = objectFile.BlurHash;
+                }
+
+                return new GetObjectPathResponse() { FilePath = objectFile.FullPath, FileFormat = objectFile.FileFormat, BlurHash = blurHash };
             }
 
-            return new GetObjectPathResponse() { FilePath = "", FileType = "" };
+            return new GetObjectPathResponse() { FilePath = "", FileFormat = "", BlurHash = "" };
         }
 
         public override async Task<DeleteObjectResponse> DeleteObjectByPath(DeleteObjectRequest request, ServerCallContext context)

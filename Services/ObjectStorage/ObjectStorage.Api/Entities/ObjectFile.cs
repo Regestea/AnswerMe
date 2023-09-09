@@ -21,6 +21,8 @@ namespace ObjectStorage.Api.Entities
         [Required]
         public string FileFormat { get; set; } = null!;
 
+        public string? BlurHash { get; set; }
+
         [Required]
         public bool HaveUse { get; set; }
 

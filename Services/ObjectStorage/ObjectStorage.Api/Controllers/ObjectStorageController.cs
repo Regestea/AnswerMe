@@ -30,14 +30,16 @@ namespace ObjectStorage.Api.Controllers
         private readonly IFileUploadService _fileUploadService;
         private readonly IBlobClientFactory _blobClientFactory;
         private readonly IJwtTokenRepository _jwtTokenRepository;
+        private readonly IBlurHashService _blurHashService;
 
-        public ObjectStorageController(IFileUploadService fileUploadService, IBlobClientFactory blobClientFactory, IJwtTokenRepository jwtTokenRepository)
+
+        public ObjectStorageController(IFileUploadService fileUploadService, IBlobClientFactory blobClientFactory, IJwtTokenRepository jwtTokenRepository, IBlurHashService blurHashService)
         {
             _fileUploadService = fileUploadService;
             _blobClientFactory = blobClientFactory;
             _jwtTokenRepository = jwtTokenRepository;
+            _blurHashService = blurHashService;
         }
-
 
         [HttpPost]
         [AuthorizeByIdentityServer]
@@ -104,6 +106,11 @@ namespace ObjectStorage.Api.Controllers
                         ETag = ETag.All
                     };
 
+                    if (!string.IsNullOrWhiteSpace(stashChunkDetail.BlurHash))
+                    {
+                        objectIndex.BlurHash = stashChunkDetail.BlurHash;
+                    }
+
                     // ReSharper disable once MethodSupportsCancellation
                     await _blobClientFactory.BlobTableClient(TableName.IndexObjectFile)
                         .AddEntityAsync(objectIndex);
@@ -135,7 +142,7 @@ namespace ObjectStorage.Api.Controllers
 
         [HttpPost("Profile")]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> RequestUploadProfileImageToken([FromBody] ImageUploadRequest request)
+        public async Task<IActionResult> RequestUploadProfileImageToken([FromBody] ProfileImageUploadRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
@@ -153,7 +160,7 @@ namespace ObjectStorage.Api.Controllers
                 TotalUploadedChunks = 0,
                 TotalUploadedSizeMB = 0
             };
-            AccessTier accessTier = (AccessTier)stashChunkDetail.AccessTier;
+
             var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
             await blobTableClient.AddEntityAsync(stashChunkDetail);
@@ -162,11 +169,18 @@ namespace ObjectStorage.Api.Controllers
         }
 
 
-
         [HttpPost("Image")]
         [AuthorizeByIdentityServer]
         public async Task<IActionResult> RequestUploadImageToken([FromBody] ImageUploadRequest request)
         {
+            var isValidBlurHash = await _blurHashService.ValidateBlurHash(request.BlurHash);
+
+            if (!isValidBlurHash.AsT0.Value)
+            {
+                ModelState.AddModelError(nameof(request.BlurHash),"Invalid blurHash");
+                return BadRequest(ModelState);
+            }
+
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
@@ -180,9 +194,11 @@ namespace ObjectStorage.Api.Controllers
                 ETag = ETag.All,
                 FileSizeMB = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
+                BlurHash = request.BlurHash,
                 TotalUploadedChunks = 0,
                 TotalUploadedSizeMB = 0
             };
+
             var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
             await blobTableClient.AddEntityAsync(stashChunkDetail);

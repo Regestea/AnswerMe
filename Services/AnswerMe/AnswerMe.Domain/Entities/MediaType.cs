@@ -8,9 +8,10 @@ namespace AnswerMe.Domain.Entities
 {
     public enum MediaType
     {
-        Other,
-        Image,
-        Gif,
-        Video,
+        other,
+        image,
+        gif,
+        video,
+        audio
     }
 }

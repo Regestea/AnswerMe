@@ -9,9 +9,6 @@ namespace Models.Shared.Requests.User
 {
     public class RegisterUserRequest
     {
-        [Required]
-        [MaxLength(50)]
-        public string FullName { get; set; } = null!;
 
         [Required]
         [MaxLength(15)]

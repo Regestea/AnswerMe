@@ -4,14 +4,16 @@ using OneOf.Types;
 
 namespace Models.Shared.RepositoriesResponseTypes
 {
-    public class UpdateResponse : OneOfBase<Success, Success<Guid>, List<ValidationFailedDto>, Error<string>>
+    public class UpdateResponse : OneOfBase<Success, Success<Guid>, List<ValidationFailedDto>, Error<string>, NotFound>
     {
-        protected UpdateResponse(OneOf<Success, Success<Guid>, List<ValidationFailedDto>, Error<string>> input)
+        protected UpdateResponse(OneOf<Success, Success<Guid>, List<ValidationFailedDto>, Error<string>, NotFound> input)
             : base(input)
         {
         }
 
         public static implicit operator UpdateResponse(Success _) => new(_);
+
+        public static implicit operator UpdateResponse(NotFound _) => new(_);
 
         public static implicit operator UpdateResponse(Success<Guid> _) => new(_);
 

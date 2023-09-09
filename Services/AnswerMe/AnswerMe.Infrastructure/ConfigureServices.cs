@@ -1,10 +1,13 @@
 ﻿using AnswerMe.Application.Common.Interfaces;
+using AnswerMe.Application.Extensions;
 using AnswerMe.Infrastructure.Persistence;
 using AnswerMe.Infrastructure.Repositories;
+using AnswerMe.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ObjectStorage.Api.Protos;
 
 
 namespace AnswerMe.Infrastructure
@@ -19,8 +22,12 @@ namespace AnswerMe.Infrastructure
                     configuration.GetSection("DatabaseSettings:PrimaryKey").Value ?? throw new InvalidOperationException(),
                     configuration.GetSection("DatabaseSettings:DatabaseName").Value ?? throw new InvalidOperationException())
             );
-            services.AddScoped<IUserRepository, UserRepository>();
-
+            //services.AddScoped<IUserRepository, UserRepository>();
+            services.AddGrpcClient<ObjectStorageService.ObjectStorageServiceClient>(o =>
+                o.Address = new Uri(configuration.GetSection("ObjectStorageServer:GrpcUrl").Value ?? throw new InvalidOperationException()));
+            services.AddScoped<FileStorageService>();
+            services.AddScoped<IGroupRoomAdminRepository, GroupRoomAdminRepository>();
+            FileStorageHelper.Initialize(configuration.GetSection("ObjectStorageServer:GrpcUrl").Value ?? throw new InvalidOperationException());
             return services;
         }
     }

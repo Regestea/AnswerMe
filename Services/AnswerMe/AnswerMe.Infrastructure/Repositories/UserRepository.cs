@@ -1,116 +1,100 @@
 ﻿using AnswerMe.Application.Common.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using AnswerMe.Application.DTOs;
 using AnswerMe.Application.Extensions;
-using AnswerMe.Application.RepositoriesResponseTypes;
 using AnswerMe.Domain.Entities;
 using AnswerMe.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 using Models.Shared.Requests.User;
 using Models.Shared.Responses.Shared;
 using OneOf.Types;
-using AnswerMe.Application.DTOs.Error;
 using AnswerMe.Application.DTOs.User;
+using AnswerMe.Infrastructure.Services;
+using Models.Shared.DTOs.Error;
+using Models.Shared.RepositoriesResponseTypes;
+
+using Microsoft.EntityFrameworkCore;
+using Models.Shared.Requests.Shared;
+using Models.Shared.Responses.User;
 
 namespace AnswerMe.Infrastructure.Repositories
 {
-    public class UserRepository : IUserRepository
-    {
-        private AnswerMeDbContext _context;
+    //public class UserRepository : IUserRepository
+    //{
+    //    private readonly AnswerMeDbContext _context;
+    //    private readonly FileStorageService _fileStorageService;
 
-        public UserRepository(AnswerMeDbContext context)
-        {
-            _context = context;
-        }
+    //    public UserRepository(AnswerMeDbContext context, FileStorageService fileStorageService)
+    //    {
+    //        _context = context;
+    //        _fileStorageService = fileStorageService;
+    //    }
 
-        public async Task<CreateResponse<IdResponse>> AddUser(RegisterUserRequest request)
-        {
+    //     save blur hash at answer me api side into media entity 
+    //    public async Task<ReadResponse<bool>> ExistUserAsync(Guid id)
+    //    {
+    //        var response= await _context.Users.AnyAsync(x => x.id == id);
+    //        return new Success<bool>(response);
+    //    }
 
-            var existPhone =await _context.Users.Where(x => x.PhoneNumber == request.PhoneNumber.NormalizeString()).CountAsync() > 0;
-            var existIdName =await _context.Users.Where(x => x.PhoneNumber == request.IdName.NormalizeString()).CountAsync() > 0;
+    //    public async Task<CreateResponse<IdResponse>> AddUserAsync(AddUserDto userDto)
+    //    {
+    //        var user = new User
+    //        {
+    //            id = userDto.id,
+    //            FullName = userDto.IdName,
+    //            IdName = userDto.IdName,
+    //            PhoneNumber = userDto.PhoneNumber,
+    //        };
+    //        await _context.Users.AddAsync(user);
+    //        await _context.SaveChangesAsync();
+    //        return new Success<IdResponse>(new IdResponse() { Id = user.id });
+    //    }
 
+    //    public async Task<ReadResponse<UserResponse>> GetUserByIdAsync(Guid id)
+    //    {
+    //        var userDto = await _context.Users.Where(x => x.id == id)
+    //            .Select(x => new UserResponse()
+    //            {
+    //                id = x.id,
+    //                PhoneNumber = x.PhoneNumber,
+    //                IdName = x.IdName,
+    //                CreatedDate = x.CreatedDate,
+    //                FullName = x.FullName,
+    //                ModifiedDate = x.ModifiedDate,
+    //                ProfileImage = x.ProfileImage
+    //            })
+    //            .SingleOrDefaultAsync();
 
-            if (existPhone || existIdName)
-            {
-                var validationErrorList = new List<ValidationFailedDto>();
-                if (existIdName)
-                {
-                    validationErrorList.Add(new ValidationFailedDto()
-                    {
-                        Field = nameof(request.IdName),
-                        Error = $"this {nameof(request.IdName)} is taken try different {nameof(request.IdName)}"
-                    });
-                }
+    //        if (userDto != null)
+    //        {
+    //            return new Success<UserResponse>(userDto);
+    //        }
 
-                if (existPhone)
-                {
-                    validationErrorList.Add(new ValidationFailedDto()
-                    {
-                        Field = nameof(request.PhoneNumber),
-                        Error = $"this {nameof(request.PhoneNumber)} is taken try different {nameof(request.PhoneNumber)}"
-                    });
-                }
+    //        return new NotFound();
+    //    }
 
-                return validationErrorList;
-            }
+    //    public async Task<UpdateResponse> EditUserAsync(Guid id, EditUserRequest request)
+    //    {
+    //        var user = await _context.Users.SingleAsync(x => x.id == id);
 
-            var user = new User
-            {
-                id = Guid.NewGuid(),
-                FullName = request.FullName,
-                IdName = request.IdName.NormalizeString(),
-                Password = PasswordHash.Hash(request.Password),
-                PhoneNumber = request.PhoneNumber.NormalizeString(),
-            };
-            await _context.Users.AddAsync(user);
-            await _context.SaveChangesAsync();
-            return new Success<IdResponse>(new IdResponse() { Id = user.id });
-        }
+    //        if (!string.IsNullOrWhiteSpace(request.FullName))
+    //        {
+    //            user.FullName=request.FullName;
+    //        }
 
-        public async Task<ReadResponse<UserDto>> GetUser(LoginUserRequest request)
-        {
-            var userDto = await _context.Users.Where(x =>
-                x.PhoneNumber == request.PhoneNumber.Normalize() && x.Password == PasswordHash.Hash(request.Password))
-                .Select(x => new UserDto()
-                {
-                    id = x.id,
-                    PhoneNumber = x.PhoneNumber,
-                    IdName = x.IdName,
-                    CreatedDate = x.CreatedDate,
-                    FullName = x.FullName,
-                    ModifiedDate = x.ModifiedDate,
-                    ProfileImage = x.ProfileImage
-                })
-                .SingleOrDefaultAsync();
+    //        if (!string.IsNullOrWhiteSpace(request.ProfileImageToken))
+    //        {
+    //            var response = await _fileStorageService.GetObjectPath(id, request.ProfileImageToken);
+    //            if (!string.IsNullOrWhiteSpace(response.FilePath) && !string.IsNullOrWhiteSpace(response.FileType))
+    //            {
+    //                user.ProfileImage = response.FilePath;
+    //            }
+    //        }
 
-            if (userDto != null)
-            {
-                return new Success<UserDto>(userDto);
-            }
+    //        _context.Users.Update(user);
 
-            return new NotFound();
-        }
+    //        await _context.SaveChangesAsync();
 
-        public Task<UpdateResponse> EditProfileImage(EditProfileImageRequest request)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<ReadResponse<bool>> ExistPhone(string phone)
-        {
-            var exist = await _context.Users.AnyAsync(x => x.PhoneNumber == phone.NormalizeString());
-
-            return new Success<bool>(exist);
-        }
-
-        public async Task<ReadResponse<bool>> ExistIdName(string idName)
-        {
-            var exist = await _context.Users.AnyAsync(x => x.IdName == idName.NormalizeString());
-
-            return new Success<bool>(exist);
-        }
-    }
+    //        return new Success<Guid>(user.id);
+    //    }
+    //}
 }

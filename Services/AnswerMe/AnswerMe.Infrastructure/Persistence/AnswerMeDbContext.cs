@@ -14,21 +14,28 @@ namespace AnswerMe.Infrastructure.Persistence
         }
 
 
-        public DbSet<Media> Medias { get; set; }
+        //public DbSet<Media> Medias { get; set; }
+        public DbSet<UserGroup> UserGroups { get; set; }
         public DbSet<Message> Messages { get; set; }
-        public DbSet<Room> Rooms { get; set; }
+        public DbSet<PrivateChat> PrivateChats { get; set; }
+        public DbSet<GroupChat> GroupChats { get; set; }
+        public DbSet<LastSeen> LastSeen { get; set; }
+        public DbSet<GroupAdmin> GroupAdmins { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<UserRoom> UserRooms { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Media>().ToContainer("Medias");
+            //modelBuilder.Entity<Media>().ToContainer("Medias");
+
+            modelBuilder.Entity<UserGroup>().HasNoKey().ToContainer("GroupUsers");
             modelBuilder.Entity<Message>().ToContainer("Messages");
-            modelBuilder.Entity<Room>().ToContainer("Rooms");
+            modelBuilder.Entity<PrivateChat>().ToContainer("PrivateRoomChats");
+            modelBuilder.Entity<GroupChat>().ToContainer("GroupRoomChats");
+            modelBuilder.Entity<LastSeen>().HasNoKey().ToContainer("RoomsLastSeen");
+            modelBuilder.Entity<GroupAdmin>().HasNoKey().ToContainer("GroupRoomAdmins");
             modelBuilder.Entity<User>().ToContainer("Users");
-            modelBuilder.Entity<UserRoom>().ToContainer("UserRooms");
-            
             modelBuilder.SeedData();
         }
     }

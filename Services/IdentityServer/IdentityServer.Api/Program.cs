@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
-using Configs.Shared;
+using IdentityServer.Api.Configs;
 using IdentityServer.Api.Context;
 using IdentityServer.Api.GrpcServices;
 using IdentityServer.Api.Repositories;
@@ -29,12 +29,7 @@ builder.Services.AddDbContext<IdentityServerDbContext>(options =>
 );
 #endregion
 
-builder.Services.AddSwagger(options =>
-    {
-        options.Title = "Identity Server";
-        options.Version = "v1";
-    }
-);
+builder.Services.AddSwagger();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAllOrigins",

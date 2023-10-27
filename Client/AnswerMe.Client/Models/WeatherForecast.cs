@@ -1,4 +1,4 @@
-namespace AnswerMe.Client
+namespace AnswerMe.Client.Models
 {
     public class WeatherForecast
     {

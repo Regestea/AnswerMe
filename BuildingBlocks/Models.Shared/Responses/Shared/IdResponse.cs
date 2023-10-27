@@ -8,6 +8,7 @@ namespace Models.Shared.Responses.Shared
 {
     public class IdResponse
     {
+        public string FieldName { get; set; }
         public Guid Id { get; set; }
     }
 }

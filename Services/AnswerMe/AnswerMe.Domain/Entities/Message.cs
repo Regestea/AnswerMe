@@ -16,11 +16,10 @@ namespace AnswerMe.Domain.Entities
 
         public Guid UserSenderId { get; set; }
 
-        //public Guid UserReceiverId { get; set; }
+        public string? GroupInvitationToken { get; set; }
 
         public Guid? ReplyMessageId { get; set; }
 
         public ICollection<Media>? MediaList { get; set; }
-
     }
 }

@@ -8,6 +8,8 @@ namespace Models.Shared.Requests.Message
 
         public Guid? ReplyMessageId { get; set; }
 
+        public string? GroupInvitationToken { get; set; }
+
         public List<TokenRequest>? MediaTokenList { get; set; }
     }
 }

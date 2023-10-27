@@ -1,12 +1,12 @@
-﻿using Models.Shared.DTOs.Error;
+﻿using Models.Shared.OneOfTypes;
 using OneOf;
 using OneOf.Types;
 
 namespace Models.Shared.RepositoriesResponseTypes
 {
-    public class UpdateResponse : OneOfBase<Success, Success<Guid>, List<ValidationFailedDto>, Error<string>, NotFound>
+    public class UpdateResponse : OneOfBase<Success, List<ValidationFailed>, ValidationFailed, Error<string>, AccessDenied, NotFound>
     {
-        protected UpdateResponse(OneOf<Success, Success<Guid>, List<ValidationFailedDto>, Error<string>, NotFound> input)
+        protected UpdateResponse(OneOf<Success, List<ValidationFailed>, ValidationFailed, Error<string>, AccessDenied, NotFound> input)
             : base(input)
         {
         }
@@ -15,10 +15,12 @@ namespace Models.Shared.RepositoriesResponseTypes
 
         public static implicit operator UpdateResponse(NotFound _) => new(_);
 
-        public static implicit operator UpdateResponse(Success<Guid> _) => new(_);
-
         public static implicit operator UpdateResponse(Error<string> _) => new(_);
 
-        public static implicit operator UpdateResponse(List<ValidationFailedDto> _) => new(_);
+        public static implicit operator UpdateResponse(AccessDenied _) => new(_);
+
+        public static implicit operator UpdateResponse(List<ValidationFailed> _) => new(_);
+
+        public static implicit operator UpdateResponse(ValidationFailed _) => new(_);
     }
 }

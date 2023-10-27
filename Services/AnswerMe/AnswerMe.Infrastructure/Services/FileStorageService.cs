@@ -9,12 +9,13 @@ namespace AnswerMe.Infrastructure.Services
 {
     public class FileStorageService
     {
-        private ObjectStorageService.ObjectStorageServiceClient _storageServiceClient;
+        private readonly ObjectStorageService.ObjectStorageServiceClient _storageServiceClient;
 
         public FileStorageService(ObjectStorageService.ObjectStorageServiceClient storageServiceClient)
         {
             _storageServiceClient = storageServiceClient;
         }
+
 
         public async Task<GetObjectPathResponse> GetObjectPathAsync(Guid userId, string token)
         {

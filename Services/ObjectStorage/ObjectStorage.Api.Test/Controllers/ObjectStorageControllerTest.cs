@@ -62,30 +62,10 @@ namespace ObjectStorage.Api.Test.Controllers
                     });
 
                     _testOutputHelper.WriteLine(token.Token);
+
+                    Assert.NotNull(token);
                 }
-
-                var chunkRequest = new FileChunkRequest()
-                {
-                    Data = chunks[i],
-                    LastChunk = chunks[i] == chunks.Last(),
-                    CurrentChunk = i,
-                    UploadToken = Guid.Parse(token.Token)
-                };
-                var cjsonContent = JsonSerializer.Serialize(chunkRequest);
-                var ccontent = new StringContent(cjsonContent, Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PostAsync("/api/ObjectStorage/", ccontent);
-                var cresponseJsonContent = await response.Content.ReadAsStringAsync();
-
-             
-                    _testOutputHelper.WriteLine(response.StatusCode.ToString());
-                    _testOutputHelper.WriteLine(cresponseJsonContent);
-                
-                
-
             }
-
-
         }
         public double ConvertBytesToMegabytes(long bytes)
         {

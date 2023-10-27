@@ -10,6 +10,7 @@ using Xunit.Abstractions;
 using ObjectStorage.Api.Test.DataGenerator;
 using ObjectStorage.Api.Test.DataConvertor;
 using Models.Shared.Responses.ObjectStorage;
+using ObjectStorage.Api.DTOs;
 using ObjectStorage.Api.Extensions;
 
 namespace ObjectStorage.Api.Test.Services;
@@ -22,20 +23,6 @@ public class FileUploadServiceTest
     public FileUploadServiceTest(ITestOutputHelper testOutputHelper)
     {
         _testOutputHelper = testOutputHelper;
-    }
-
-    [Fact]
-    public async Task TTT()
-    {
-        var mockBlobClientFactory = new Mock<IBlobClientFactory>();
-
-        mockBlobClientFactory.Setup(f => f.BlobStorageClient(ContainerName.image))
-            .Returns(() => new BlobContainerClient(BlobTestServer, ContainerName.image.ToString()));
-
-        var data = mockBlobClientFactory.Object.BlobTableClient(TableName.StashChunkDetail)
-            .Query<StashChunkDetail>(x => x.RowKey == "0667d0d3-ecbd-42b8-835c-831c5868ae44");
-
-        _testOutputHelper.WriteLine("hello");
     }
 
     [Fact]
@@ -54,27 +41,28 @@ public class FileUploadServiceTest
 
         var fileName = Guid.NewGuid().ToString();
 
-       
-
         // Act
-        var aa = chunks.First().SizeMB();
-        var bb = chunks.First().SizeMB();
 
-        _testOutputHelper.WriteLine($"aa is {aa}");
-        _testOutputHelper.WriteLine($"bb is {bb}");
-        //for (int i = 0; i < chunks.Count; i++)
-        //{
-        //    var result = await fileUploadService.UploadChunkAsync(ContainerName.image, fileName, ".png", new FileChunkRequest()
-        //    {
-        //        Data = chunks[i],
-        //        CurrentChunk = i,
-        //        LastChunk = chunks[i] == chunks.Last()
-        //        //LastChunk = i == chunks.Count-1
-        //    }, AccessTier.Archive);
-        //    // Assert
-        //    Assert.NotNull(result);
-        //    Assert.IsType<CreateResponse<UploadObjectResponse>>(result);
-        //}
+        for (int i = 0; i < chunks.Count; i++)
+        {
+            var fileChunkDto = new FileChunkDto()
+            {
+                Data = chunks[i],
+                CurrentChunk = i,
+                LastChunk = chunks[i] == chunks.Last(),
+                AccessTier = AccessTier.Archive.ToString(),
+                ContainerName = ContainerName.image,
+                FileFormat = ".png",
+                FileName = fileName,
+                TotalUploadedChunks = chunks.Count,
+            };
+            var result = await fileUploadService.UploadChunkAsync(fileChunkDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsType<UpdateResponse>(result);
+            Assert.True(result.IsT0);
+        }
 
 
 
@@ -94,9 +82,6 @@ public class FileUploadServiceTest
         var fileUploadService = new FileUploadService(mockBlobClientFactory.Object);
 
         // Act
-
-        //var uploadResult = await fileUploadService.UploadObjectAsync(ContainerName.image, "Test.png", fileStream, AccessTier.Archive,
-        //    CancellationToken.None);
 
         var fileName = Guid.NewGuid().ToString();
         var fileFormat = ".png";

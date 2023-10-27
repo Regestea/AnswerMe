@@ -7,10 +7,10 @@ namespace IdentityServer.Api.Repositories;
 
 public interface IUserRepository
 {
-    Task<CreateResponse<IdResponse>> AddUser(RegisterUserRequest request);
-    Task<ReadResponse<UserDto>> GetUser(LoginUserRequest request);
+    Task<CreateResponse<IdResponse>> AddUserAsync(RegisterUserRequest request);
+    Task<ReadResponse<UserDto>> GetUserAsync(LoginUserRequest request);
 
-    Task<ReadResponse<bool>> ExistPhone(string phone);
-    Task<ReadResponse<bool>> ExistIdName(string idName);
+    Task<ReadResponse<bool>> ExistPhoneAsync(string phone);
+    Task<ReadResponse<bool>> ExistIdNameAsync(string idName);
 
 }

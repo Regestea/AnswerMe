@@ -21,7 +21,7 @@ namespace IdentityServer.Shared.Client
             services.AddHttpContextAccessor();
             services.AddScoped<AuthorizationGrpcServices>();
 
-            services.AddScoped<ICacheRepository, CacheRepository>();
+            services.AddScoped<IJwtCacheRepository, JwtCacheRepository>();
 
             services.AddScoped<IJwtTokenRepository, JwtTokenRepository>();
 

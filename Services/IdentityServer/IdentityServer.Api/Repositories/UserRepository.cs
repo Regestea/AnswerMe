@@ -4,7 +4,7 @@ using IdentityServer.Api.DTOs.User;
 using IdentityServer.Api.Entities;
 using IdentityServer.Api.Extensions;
 using Microsoft.EntityFrameworkCore;
-using Models.Shared.DTOs.Error;
+using Models.Shared.OneOfTypes;
 using Models.Shared.RepositoriesResponseTypes;
 using Models.Shared.Requests.User;
 using Models.Shared.Responses.Shared;
@@ -21,7 +21,7 @@ namespace IdentityServer.Api.Repositories
             _context = context;
         }
 
-        public async Task<CreateResponse<IdResponse>> AddUser(RegisterUserRequest request)
+        public async Task<CreateResponse<IdResponse>> AddUserAsync(RegisterUserRequest request)
         {
 
             var existPhone = await _context.Users.Where(x => x.PhoneNumber == request.PhoneNumber.NormalizeString()).CountAsync() > 0;
@@ -29,10 +29,10 @@ namespace IdentityServer.Api.Repositories
 
             if (existPhone || existIdName)
             {
-                var validationErrorList = new List<ValidationFailedDto>();
+                var validationErrorList = new List<ValidationFailed>();
                 if (existIdName)
                 {
-                    validationErrorList.Add(new ValidationFailedDto()
+                    validationErrorList.Add(new ValidationFailed()
                     {
                         Field = nameof(request.IdName),
                         Error = $"this {nameof(request.IdName)} is taken try different {nameof(request.IdName)}"
@@ -41,7 +41,7 @@ namespace IdentityServer.Api.Repositories
 
                 if (existPhone)
                 {
-                    validationErrorList.Add(new ValidationFailedDto()
+                    validationErrorList.Add(new ValidationFailed()
                     {
                         Field = nameof(request.PhoneNumber),
                         Error = $"this {nameof(request.PhoneNumber)} is taken try different {nameof(request.PhoneNumber)}"
@@ -63,7 +63,7 @@ namespace IdentityServer.Api.Repositories
             return new Success<IdResponse>(new IdResponse() { Id = user.id });
         }
 
-        public async Task<ReadResponse<UserDto>> GetUser(LoginUserRequest request)
+        public async Task<ReadResponse<UserDto>> GetUserAsync(LoginUserRequest request)
         {
             var userDto = await _context.Users.Where(x =>
                     x.PhoneNumber == request.PhoneNumber.Normalize() &&
@@ -86,14 +86,14 @@ namespace IdentityServer.Api.Repositories
         }
 
 
-        public async Task<ReadResponse<bool>> ExistPhone(string phone)
+        public async Task<ReadResponse<bool>> ExistPhoneAsync(string phone)
         {
             var exist = await _context.Users.Where(x => x.PhoneNumber == phone.NormalizeString()).CountAsync() > 0;
 
             return new Success<bool>(exist);
         }
 
-        public async Task<ReadResponse<bool>> ExistIdName(string idName)
+        public async Task<ReadResponse<bool>> ExistIdNameAsync(string idName)
         {
             var exist =  await _context.Users.Where(x => x.IdName == idName.NormalizeString()).CountAsync() > 0;
 

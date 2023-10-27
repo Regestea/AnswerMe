@@ -4,17 +4,25 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	  <InvariantGlobalization>true</InvariantGlobalization>
+	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
+	  <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Mapster" Version="7.3.0" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.21.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Cosmos" Version="7.0.10" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
-    <PackageReference Include="OneOf" Version="3.0.255" />
-    <PackageReference Include="OneOf.SourceGenerator" Version="3.0.255" />
+    <PackageReference Include="OneOf" Version="3.0.263" />
+    <PackageReference Include="OneOf.SourceGenerator" Version="3.0.263" />
+    <PackageReference Include="SignalRSwaggerGen" Version="4.4.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.6.122" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\IdentityServer.Shared.Client\IdentityServer.Shared.Client.csproj" />
     <ProjectReference Include="..\AnswerMe.Application\AnswerMe.Application.csproj" />
     <ProjectReference Include="..\AnswerMe.Domain\AnswerMe.Domain.csproj" />
   </ItemGroup>

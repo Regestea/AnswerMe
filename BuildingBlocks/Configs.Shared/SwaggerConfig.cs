@@ -7,25 +7,24 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 
 namespace Configs.Shared
 {
     public static class SwaggerConfig
     {
-        public static IServiceCollection AddSwagger(this IServiceCollection services, Action<SwaggerOptions> options)
+        public static IServiceCollection AddSwagger(this IServiceCollection services)
         {
-            var configureOptions = new SwaggerOptions();
-            options.Invoke(configureOptions);
-
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
             services.AddEndpointsApiExplorer();
 
+
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = configureOptions.Title, Version = configureOptions.Version });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Answer Me", Version = "v1" });
 
                 var securitySchema = new OpenApiSecurityScheme
                 {

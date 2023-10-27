@@ -24,7 +24,7 @@ namespace IdentityServer.Api.Controllers
         [HttpPost("/Register")]
         public async Task<IActionResult> Register(RegisterUserRequest request)
         {
-            var result = await _userRepository.AddUser(request);
+            var result = await _userRepository.AddUserAsync(request);
 
             if (result.IsT0)
             {
@@ -43,13 +43,13 @@ namespace IdentityServer.Api.Controllers
             }
 
 
-            return StatusCode(500, result.AsT2.Value);
+            return StatusCode(500, result.AsT2);
         }
 
         [HttpPost("/Login")]
         public async Task<IActionResult> Login(LoginUserRequest request)
         {
-            var result = await _userRepository.GetUser(request);
+            var result = await _userRepository.GetUserAsync(request);
 
             if (result.IsT1)
             {

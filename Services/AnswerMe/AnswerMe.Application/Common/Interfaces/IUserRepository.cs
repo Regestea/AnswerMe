@@ -9,8 +9,9 @@ namespace AnswerMe.Application.Common.Interfaces;
 
 public interface IUserRepository
 {
-    Task<ReadResponse<bool>> ExistUserAsync(Guid id);
-    Task<CreateResponse<IdResponse>> AddUserAsync(AddUserDto userDto);
-    Task<ReadResponse<UserResponse>> GetUserByIdAsync(Guid id);
-    Task<UpdateResponse> EditUserAsync(Guid id, EditUserRequest request);
+    Task<ReadResponse<BooleanResponse>> IsOnlineAsync(Guid id);
+    Task<ReadResponse<BooleanResponse>> ExistAsync(Guid id);
+    Task<CreateResponse<IdResponse>> AddAsync(AddUserDto userDto);
+    Task<ReadResponse<UserResponse>> GetByIdAsync(Guid id);
+    Task<UpdateResponse> EditAsync(Guid loggedInUserId, EditUserRequest request);
 }

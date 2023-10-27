@@ -28,8 +28,8 @@ namespace IdentityServer.Shared.Client.Attributes
                 context.HttpContext.RequestServices.GetService<AuthorizationGrpcServices>() ??
                 throw new ArgumentNullException(nameof(AuthorizationGrpcServices));
 
-            var tokenCache = context.HttpContext.RequestServices.GetService<ICacheRepository>() ??
-                             throw new ArgumentNullException(nameof(ICacheRepository));
+            var tokenCache = context.HttpContext.RequestServices.GetService<IJwtCacheRepository>() ??
+                             throw new ArgumentNullException(nameof(IJwtCacheRepository));
 
 
             if (!context.HttpContext.Request.Headers.TryGetValue("Authorization", out var authorizationHeader))

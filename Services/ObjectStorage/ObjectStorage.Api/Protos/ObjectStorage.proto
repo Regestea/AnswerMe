@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option csharp_namespace = "ObjectStorage.Api.Protos";
+
+service ObjectStorageService {
+
+	rpc GetObjectPathByToken (GetObjectPathRequest) returns (GetObjectPathResponse);	  
+	rpc DeleteObjectByPath (DeleteObjectRequest) returns (DeleteObjectResponse);	  
+
+}
+
+//GetObjectPathByToken
+message GetObjectPathRequest {
+	string UserId = 1;
+    string Token = 2;
+}
+
+message GetObjectPathResponse {
+	string FilePath = 1;
+	string FileFormat = 2;
+	string BlurHash = 3;
+}
+
+//DeleteObjectByPath
+message DeleteObjectRequest {
+	string UserId = 1;
+	string FilePath = 2;
+}
+
+message DeleteObjectResponse {
+}

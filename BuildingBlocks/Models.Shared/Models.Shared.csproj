@@ -7,7 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Responses\User\" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.10" />
+    <PackageReference Include="OneOf" Version="3.0.263" />
+    <PackageReference Include="OneOf.SourceGenerator" Version="3.0.263" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Responses\LastSeen\" />
   </ItemGroup>
 
 </Project>

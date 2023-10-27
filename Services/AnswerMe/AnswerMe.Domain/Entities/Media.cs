@@ -8,14 +8,18 @@ using AnswerMe.Domain.Common;
 
 namespace AnswerMe.Domain.Entities
 {
-    public class Media:BaseEntity
+    public class Media
     {
+        public Guid Id { get; set; }
+
+        public Guid MessageId { get; set; }
 
         public string? BlurHash { get; set; }
 
         [Required]
         public MediaType Type { get; set; }
 
-        public string? Path { get; set; }
+        [Required]
+        public string Path { get; set; } = null!;
     }
 }

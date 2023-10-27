@@ -1,80 +1,68 @@
 ﻿using AnswerMe.Application.Common.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using AnswerMe.Application.DTOs;
 using AnswerMe.Application.Extensions;
-using AnswerMe.Application.RepositoriesResponseTypes;
 using AnswerMe.Domain.Entities;
 using AnswerMe.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 using Models.Shared.Requests.User;
 using Models.Shared.Responses.Shared;
 using OneOf.Types;
-using AnswerMe.Application.DTOs.Error;
 using AnswerMe.Application.DTOs.User;
+using AnswerMe.Infrastructure.Services;
+using Models.Shared.RepositoriesResponseTypes;
+using Microsoft.EntityFrameworkCore;
+using Models.Shared.Requests.Shared;
+using Models.Shared.Responses.User;
 
 namespace AnswerMe.Infrastructure.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private AnswerMeDbContext _context;
+        private readonly AnswerMeDbContext _context;
+        private readonly FileStorageService _fileStorageService;
+        private readonly IOnlineHubService _onlineHubService;
 
-        public UserRepository(AnswerMeDbContext context)
+        public UserRepository(AnswerMeDbContext context, FileStorageService fileStorageService, IOnlineHubService onlineHubService)
         {
             _context = context;
+            _fileStorageService = fileStorageService;
+            _onlineHubService = onlineHubService;
         }
 
-        public async Task<CreateResponse<IdResponse>> AddUser(RegisterUserRequest request)
+
+        public async Task<ReadResponse<BooleanResponse>> IsOnlineAsync(Guid id)
         {
+            var isOnline = await _onlineHubService.IsOnlineAsync(id);
 
-            var existPhone =await _context.Users.Where(x => x.PhoneNumber == request.PhoneNumber.NormalizeString()).CountAsync() > 0;
-            var existIdName =await _context.Users.Where(x => x.PhoneNumber == request.IdName.NormalizeString()).CountAsync() > 0;
+            return new Success<BooleanResponse>(isOnline.AsT0.Value);
+        }
 
+        public async Task<ReadResponse<BooleanResponse>> ExistAsync(Guid id)
+        {
+            var response = await _context.Users.AnyAsync(x => x.id == id);
 
-            if (existPhone || existIdName)
-            {
-                var validationErrorList = new List<ValidationFailedDto>();
-                if (existIdName)
-                {
-                    validationErrorList.Add(new ValidationFailedDto()
-                    {
-                        Field = nameof(request.IdName),
-                        Error = $"this {nameof(request.IdName)} is taken try different {nameof(request.IdName)}"
-                    });
-                }
+            return new Success<BooleanResponse>(new BooleanResponse() { FieldName = "ExistUser", Result = response });
+        }
 
-                if (existPhone)
-                {
-                    validationErrorList.Add(new ValidationFailedDto()
-                    {
-                        Field = nameof(request.PhoneNumber),
-                        Error = $"this {nameof(request.PhoneNumber)} is taken try different {nameof(request.PhoneNumber)}"
-                    });
-                }
-
-                return validationErrorList;
-            }
-
+        public async Task<CreateResponse<IdResponse>> AddAsync(AddUserDto userDto)
+        {
             var user = new User
             {
-                id = Guid.NewGuid(),
-                FullName = request.FullName,
-                IdName = request.IdName.NormalizeString(),
-                Password = PasswordHash.Hash(request.Password),
-                PhoneNumber = request.PhoneNumber.NormalizeString(),
+                id = userDto.id,
+                FullName = userDto.IdName,
+                IdName = userDto.IdName,
+                PhoneNumber = userDto.PhoneNumber,
             };
+
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
-            return new Success<IdResponse>(new IdResponse() { Id = user.id });
+
+            return new Success<IdResponse>(new IdResponse() { FieldName = "UserId", Id = user.id });
         }
 
-        public async Task<ReadResponse<UserDto>> GetUser(LoginUserRequest request)
+        public async Task<ReadResponse<UserResponse>> GetByIdAsync(Guid id)
         {
-            var userDto = await _context.Users.Where(x =>
-                x.PhoneNumber == request.PhoneNumber.Normalize() && x.Password == PasswordHash.Hash(request.Password))
-                .Select(x => new UserDto()
+            var userDto = await _context.Users.Where(x => x.id == id)
+                .Select(x => new UserResponse()
                 {
                     id = x.id,
                     PhoneNumber = x.PhoneNumber,
@@ -82,35 +70,41 @@ namespace AnswerMe.Infrastructure.Repositories
                     CreatedDate = x.CreatedDate,
                     FullName = x.FullName,
                     ModifiedDate = x.ModifiedDate,
-                    ProfileImage = x.ProfileImage
+                    ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
                 })
                 .SingleOrDefaultAsync();
 
             if (userDto != null)
             {
-                return new Success<UserDto>(userDto);
+                return new Success<UserResponse>(userDto);
             }
 
             return new NotFound();
         }
 
-        public Task<UpdateResponse> EditProfileImage(EditProfileImageRequest request)
+        public async Task<UpdateResponse> EditAsync(Guid loggedInUserId, EditUserRequest request)
         {
-            throw new NotImplementedException();
-        }
+            var user = await _context.Users.SingleAsync(x => x.id == loggedInUserId);
 
-        public async Task<ReadResponse<bool>> ExistPhone(string phone)
-        {
-            var exist = await _context.Users.AnyAsync(x => x.PhoneNumber == phone.NormalizeString());
+            if (!string.IsNullOrWhiteSpace(request.FullName))
+            {
+                user.FullName = request.FullName;
+            }
 
-            return new Success<bool>(exist);
-        }
+            if (!string.IsNullOrWhiteSpace(request.ProfileImageToken))
+            {
+                var response = await _fileStorageService.GetObjectPathAsync(loggedInUserId, request.ProfileImageToken);
+                if (!string.IsNullOrWhiteSpace(response.FilePath) && !string.IsNullOrWhiteSpace(response.FileFormat))
+                {
+                    user.ProfileImage = response.FilePath;
+                }
+            }
 
-        public async Task<ReadResponse<bool>> ExistIdName(string idName)
-        {
-            var exist = await _context.Users.AnyAsync(x => x.IdName == idName.NormalizeString());
+            _context.Users.Update(user);
 
-            return new Success<bool>(exist);
+            await _context.SaveChangesAsync();
+
+            return new Success();
         }
     }
 }

@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Remove="Protos\ObjectStorage.proto" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Blurhash.ImageSharp" Version="3.0.0" />
+		<PackageReference Include="Grpc.AspNetCore" Version="2.57.0" />
+		<PackageReference Include="Azure.Data.Tables" Version="12.8.1" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.17.0" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.10" />
+		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.35.3" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Cosmos" Version="7.0.10" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.0.2" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\..\BuildingBlocks\IdentityServer.Shared.Client\IdentityServer.Shared.Client.csproj" />
+	  <ProjectReference Include="..\..\..\BuildingBlocks\Models.Shared\Models.Shared.csproj" />
+	  <ProjectReference Include="..\..\..\BuildingBlocks\Security.Shared\Security.Shared.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Protobuf Include="Protos\ObjectStorage.proto" GrpcServices="Server" />
+	</ItemGroup>
+	<ItemGroup>
+		<InternalsVisibleTo Include="$(AssemblyName).Test" />
+	</ItemGroup>
+
+</Project>

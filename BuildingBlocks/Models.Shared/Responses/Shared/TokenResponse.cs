@@ -8,7 +8,7 @@ namespace Models.Shared.Responses.Shared
 {
     public class TokenResponse
     {
+        public string FieldName { get; set; }
         public string Token { get; set; }
-
     }
 }

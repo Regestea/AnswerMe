@@ -1,0 +1,188 @@
+﻿
+@inject NavigationManager NavigationManager
+
+<section class="nav-border @NavMenuClass title-bar  sm:w-screen md:w-screen lg:w-1/4 xl:w-1/4 2xl:w-1/4 ">
+    <div style="margin: 0.5em">
+
+        <div class="avatar online">
+            <div class="w-24 rounded-full">
+                <img src="/image/profileimage.jpg" />
+            </div>
+        </div>
+
+        <p>amir hossein</p>
+
+    </div>
+</section>
+
+
+
+<section class="nav-border @NavMenuClass title-bar  sm:w-screen md:w-screen lg:w-1/4 xl:w-1/4 2xl:w-1/4 ">
+    <div style="margin: 0.5em;">
+
+        <a href="#">hello world</a>
+        <a href="#">hello world</a>
+        <a href="#">hello world</a>
+        <a href="#">hello world</a>
+    </div>
+</section>
+
+
+
+<section class="nav-border @NavMenuClass title-bar  sm:w-screen md:w-screen lg:w-1/4 xl:w-1/4 2xl:w-1/4 ">
+    <div style="margin: 0.5em">
+
+        <label class="btn btn-circle swap swap-rotate">
+
+            <!-- this hidden checkbox controls the state -->
+            <input type="checkbox" />
+
+            <!-- hamburger icon -->
+            <svg class="swap-off fill-current" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512"><path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z" /></svg>
+
+            <!-- close icon -->
+            <svg class="swap-on fill-current" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512"><polygon points="400 145.49 366.51 112 256 222.51 145.49 112 112 145.49 222.51 256 112 366.51 145.49 400 256 289.49 366.51 400 400 366.51 289.49 256 400 145.49" /></svg>
+
+        </label>
+
+        <div class="stat-figure  ">
+            <div class="avatar offline">
+                <div class="w-16 rounded-full">
+                    <img src="/image/profileimage.jpg" />
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+
+@code {
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+    private string NavMenuClass = "menu-off";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+        if (firstRender)
+        {
+            var lDotNetReference = DotNetObjectReference.Create(this);
+
+            await JSRuntime.InvokeVoidAsync("setDotnetReference", lDotNetReference);
+
+            var screenSize = await JSRuntime.InvokeAsync<string>("getScreenSizeCategory");
+            OnWindowResized(screenSize);
+            StateHasChanged();
+        }
+       
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    [JSInvokable]
+    public void OnWindowResized(string screenSize)
+    {
+        if (screenSize is "sm" or "md")
+        {
+
+            var isInHome = IsHomePage(NavigationManager.Uri);
+            if (!isInHome)
+            {
+                NavMenuClass = "menu-off";
+                StateHasChanged();
+            }
+
+            //if user is not at home page witch is /
+            //hidden sidebar by menu-off
+
+            //else fullscreen the sidebar
+        }
+        else
+        {
+            NavMenuClass = "menu-on";
+            StateHasChanged();
+        }
+
+    }
+
+    public static bool IsHomePage(string uri)
+    {
+        // Check if the current URL is the home page
+        return string.IsNullOrEmpty(new Uri(uri).AbsolutePath) || new Uri(uri).AbsolutePath == "/";
+    }
+
+
+
+}
+
+
+@* @inject IJSRuntime JSRuntime
+
+@code {
+    private string ScreenSizeCategory { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", "function getScreenSizeCategory() { /* ... JavaScript function code ... */ }");
+            await JSRuntime.InvokeVoidAsync("eval", "window.addEventListener('resize', function () { DotNet.invokeMethodAsync('YourAssemblyName', 'OnResize').then(size => { console.log('Screen size category: ' + size); }); });");
+        }
+    }
+
+    [JSInvokable]
+    public async Task<string> OnResize()
+    {
+        ScreenSizeCategory = await JSRuntime.InvokeAsync<string>("getScreenSizeCategory");
+    // Perform actions based on the ScreenSizeCategory, or use it as needed
+
+    // Call any C# method or update UI based on the ScreenSizeCategory
+        StateHasChanged();
+        return ScreenSizeCategory;
+    }
+}
+ *@
+
+
+@* @code
+{
+    private string NavMenuClass = "menu-on";
+    private string ThemeMenuClass = "menu-off";
+    private string ProfileMenuClass = "menu-off";
+    private string SidebarHiddenOrShow = "";
+
+
+    private void LogResize()
+    {
+
+    }
+
+
+    private void ToggleNavMenu()
+    {
+        if (ThemeMenuClass == "menu-on") ThemeMenuClass = "menu-off";
+        if (ProfileMenuClass == "menu-on") ProfileMenuClass = "menu-off";
+
+        NavMenuClass = NavMenuClass == "menu-on" ? "menu-off" : "menu-on";
+    }
+
+    private void ToggleThemeMenu()
+    {
+        if (NavMenuClass == "menu-on") NavMenuClass = "menu-off";
+        if (ProfileMenuClass == "menu-on") ProfileMenuClass = "menu-off";
+
+        ThemeMenuClass = ThemeMenuClass == "menu-on" ? "menu-off" : "menu-on";
+    }
+
+    private void ToggleProfileMenu()
+    {
+        if (NavMenuClass == "menu-on") NavMenuClass = "menu-off";
+        if (ThemeMenuClass == "menu-on") ThemeMenuClass = "menu-off";
+
+        ProfileMenuClass = ProfileMenuClass == "menu-on" ? "menu-off" : "menu-on";
+    }
+}
+ *@

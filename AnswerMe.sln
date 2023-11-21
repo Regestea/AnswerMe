@@ -37,6 +37,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Security.Shared", "Building
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnswerMe.Api.Test", "Services\AnswerMe\AnswerMe.Api.Test\AnswerMe.Api.Test.csproj", "{32714E4E-8987-4539-8D45-B084AD469C13}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnswerMe.App", "Client\AnswerMe.App\AnswerMe.App\AnswerMe.App.csproj", "{8726DBC0-74BF-4AFF-BF61-825E3A8DA0DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnswerMe.App.Client", "Client\AnswerMe.App\AnswerMe.App.Client\AnswerMe.App.Client.csproj", "{462FA3DC-00C0-40CE-8A75-C125BA711D1A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +91,14 @@ Global
 		{32714E4E-8987-4539-8D45-B084AD469C13}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{32714E4E-8987-4539-8D45-B084AD469C13}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{32714E4E-8987-4539-8D45-B084AD469C13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8726DBC0-74BF-4AFF-BF61-825E3A8DA0DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8726DBC0-74BF-4AFF-BF61-825E3A8DA0DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8726DBC0-74BF-4AFF-BF61-825E3A8DA0DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8726DBC0-74BF-4AFF-BF61-825E3A8DA0DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{462FA3DC-00C0-40CE-8A75-C125BA711D1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{462FA3DC-00C0-40CE-8A75-C125BA711D1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{462FA3DC-00C0-40CE-8A75-C125BA711D1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{462FA3DC-00C0-40CE-8A75-C125BA711D1A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -106,6 +118,8 @@ Global
 		{23B0E507-2E97-4516-AB2B-884DAC32777F} = {64E28C9A-A660-4902-872A-3C52F1CDE968}
 		{B4EEB261-6B8C-471D-8A6B-E900F47DAA0A} = {64E28C9A-A660-4902-872A-3C52F1CDE968}
 		{32714E4E-8987-4539-8D45-B084AD469C13} = {47B99B9C-83B5-44ED-8B36-D200AA20CADE}
+		{8726DBC0-74BF-4AFF-BF61-825E3A8DA0DB} = {84659660-34E0-4481-853C-331BF4850D40}
+		{462FA3DC-00C0-40CE-8A75-C125BA711D1A} = {84659660-34E0-4481-853C-331BF4850D40}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0E247C9F-032F-4F9E-84A3-79DB72D4D4CE}

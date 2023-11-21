@@ -1,0 +1,17 @@
+﻿
+@inherits LayoutComponentBase
+
+<div class="flex">
+    <div class="sidebar">
+        <NavMenu @rendermode="RenderMode.InteractiveServer" />
+    </div>
+
+    <main>
+
+
+        <article class="content px-4" style="float:left">
+            @Body
+        </article>
+    </main>
+</div>
+

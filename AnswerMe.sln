@@ -37,9 +37,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Security.Shared", "Building
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnswerMe.Api.Test", "Services\AnswerMe\AnswerMe.Api.Test\AnswerMe.Api.Test.csproj", "{32714E4E-8987-4539-8D45-B084AD469C13}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnswerMe.App", "Client\AnswerMe.App\AnswerMe.App\AnswerMe.App.csproj", "{8726DBC0-74BF-4AFF-BF61-825E3A8DA0DB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnswerMe.App", "Client\AnswerMe.App\AnswerMe.App\AnswerMe.App.csproj", "{8726DBC0-74BF-4AFF-BF61-825E3A8DA0DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnswerMe.App.Client", "Client\AnswerMe.App\AnswerMe.App.Client\AnswerMe.App.Client.csproj", "{462FA3DC-00C0-40CE-8A75-C125BA711D1A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnswerMe.App.Client", "Client\AnswerMe.App\AnswerMe.App.Client\AnswerMe.App.Client.csproj", "{462FA3DC-00C0-40CE-8A75-C125BA711D1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

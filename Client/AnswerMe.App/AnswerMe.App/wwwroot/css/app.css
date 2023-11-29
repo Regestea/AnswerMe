@@ -1,64 +1,10 @@
-﻿
-.nav-section {
-    display: grid;
-    place-content: center;
-    height: 70vh;
-    width: 35vh;
-    backdrop-filter: blur(3em);
-    position: fixed;
-    left: 1rem;
+﻿.nav-section {
     transform: translateX(0%);
-    bottom: 8rem;
-    border-radius: 0.5em;
-    background-color: rgba(0, 0, 0, 0.65);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    font-size: 1.5em;
-    color: white;
-    transition-duration: 0.2s;
-    background: #0F2027; /* fallback for old browsers */
-    background: -webkit-linear-gradient(to right, #2C5364, #203A43, #0F2027); /* Chrome 10-25, Safari 5.1-6 */
-    background: linear-gradient(to right, #2C5364, #203A43, #0F2027); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-}
-
-.title-bar {
-/*    display: grid;*/
-   /* place-content: center;*/
-/*    height: 10vh;
-    width: 35vh;
-    position: fixed;
-    left: 1rem;*/
-    transform: translateX(0%);
-/*    top: 1rem;*/
-    border-radius: 0.5em;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    font-size: 1.5em;
     transition-duration: 0.5s;
     animation-delay: 0.3s;
-    background: #0F2027; /* fallback for old browsers */
-    background: -webkit-linear-gradient(to right, #2C5364, #203A43, #0F2027); /* Chrome 10-25, Safari 5.1-6 */
-    background: linear-gradient(to right, #2C5364, #203A43, #0F2027); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-}
-
-.tools-bar {
-    display: grid;
-    place-content: center;
-    height: 10vh;
-    width: 35vh;
     position: fixed;
-    left: 1rem;
-    transform: translateX(0%);
-    bottom: 1rem;
-    border-radius: 0.5em;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    font-size: 1.5em;
-    transition-duration: 0.2s;
-    animation-delay: 0.1s;
-    background: #0F2027; /* fallback for old browsers */
-    background: -webkit-linear-gradient(to right, #2C5364, #203A43, #0F2027); /* Chrome 10-25, Safari 5.1-6 */
-    background: linear-gradient(to right, #2C5364, #203A43, #0F2027); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    width: 100%;
 }
-
-
 
 .menu-on {
     transform: translateX(0%) !important;
@@ -66,4 +12,212 @@
 
 .menu-off {
     transform: translateX(-150%) !important;
+}
+
+.chat-content {
+
+
+}
+
+.send-box {
+    position: fixed;
+    bottom: 6%;
+    padding: 0.8%;
+    width: 80%;
+    background-color: rgb(29, 35, 42);
+    margin-left: 0;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+
+.responsive-send-box button{
+    @media (min-width: 275px) {
+        /* Styles for screens with a width of 640 pixels and larger */
+        width: 3rem;
+    }
+
+    /* Medium screen size (sm) */
+    @media (min-width: 640px) {
+        /* Styles for screens with a width of 640 pixels and larger */
+        width: 3rem;
+    }
+
+    @media (min-width: 768px) {
+        /* Styles for screens with a width of 768 pixels and larger */
+        width: 4rem;
+        height: 4rem;
+    }
+}
+
+.responsive-send-button{
+    @media (min-width: 275px) {
+        /* Styles for screens with a width of 640 pixels and larger */
+        margin-right: 3rem;
+    }
+
+    /* Medium screen size (sm) */
+    @media (min-width: 640px) {
+        /* Styles for screens with a width of 640 pixels and larger */
+        margin-right: 3rem;
+    }
+
+    @media (min-width: 768px) {
+        /* Styles for screens with a width of 768 pixels and larger */
+        margin-right: 6rem;
+    }
+}
+
+.responsive-send-box {
+
+    /* Medium screen size (sm) */
+    @media (min-width: 275px) {
+        /* Styles for screens with a width of 640 pixels and larger */
+        width: 100%;
+    }
+
+    /* Medium screen size (sm) */
+    @media (min-width: 640px) {
+        /* Styles for screens with a width of 640 pixels and larger */
+        width: 100%;
+        padding: 10px;
+    }
+
+    /* Large screen size (md) */
+    @media (min-width: 768px) {
+        /* Styles for screens with a width of 768 pixels and larger */
+        width: 100%;
+    }
+
+    /* Extra-large screen size (lg) */
+    @media (min-width: 1024px) {
+        /* Styles for screens with a width of 1024 pixels and larger */
+        width: 100%;
+    }
+
+    /* Extra-large screen size (xl) */
+    @media (min-width: 1280px) {
+        /* Styles for screens with a width of 1280 pixels and larger */
+        width: 74%;
+    }
+
+    /* Extra-extra-large screen size (2xl) */
+    @media (min-width: 1536px) {
+        /* Styles for screens with a width of 1536 pixels and larger */
+        width: 75%;
+    }
+}
+
+
+.responsive-chat-area {
+
+    /* Medium screen size (sm) */
+    @media (min-width: 640px) {
+        /* Styles for screens with a width of 640 pixels and larger */
+        width: 97%;
+    }
+
+    /* Large screen size (md) */
+    @media (min-width: 768px) {
+        /* Styles for screens with a width of 768 pixels and larger */
+        width: 97%;
+    }
+
+    /* Extra-large screen size (lg) */
+    @media (min-width: 1024px) {
+        /* Styles for screens with a width of 1024 pixels and larger */
+        width: 97%;
+    }
+
+    /* Extra-large screen size (xl) */
+    @media (min-width: 1280px) {
+        /* Styles for screens with a width of 1280 pixels and larger */
+        width: 72.5%;
+    }
+
+    /* Extra-extra-large screen size (2xl) */
+    @media (min-width: 1536px) {
+        /* Styles for screens with a width of 1536 pixels and larger */
+        width: 73%;
+    }
+}
+
+
+.chat-area {
+    margin-top: 5%;
+    height: 85%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    position: fixed;
+    bottom: 6%;
+}
+
+
+.body-content {
+
+    /* Medium screen size (sm) */
+    @media (min-width: 640px) {
+        .element {
+            /* Styles for screens with a width of 640 pixels and larger */
+            margin-left: 0%;
+        }
+    }
+
+    /* Large screen size (md) */
+    @media (min-width: 768px) {
+        .element {
+            /* Styles for screens with a width of 768 pixels and larger */
+            margin-left: 0%;
+        }
+    }
+
+    /* Extra-large screen size (lg) */
+    @media (min-width: 1024px) {
+        .element {
+            /* Styles for screens with a width of 1024 pixels and larger */
+            margin-left: 0%;
+        }
+    }
+
+    /* Extra-large screen size (xl) */
+    @media (min-width: 1280px) {
+        .element {
+            /* Styles for screens with a width of 1280 pixels and larger */
+            margin-left: 25%;
+        }
+    }
+
+    /* Extra-extra-large screen size (2xl) */
+    @media (min-width: 1536px) {
+        .element {
+            /* Styles for screens with a width of 1536 pixels and larger */
+            margin-left: 25%;
+        }
+    }
+}
+
+
+
+
+::-webkit-scrollbar-track
+{
+    border: 5px solid #1f2937;
+// border color does not support transparent on scrollbar
+// border-color: transparent;
+    background-color: #1f2937;
+    
+}
+
+::-webkit-scrollbar
+{
+    width: 15px;
+    background-color: #1f2937;
+}
+
+::-webkit-scrollbar-thumb
+{
+    background-color: #6419e6;
+    border-radius: 10px;
 }

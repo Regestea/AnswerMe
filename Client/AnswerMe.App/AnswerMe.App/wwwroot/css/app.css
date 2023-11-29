@@ -1,4 +1,7 @@
-﻿.nav-section {
+﻿*{
+    font-family: "Comic Sans MS", serif;
+}
+.nav-section {
     transform: translateX(0%);
     transition-duration: 0.5s;
     animation-delay: 0.3s;

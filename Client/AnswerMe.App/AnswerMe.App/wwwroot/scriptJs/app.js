@@ -1,4 +1,4 @@
-﻿//do all of them in js if user was at home page and the screen was too small full screen the side bar
+﻿
 var GLOBAL = {};
 GLOBAL.DotNetReference = null;
 
@@ -6,15 +6,36 @@ function setDotnetReference(pDotNetReference) {
     GLOBAL.DotNetReference = pDotNetReference;
 }
 
-window.addEventListener('resize', function () {
+ResizeComponent();
+
+window.addEventListener('resize', ResizeComponent);
+
+
+function ResizeComponent() {
     const sizeCategory = getScreenSizeCategory();
-    const isAtHome=IsAtHomePage();
-    document.getElementById("NavMenu");
-    document.getElementById("MainBody");
-});
+    const isAtHome = IsAtHomePage();
+
+    if (sizeCategory === 'sm' || sizeCategory === 'md' || sizeCategory === 'lg' || sizeCategory === 'xl') {
+
+        if (isAtHome) {
+            let mainBody = document.getElementById("MainBody");
+            let sidebar = document.getElementById("SidebarMenu");
+            sidebar.style.width = '100%';
+            sidebar.classList.add('-translate-x-0');
+            mainBody.classList.add('-translate-x-full');
+        }
+        
+    } else {
+        let mainBody = document.getElementById("MainBody");
+        let sidebar = document.getElementById("SidebarMenu");
+        sidebar.classList.remove('-translate-x-0');
+        sidebar.style.width = '';
+        mainBody.classList.remove('-translate-x-full');
+    }
+}
 
 function IsAtHomePage() {
-    // Check if the user is on the home page
+    // Check if the user is at the home page
     return window.location.pathname === '/';
 }
 

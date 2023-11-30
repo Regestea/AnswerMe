@@ -1,44 +1,83 @@
 ﻿@inject NavigationManager NavigationManager
 
 
-<aside id="logo-sidebar" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform -translate-x-full xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700" aria-label="Sidebar">
-    <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-900">
-        <ul class="space-y-2 font-medium" style="">
-            @for (var i = 0; i < 20; i++)
-            {
-                <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:20px ">
-                    <div class="avatar online ">
-                        <div class="w-16 h-16 rounded-full">
-                            <img src="/image/ProfileImage.jpg"/>
-                        </div>
-                    </div>
-                    <div class="w-full  flex flex-col-reverse">
-                        <div style="display: grid;margin-top: 15px">
-                           <p style="margin-left: 15px;font-size: 12px">hello how are you ?</p>
-                            <div style=" grid-column-end: 12">
-                                <span class="badge">19 day ago</span>
-                            </div>
-                        </div>
-                        <div style="display: grid">
-                            <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">amir hossein</h1>
-                            <div style=" grid-column-end: 12">
-                                <span class="badge badge-primary">+99</span>
-                            </div>
-                        </div>
+<aside id="SidebarMenu" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform -translate-x-full xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700" aria-label="Sidebar">
 
-                    </div>
-                </li>
-                }
-        </ul>
+    <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-900">
+        <div role="tablist" class="tabs tabs-boxed grid grid-cols-2 tab-primary" style="background-color: #111827">
+
+            <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Private Chat" style="color: wheat">
+            <div role="tabpanel" class="tab-content ">
+                <ul class="space-y-2 font-medium" style="background-color: #111827">
+                    @for (var i = 0; i < 20; i++)
+                    {
+                        <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:20px ">
+                            <div class="avatar online ">
+                                <div class="w-16 h-16 rounded-full">
+                                    <img src="/image/ProfileImage.jpg"/>
+                                </div>
+                            </div>
+                            <div class="w-full  flex flex-col-reverse">
+                                <div style="display: grid;margin-top: 15px">
+                                    <p style="margin-left: 15px;font-size: 12px">hello how are you ?</p>
+                                    <div style=" grid-column-end: 12">
+                                        <span class="badge">19 day ago</span>
+                                    </div>
+                                </div>
+                                <div style="display: grid">
+                                    <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">amir hossein</h1>
+                                    <div style=" grid-column-end: 12">
+                                        <span class="badge badge-primary">+99</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Group Chat" style="color: wheat" checked/>
+            <div role="tabpanel" class="tab-content ">
+                <ul class="space-y-2 font-medium" style="background-color: #111827">
+                    @for (var i = 0; i < 20; i++)
+                    {
+                        <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:20px ">
+                            <div class="avatar online ">
+                                <div class="w-16 h-16 rounded-full">
+                                    <img src="/image/ProfileImage.jpg"/>
+                                </div>
+                            </div>
+                            <div class="w-full  flex flex-col-reverse">
+                                <div style="display: grid;margin-top: 15px">
+                                    <p style="margin-left: 15px;font-size: 12px">hello how are you ?</p>
+                                    <div style=" grid-column-end: 12">
+                                        <span class="badge">19 day ago</span>
+                                    </div>
+                                </div>
+                                <div style="display: grid">
+                                    <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">Ali group</h1>
+                                    <div style=" grid-column-end: 12">
+                                        <span class="badge badge-success">+99</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+        </div>
+
     </div>
 </aside>
 
 
 @code {
-    
+
     private string NavMenuClass = "menu-off";
-    
-    
+
 
     // protected override async Task OnAfterRenderAsync(bool firstRender)
     // {
@@ -58,43 +97,43 @@
     //     await base.OnAfterRenderAsync(firstRender);
     // }
 
-@*     [JSInvokable] *@
-@*     public async Task OnWindowResized(string screenSize) *@
-@*     { *@
-@*         await ShouldContentFullScreen.InvokeAsync(true); *@
-@*         if (screenSize is "sm" or "md") *@
-@*         { *@
-@*             var isInHome = IsHomePage(NavigationManager.Uri); *@
-@*             if (!isInHome) *@
-@*             { *@
-@*                 NavMenuClass = "menu-off"; *@
-@*                 StateHasChanged(); *@
-@*             } *@
-@* *@
-@*     //if user is not at home page witch is / *@
-@*     //hidden sidebar by menu-off *@
-@* *@
-@*     //else fullscreen the sidebar *@
-@*         } *@
-@*         else *@
-@*         { *@
-@*             NavMenuClass = "menu-on"; *@
-@*             StateHasChanged(); *@
-@*         } *@
-@*     } *@
-@* *@
-@*     public static bool IsHomePage(string uri) *@
-@*     { *@
-@*     // Check if the current URL is the home page *@
-@*         return string.IsNullOrEmpty(new Uri(uri).AbsolutePath) || new Uri(uri).AbsolutePath == "/"; *@
-@*     } *@
-@* *@
-@* *@
-@* *@
-@* } *@
+    @*     [JSInvokable] *@
+    @*     public async Task OnWindowResized(string screenSize) *@
+    @*     { *@
+    @*         await ShouldContentFullScreen.InvokeAsync(true); *@
+    @*         if (screenSize is "sm" or "md") *@
+    @*         { *@
+    @*             var isInHome = IsHomePage(NavigationManager.Uri); *@
+    @*             if (!isInHome) *@
+    @*             { *@
+    @*                 NavMenuClass = "menu-off"; *@
+    @*                 StateHasChanged(); *@
+    @*             } *@
+    @* *@
+    @*     //if user is not at home page witch is / *@
+    @*     //hidden sidebar by menu-off *@
+    @* *@
+    @*     //else fullscreen the sidebar *@
+    @*         } *@
+    @*         else *@
+    @*         { *@
+    @*             NavMenuClass = "menu-on"; *@
+    @*             StateHasChanged(); *@
+    @*         } *@
+    @*     } *@
+    @* *@
+    @*     public static bool IsHomePage(string uri) *@
+    @*     { *@
+    @*     // Check if the current URL is the home page *@
+    @*         return string.IsNullOrEmpty(new Uri(uri).AbsolutePath) || new Uri(uri).AbsolutePath == "/"; *@
+    @*     } *@
+    @* *@
+    @* *@
+    @* *@
+    @* } *@
 
 
-@* @inject IJSRuntime JSRuntime
+    @* @inject IJSRuntime JSRuntime
 
 @code {
     private string ScreenSizeCategory { get; set; }
@@ -122,7 +161,7 @@
  *@
 
 
-@* @code
+    @* @code
 {
     private string NavMenuClass = "menu-on";
     private string ThemeMenuClass = "menu-off";

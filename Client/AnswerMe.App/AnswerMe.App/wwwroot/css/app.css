@@ -6,6 +6,7 @@
     background: linear-gradient(144deg, rgba(116,128,255,1) 0%, rgba(100,25,230,1) 100%);
 }
 
+
 .nav-section {
     transform: translateX(0%);
     transition-duration: 0.5s;

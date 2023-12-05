@@ -12,8 +12,4 @@
     <PackageReference Include="OneOf.SourceGenerator" Version="3.0.263" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Responses\LastSeen\" />
-  </ItemGroup>
-
 </Project>

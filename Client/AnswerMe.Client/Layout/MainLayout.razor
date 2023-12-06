@@ -1,17 +1,22 @@
 ﻿@inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Authorization
 @using AnswerMe.Client.Componenets
+@inject NavigationManager NavigationManager
 <AuthorizeView>
     <Authorized>
-       
+
         <div class="nav-section menu-on ">
-            <NavMenu/>
+
+            <aside id="SidebarMenu" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 " style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
+
+                <NavMenu/>
+            </aside>
         </div>
 
-        <div id="MainBody" class="body-content transition-transform">
+        <div id="ChatBody" class="body-content transition-transform @_chatBodyClass" >
             @Body
         </div>
-   
+
     </Authorized>
 
     <NotAuthorized>
@@ -19,3 +24,45 @@
     </NotAuthorized>
 
 </AuthorizeView>
+
+@code
+{
+    public bool IsAtHome = false;
+    public string? ScreenSize;
+    private string _chatBodyClass = "";
+    private string _sidebarClass = "-translate-x-full";
+
+    [Inject] public IJSRuntime JSRuntime { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("c# stuff");
+        if (NavigationManager.Uri == NavigationManager.BaseUri)
+        {
+            IsAtHome = true;
+        }
+
+        ScreenSize = await JSRuntime.InvokeAsync<string>("getScreenSizeCategory");
+
+        if (ScreenSize is "sm" or "md" or "lg" or "xl")
+        {
+            if (IsAtHome)
+            {
+                _sidebarClass = "-translate-x-0 w-full";
+                _chatBodyClass = "-translate-x-full";
+            }
+            else
+            {
+                _chatBodyClass = "";
+            }
+        }
+        else
+        {
+            
+                _sidebarClass = "";
+                _chatBodyClass = "";
+        }
+
+        await base.OnInitializedAsync();
+    }
+}

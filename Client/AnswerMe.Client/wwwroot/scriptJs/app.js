@@ -6,7 +6,7 @@ function setDotnetReference(pDotNetReference) {
     GLOBAL.DotNetReference = pDotNetReference;
 }
 
-ResizeComponent();
+
 
 window.addEventListener('resize', ResizeComponent);
 
@@ -18,19 +18,29 @@ function ResizeComponent() {
     if (sizeCategory === 'sm' || sizeCategory === 'md' || sizeCategory === 'lg' || sizeCategory === 'xl') {
 
         if (isAtHome) {
-            let mainBody = document.getElementById("MainBody");
+            let mainBody = document.getElementById("ChatBody");
             let sidebar = document.getElementById("SidebarMenu");
-            sidebar.style.width = '100%';
-            sidebar.classList.add('-translate-x-0');
-            mainBody.classList.add('-translate-x-full');
+            
+            if (mainBody !=null && sidebar !=null ){
+                sidebar.classList.add('w-full');
+                sidebar.classList.add('-translate-x-0');
+                mainBody.classList.add('-translate-x-full');
+                mainBody.classList.add('hidden');
+            }
+        }
+        else {
+            let sidebar = document.getElementById("SidebarMenu");
+            
+            sidebar.classList.add('-translate-x-full');
         }
         
     } else {
-        let mainBody = document.getElementById("MainBody");
+        let mainBody = document.getElementById("ChatBody");
         let sidebar = document.getElementById("SidebarMenu");
         sidebar.classList.remove('-translate-x-0');
-        sidebar.style.width = '';
+        sidebar.classList.remove('w-full');
         mainBody.classList.remove('-translate-x-full');
+        mainBody.classList.remove('hidden');
     }
 }
 

@@ -16,10 +16,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Pages\Account\Login.razor" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Content Update="Layout\MainLayout.razor">
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </Content>

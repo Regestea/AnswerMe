@@ -7,13 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.10" />
-    <PackageReference Include="OneOf" Version="3.0.263" />
-    <PackageReference Include="OneOf.SourceGenerator" Version="3.0.263" />
+    <Compile Remove="Responses\LastSeen\**" />
+    <EmbeddedResource Remove="Responses\LastSeen\**" />
+    <None Remove="Responses\LastSeen\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Responses\LastSeen\" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.10" />
+    <PackageReference Include="OneOf" Version="3.0.263" />
+    <PackageReference Include="OneOf.SourceGenerator" Version="3.0.263" />
   </ItemGroup>
 
 </Project>

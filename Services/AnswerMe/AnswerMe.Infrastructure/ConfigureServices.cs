@@ -15,8 +15,17 @@ using AnswerMe.Infrastructure.Configs;
 
 namespace AnswerMe.Infrastructure
 {
+    /// This class provides methods to add infrastructure services to the IServiceCollection.
+    /// </summary>
     public static class ConfigureServices
     {
+        /// <summary>
+        /// Adds infrastructure services to the <see cref="
+        /// IServiceCollection"/>.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
+        /// <param name="configuration">The <see cref="IConfiguration"/> containing the configuration settings.</param>
+        /// <returns>The modified <see cref="IServiceCollection"/> with added services.</returns>
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<AnswerMeDbContext>(options =>

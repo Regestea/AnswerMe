@@ -7,6 +7,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace IdentityServer.Api.GrpcServices
 {
+    /// <summary>
+    /// Represents a gRPC service for authorization. </summary>
+    /// /
     public class AuthorizationGrpcService : AuthorizationService.AuthorizationServiceBase
     {
         private readonly IConfiguration _configuration;
@@ -19,17 +22,26 @@ namespace IdentityServer.Api.GrpcServices
         }
 
 
-        public override Task<ValidateTokenResponse> ValidateJwtBearerToken(ValidateTokenRequest request, ServerCallContext context)
+        /// <summary>
+        /// This code retrieves the list of roles associated with a claims
+        /// principal. It filters the claims based on the claim type "Role
+        /// " and then selects the values of those claims. The values are
+        /// then stored in a list.
+        /// </summary>
+        /// <param name="claimsPrincipal">The claims principal for which the roles are being retrieved.</param>
+        /// <returns>A list of roles associated with the claims principal.</returns>
+        public override Task<ValidateTokenResponse> ValidateJwtBearerToken(ValidateTokenRequest request,
+            ServerCallContext context)
         {
-            var httpContextRequest = _httpContextAccessor.HttpContext?.Request;
+                var httpContextRequest = _httpContextAccessor.HttpContext?.Request;
 
-            string hostUrl = $"{httpContextRequest?.Scheme}://{httpContextRequest?.Host}";
+                string hostUrl = $"{httpContextRequest?.Scheme}://{httpContextRequest?.Host}";
 
-            var jwtSecretKey = _configuration.GetValue<string>("JWT:SecretKey");
-            byte[] secretKey = Encoding.UTF8.GetBytes(jwtSecretKey ?? throw new ArgumentNullException(nameof(jwtSecretKey)));
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var response = new ValidateTokenResponse();
-            var tokenValidationParameters = new TokenValidationParameters
+                var jwtSecretKey = _configuration.GetValue<string>("JWT:SecretKey");
+                byte[] secretKey = Encoding.UTF8.GetBytes(jwtSecretKey ?? throw new ArgumentNullException(nameof(jwtSecretKey)));
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var response = new ValidateTokenResponse();
+                var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidIssuer = hostUrl,
@@ -47,7 +59,7 @@ namespace IdentityServer.Api.GrpcServices
 
                 var roles = claimsPrincipal.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
 
-                var rolesString = string.Join(",", roles);
+                    var rolesString = string.Join(",", roles);
                 response.Roles = rolesString;
                 response.Valid = true;
 

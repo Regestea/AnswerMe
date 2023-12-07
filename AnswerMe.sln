@@ -37,7 +37,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdentityServer.Shared.Clien
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Security.Shared", "BuildingBlocks\Security.Shared\Security.Shared.csproj", "{B4EEB261-6B8C-471D-8A6B-E900F47DAA0A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnswerMe.Api.Test", "Services\AnswerMe\AnswerMe.Api.Test\AnswerMe.Api.Test.csproj", "{32714E4E-8987-4539-8D45-B084AD469C13}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnswerMe.Api.Test", "Services\AnswerMe\AnswerMe.Api.Test\AnswerMe.Api.Test.csproj", "{32714E4E-8987-4539-8D45-B084AD469C13}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -98,7 +98,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{3416BA68-4E24-4B0B-9415-879FC0B065BD} = {84659660-34E0-4481-853C-331BF4850D40}
 		{47B99B9C-83B5-44ED-8B36-D200AA20CADE} = {FAEEAD4A-11E5-494F-900F-E4F3E3738F96}
 		{A6E0672C-0B6D-441A-AAE0-E51D9BD0D0FE} = {FAEEAD4A-11E5-494F-900F-E4F3E3738F96}
 		{AAF360D0-F9AA-400C-91BD-CEF5FADB54F1} = {47B99B9C-83B5-44ED-8B36-D200AA20CADE}

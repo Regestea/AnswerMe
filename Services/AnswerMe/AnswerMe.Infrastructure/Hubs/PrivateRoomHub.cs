@@ -33,7 +33,7 @@ namespace AnswerMe.Infrastructure.Hubs
         }
 
         /// <summary>
-        ///RoomId in header is required
+        /// Overrides the base OnConnectedAsync method and performs additional logic for establishing a connection.
         /// </summary>
         [AuthorizeByIdentityServer]
         public override async Task OnConnectedAsync()
@@ -44,11 +44,11 @@ namespace AnswerMe.Infrastructure.Hubs
                 {
                     var roomId = Guid.Parse(roomIdValues.ToString());
 
-                    var jwtToken = _jwtTokenRepository.GetJwtToken();
-                    var userDto = _jwtTokenRepository.ExtractUserDataFromToken(jwtToken);
+                        var jwtToken = _jwtTokenRepository.GetJwtToken();
+                        var userDto = _jwtTokenRepository.ExtractUserDataFromToken(jwtToken);
 
 
-                    var existRoom = await _context.PrivateChats.IsAnyAsync(x => x.id == roomId && (x.User1Id == userDto.id || x.User2Id == userDto.id));
+                        var existRoom = await _context.PrivateChats.IsAnyAsync(x => x.id == roomId && (x.User1Id == userDto.id || x.User2Id == userDto.id));
                     if (!existRoom)
                     {
                         Context.Abort();
@@ -78,10 +78,20 @@ namespace AnswerMe.Infrastructure.Hubs
             }
         }
 
+        /// Method: OnDisconnectedAsync
+        /// Description: Overrides the OnDisconnectedAsync method from the Hub class.
+        /// Handles the disconnection of a client from the hub.
+        /// Removes the client from the associated group, updates the last seen timestamp,
+        /// and performs necessary cleanup.
+        /// Access Modifier: public
+        /// Return Type: Task
+        /// Parameters:
+        /// - exception: Exception? (optional parameter) - The exception that occurred during the disconnection.
+        /// /
         [AuthorizeByIdentityServer]
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            var roomConnectionDto = await _cacheRepository.GetAsync<RoomConnectionDto>(Context.ConnectionId);
+                var roomConnectionDto = await _cacheRepository.GetAsync<RoomConnectionDto>(Context.ConnectionId);
             if (roomConnectionDto != null)
             {
                 await Groups.RemoveFromGroupAsync(roomConnectionDto.ConnectionId, roomConnectionDto.RoomId.ToString());
@@ -89,7 +99,7 @@ namespace AnswerMe.Infrastructure.Hubs
                 await _cacheRepository.RemoveAsync(Context.ConnectionId);
                 await _cacheRepository.RemoveAsync(roomConnectionDto.UserId.ToString());
 
-                var roomLastSeen = await _context.RoomLastSeen
+                    var roomLastSeen = await _context.RoomLastSeen
                      .SingleOrDefaultAsync(x =>
                      x.UserId == roomConnectionDto.UserId && x.RoomId == roomConnectionDto.RoomId);
                 if (roomLastSeen == null)

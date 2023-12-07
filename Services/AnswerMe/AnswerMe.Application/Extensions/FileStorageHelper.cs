@@ -9,15 +9,33 @@ using Models.Shared.Responses.Media;
 
 namespace AnswerMe.Application.Extensions
 {
+    /// <summary>
+    /// This class provides helper methods for working with file storage.
+    /// </summary>
     public static class FileStorageHelper
     {
+        /// <summary>
+        /// The URL of the object storage.
+        /// </summary>
         private static string _ObjectStorageUrl = "";
 
+        /// <summary>
+        /// This method initializes the object storage URL.
+        /// </summary>
+        /// <param name="objectStorageUrl">The URL of the object storage.</param>
+        /// <remarks>
+        /// You should call this method before using any other methods that interact with the object storage.
+        /// </remarks>
         public static void Initialize(string objectStorageUrl)
         {
             _ObjectStorageUrl = objectStorageUrl;
         }
 
+        /// <summary>
+        /// Returns the full URL for a given file path.
+        /// </summary>
+        /// <param name="filePath">The file path.</param>
+        /// <returns>The full URL.</returns>
         public static string GetUrl(string? filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath))
@@ -27,9 +45,13 @@ namespace AnswerMe.Application.Extensions
             return _ObjectStorageUrl + filePath;
         }
 
+        /// Determines the media response type based on the file format.
+        /// @param fileFormat The file format to check.
+        /// @returns The media response type.
+        /// /
         public static MediaTypeResponse GetMediaResponseType(string fileFormat)
         {
-            MediaTypeResponse mediaType;
+                MediaTypeResponse mediaType;
             switch (fileFormat)
             {
                 case "jpg":
@@ -58,6 +80,12 @@ namespace AnswerMe.Application.Extensions
             return mediaType;
         }
 
+        /// <summary>
+        /// Represents a media type.
+        /// </summary>
+        /// <remarks>
+        /// The MediaType class is used to store and manipulate information about a specific media type.
+        /// </remarks>
         public static MediaType GetMediaType(string fileFormat)
         {
             MediaType mediaType;

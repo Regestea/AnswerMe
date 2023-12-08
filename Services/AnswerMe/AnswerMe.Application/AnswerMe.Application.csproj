@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="DTOs\Message\**" />
+    <EmbeddedResource Remove="DTOs\Message\**" />
+    <None Remove="DTOs\Message\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.24.3" />
     <PackageReference Include="Grpc.Net.ClientFactory" Version="2.57.0" />
     <PackageReference Include="Grpc.Tools" Version="2.58.0">
@@ -30,10 +36,6 @@
     <Protobuf Include="..\..\ObjectStorage\ObjectStorage.Api\Protos\ObjectStorage.proto" GrpcServices="Client">
       <Link>Protos\ObjectStorage.proto</Link>
     </Protobuf>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="DTOs\Message\" />
   </ItemGroup>
 
 </Project>

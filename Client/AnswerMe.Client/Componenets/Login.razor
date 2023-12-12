@@ -1,6 +1,9 @@
-@using Models.Shared.Requests.User
+@inject IAuthService AuthService
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject NavigationManager NavigationManager;
+@inject AuthStateProvider AuthStateProvider
 
-<div class="hero min-h-screen bg-base-200 loginBackground" >
+<div class="hero min-h-screen bg-base-200 loginBackground">
 
     <div class="hero-content flex-col lg:flex-row-reverse">
         <div class="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
@@ -9,63 +12,74 @@
                 <div class="flex" style="position: absolute;width: 100%;justify-content: center;margin-top: 10px">
                     <div class="avatar" style="align-self: center">
                         <div class="w-16 h-16 rounded-full">
-                            <img src="image/Logo.jpeg" />
+                            <img src="image/Logo.jpeg"/>
                         </div>
                     </div>
                     <h1 style="align-self: center;margin-left: 5px;font-weight: bold">Answer Me</h1>
                 </div>
             </div>
-            
-            
+
+
             <div role="tablist" class="tabs tabs-boxed grid grid-cols-2 tab-primary" style="margin-top:100px">
 
                 <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Login" style="color: wheat" checked>
                 <div role="tabpanel" class="tab-content ">
-                    <EditForm class="card-body" Model="LoginUserRequest" method="post" OnValidSubmit="LoginHandler" FormName="login" >
+                    <EditForm EditContext="_loginEditContext" class="card-body" method="post" OnValidSubmit="LoginHandler" FormName="login">
                         <div class="form-control">
                             <label class="label">
                                 <span class="label-text">Phone Number</span>
                             </label>
-                            <input type="number" @bind-value="LoginUserRequest.PhoneNumber" placeholder="phone" class="input input-bordered" required />
+                            <input type="number" @onfocusout="ClearLoginErrors" @bind-value="LoginUserRequest.PhoneNumber" placeholder="phone" class="input input-bordered" required/>
+                            <div class="text-secondary m-1">
+                                <ValidationMessage For="() => LoginUserRequest.PhoneNumber"/>
+                            </div>
                         </div>
                         <div class="form-control">
                             <label class="label">
                                 <span class="label-text">Password</span>
                             </label>
-                            <input type="password" @bind-value="LoginUserRequest.Password" placeholder="password" class="input input-bordered" required />
+                            <input type="password" @onfocusout="ClearLoginErrors" @bind-value="LoginUserRequest.Password" placeholder="password" class="input input-bordered" required/>
 
                         </div>
                         <div class="form-control mt-6">
-                            <button type="submit" style=" background: linear-gradient(144deg, rgba(116,128,255,1) 0%, rgba(100,25,230,1) 100%);color: wheat"  class="btn btn-primary" >Login</button>
+                            <button type="submit" style=" background: linear-gradient(144deg, rgba(116,128,255,1) 0%, rgba(100,25,230,1) 100%);color: wheat" class="btn btn-primary">Login</button>
                         </div>
 
                     </EditForm>
                 </div>
 
-                <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Register" style="color: wheat"  />
+                <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Register" style="color: wheat"/>
                 <div role="tabpanel" class="tab-content ">
-                    <EditForm class="card-body" Model="RegisterUserRequest" method="post" OnValidSubmit="RegisterHandler" FormName="register">
+                    <EditForm EditContext="_registerEditContext" class="card-body" method="post" OnValidSubmit="RegisterHandler" FormName="register">
                         <div class="form-control">
                             <label class="label">
                                 <span class="label-text">UserName</span>
                             </label>
-                            <input type="text" @bind-value="RegisterUserRequest.IdName" placeholder="UserName" class="input input-bordered" required />
+                            <input type="text" @bind-value="RegisterUserRequest.IdName" placeholder="UserName" class="input input-bordered" required/>
+                            <div class="text-secondary m-1">
+                                <ValidationMessage For="() => RegisterUserRequest.IdName"/>
+                            </div>
                         </div>
                         <div class="form-control">
                             <label class="label">
                                 <span class="label-text">Phone Number</span>
                             </label>
-                            <input type="number" @bind-value="RegisterUserRequest.PhoneNumber" placeholder="phone" class="input input-bordered" required />
+                            <input type="number" @bind-value="RegisterUserRequest.PhoneNumber" placeholder="phone" class="input input-bordered" required/>
+                            <div class="text-secondary m-1">
+                                <ValidationMessage For="() => RegisterUserRequest.PhoneNumber"/>
+                            </div>
                         </div>
                         <div class="form-control">
                             <label class="label">
                                 <span class="label-text">Password</span>
                             </label>
-                            <input type="password" @bind-value="RegisterUserRequest.Password" placeholder="password" class="input input-bordered" required />
-
+                            <input type="password" @bind-value="RegisterUserRequest.Password" placeholder="password" class="input input-bordered" required/>
+                            <div class="text-secondary m-1">
+                                <ValidationMessage For="() => RegisterUserRequest.Password"/>
+                            </div>
                         </div>
                         <div class="form-control mt-6">
-                            <button type="submit" style=" background: linear-gradient(144deg, rgba(116,128,255,1) 0%, rgba(100,25,230,1) 100%);color: wheat"  class="btn btn-primary">Register</button>
+                            <button type="submit" style=" background: linear-gradient(144deg, rgba(116,128,255,1) 0%, rgba(100,25,230,1) 100%);color: wheat" class="btn btn-primary">Register</button>
                         </div>
 
 
@@ -74,7 +88,7 @@
 
             </div>
 
-          
+
         </div>
     </div>
 </div>
@@ -82,26 +96,88 @@
 
 @code
 {
+    [Inject] public IJSRuntime JSRuntime { get; set; }
+
     [SupplyParameterFromForm(FormName = "login")]
     private LoginUserRequest LoginUserRequest { get; set; } = new();
 
     [SupplyParameterFromForm(FormName = "register")]
     private RegisterUserRequest RegisterUserRequest { get; set; } = new();
 
+    private ValidationMessageStore? _registerMessageStore;
+    private ValidationMessageStore? _loginMessageStore;
+    private EditContext? _registerEditContext;
+    private EditContext? _loginEditContext;
 
-    private void LoginHandler()
+
+    protected override Task OnInitializedAsync()
     {
-        Console.WriteLine(LoginUserRequest.PhoneNumber);
-        Console.WriteLine(LoginUserRequest.Password);
+        _loginEditContext = new(LoginUserRequest);
+        _registerEditContext = new(RegisterUserRequest);
+
+        _registerMessageStore = new(_registerEditContext);
+        _loginMessageStore = new(_loginEditContext);
+
+        return base.OnInitializedAsync();
     }
 
-    private void RegisterHandler()
+    private void ClearLoginErrors()
     {
-        Console.WriteLine(RegisterUserRequest.PhoneNumber);
-        Console.WriteLine(RegisterUserRequest.IdName);
-        Console.WriteLine(RegisterUserRequest.Password);
+        _loginMessageStore?.Clear();
+        _loginEditContext?.NotifyValidationStateChanged();
+    }
+
+    private void ClearRegisterErrors()
+    {
+        _registerMessageStore?.Clear();
+        _registerEditContext?.NotifyValidationStateChanged();
+    }
+
+    private void AddValidationError(ValidationMessageStore? messageStore, object model, string fieldName, string errorMessage)
+    {
+        messageStore?.Add(new FieldIdentifier(model, fieldName), errorMessage);
+    }
+
+    private async Task LoginHandler()
+    {
+        var result = await AuthService.Login(LoginUserRequest);
+
+        //success login set token redirect to home hide login and register link and show logout
+        if (result.IsT0)
+        {
+            await LocalStorage.SetItemAsStringAsync("authToken", result.AsT0.Value.Token);
+            NavigationManager.NavigateTo("/", true);
+        }
+
+        //user not found
+        if (!result.IsT0)
+        {
+            _loginMessageStore?.Clear();
+            AddValidationError(_loginMessageStore, LoginUserRequest, nameof(LoginUserRequest.PhoneNumber), "User not found");
+            _loginEditContext?.NotifyValidationStateChanged();
+        }
+
+        await AuthStateProvider.GetAuthenticationStateAsync();
+    }
+
+    private async Task RegisterHandler()
+    {
+        var result = await AuthService.Register(RegisterUserRequest);
+
+        if (result.IsT0)
+        {
+            await JSRuntime.InvokeVoidAsync("MessageShow", "success", "SuccessFull", "Your account created successfully please login");
+        }
+
+        if (result.IsT1)
+        {
+            _registerMessageStore?.Clear();
+            foreach (var validation in result.AsT1)
+            {
+                _registerMessageStore?.Add(new FieldIdentifier(RegisterUserRequest, validation.Field), validation.Error);
+            }
+
+            _loginEditContext?.NotifyValidationStateChanged();
+        }
     }
 }
-
-
-

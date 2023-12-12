@@ -2,18 +2,33 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using AnswerMe.Client.Componenets
 @inject NavigationManager NavigationManager
+
+
+<dialog id="Modal-Message" class="modal">
+    <div class="modal-box glass-box ">
+        <div id="Modal-Message-Header"></div>
+        <p id="Modal-Text" class="py-4"></p>
+        <div class="modal-action">
+            <form method="dialog">
+                <!-- if there is a button in form, it will close the modal -->
+                <button class="btn btn-outline btn-primary">close</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+
 <AuthorizeView>
     <Authorized>
 
         <div class="nav-section menu-on ">
 
             <aside id="SidebarMenu" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 " style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
-
                 <NavMenu/>
             </aside>
         </div>
 
-        <div id="ChatBody" class="body-content transition-transform @_chatBodyClass" >
+        <div id="ChatBody" class="body-content transition-transform @_chatBodyClass">
             @Body
         </div>
 
@@ -36,7 +51,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("c# stuff");
         if (NavigationManager.Uri == NavigationManager.BaseUri)
         {
             IsAtHome = true;
@@ -58,9 +72,8 @@
         }
         else
         {
-            
-                _sidebarClass = "";
-                _chatBodyClass = "";
+            _sidebarClass = "";
+            _chatBodyClass = "";
         }
 
         await base.OnInitializedAsync();

@@ -22,10 +22,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Pages\Account\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\AnswerMe.Client.Core\AnswerMe.Client.Core.csproj" />
     </ItemGroup>
 

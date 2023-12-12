@@ -1,4 +1,4 @@
-﻿*{
+﻿* {
     font-family: "Comic Sans MS", serif;
 }
 
@@ -6,13 +6,22 @@
     background-image: url("/image/LoginBackground.jpg");
 }
 
-.tab-primary input:checked{
-    background: linear-gradient(144deg, rgba(116,128,255,1) 0%, rgba(100,25,230,1) 100%);
+.glass-box {
+    backdrop-filter: blur(25px) saturate(200%);
+    -webkit-backdrop-filter: blur(25px) saturate(200%);
+    background-color: rgb(149, 113, 204, 0.25);
+    border-radius: 12px;
+    color: #fff;
+    
+}
+
+.tab-primary input:checked {
+    background: linear-gradient(144deg, rgba(116, 128, 255, 1) 0%, rgba(100, 25, 230, 1) 100%);
 }
 
 [type=button], [type=reset], [type=submit], button {
     -webkit-appearance: button;
-    background: linear-gradient(144deg, rgba(116,128,255,1) 0%, rgba(100,25,230,1) 100%);
+    background: linear-gradient(144deg, rgba(116, 128, 255, 1) 0%, rgba(100, 25, 230, 1) 100%);
 }
 
 
@@ -51,7 +60,7 @@
 
 }
 
-.responsive-send-box button{
+.responsive-send-box button {
     @media (min-width: 275px) {
         /* Styles for screens with a width of 640 pixels and larger */
         width: 3rem;
@@ -70,7 +79,7 @@
     }
 }
 
-.responsive-send-button{
+.responsive-send-button {
     @media (min-width: 275px) {
         /* Styles for screens with a width of 640 pixels and larger */
         margin-right: 3rem;
@@ -217,25 +226,19 @@
 }
 
 
-
-
-::-webkit-scrollbar-track
-{
+::-webkit-scrollbar-track {
     border: 5px solid #1f2937;
-// border color does not support transparent on scrollbar
-// border-color: transparent;
+/ / border color does not support transparent on scrollbar / / border-color: transparent;
     background-color: #1f2937;
-    
+
 }
 
-::-webkit-scrollbar
-{
+::-webkit-scrollbar {
     width: 15px;
     background-color: #1f2937;
 }
 
-::-webkit-scrollbar-thumb
-{
+::-webkit-scrollbar-thumb {
     background-color: #6419e6;
     border-radius: 10px;
 }

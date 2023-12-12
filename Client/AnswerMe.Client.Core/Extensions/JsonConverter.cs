@@ -1,6 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
-using AnswerMe.Client.Core.DTOs.Error;
+using Models.Shared.OneOfTypes;
 
 namespace AnswerMe.Client.Core.Extensions
 {
@@ -31,17 +31,17 @@ namespace AnswerMe.Client.Core.Extensions
             return Task.FromResult(JsonSerializer.Serialize(content, _options));
         }
 
-        public static Task<List<ValidationFailedDto>> ToValidationFailedList(string content)
+        public static Task<List<ValidationFailed>> ToValidationFailedList(string content)
         {
             var errorDict = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(content);
-            var validationFailedList = new List<ValidationFailedDto>();
+            var validationFailedList = new List<ValidationFailed>();
 
             if (errorDict != null)
                 foreach (var error in errorDict)
                 {
                     foreach (string errorMessage in error.Value)
                     {
-                        validationFailedList.Add(new ValidationFailedDto() { Field = error.Key, Error = errorMessage });
+                        validationFailedList.Add(new ValidationFailed() { Field = error.Key, Error = errorMessage });
                     }
                 }
 

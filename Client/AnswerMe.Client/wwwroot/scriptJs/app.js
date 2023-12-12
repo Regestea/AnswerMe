@@ -37,10 +37,13 @@ function ResizeComponent() {
     } else {
         let mainBody = document.getElementById("ChatBody");
         let sidebar = document.getElementById("SidebarMenu");
-        sidebar.classList.remove('-translate-x-0');
-        sidebar.classList.remove('w-full');
-        mainBody.classList.remove('-translate-x-full');
-        mainBody.classList.remove('hidden');
+        
+        if (mainBody !=null && sidebar !=null){
+            sidebar.classList.remove('-translate-x-0');
+            sidebar.classList.remove('w-full');
+            mainBody.classList.remove('-translate-x-full');
+            mainBody.classList.remove('hidden');
+        }
     }
 }
 
@@ -62,6 +65,34 @@ function getScreenSizeCategory() {
     } else {
         return "2xl";
     }
+}
+
+
+
+function MessageShow(messageType, messageHeader, messageText) {
+    const modalHeader = document.getElementById("Modal-Message-Header");
+    const modalText = document.getElementById("Modal-Text");
+    const modal = document.getElementById("Modal-Message");
+
+    switch (messageType) {
+        case "info":
+            modalHeader.className = "stat-value text-info";
+            break;
+        case "success":
+            modalHeader.className = "stat-value text-accent";
+            break;
+        case "error":
+            modalHeader.className = "stat-value text-secondary";
+            break;
+        default:
+            modalHeader.className = "stat-value text-info";
+            break;
+    }
+
+    modalHeader.innerText = messageHeader;
+    modalText.innerText = messageText;
+
+    modal.showModal();
 }
 
 

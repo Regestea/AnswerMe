@@ -28,7 +28,7 @@ namespace AnswerMe.Api.Test.Services
         {
             //Arrange
             
-            var mockGroupMessage = new GroupMessageService(_inMemoryDbContext);
+            var mockGroupMessage = new GroupMessageService(_inMemoryDbContext,null!,null!);
 
             var loggedInUserId = Guid.NewGuid();
             var groupId = Guid.NewGuid();
@@ -84,13 +84,13 @@ namespace AnswerMe.Api.Test.Services
             //Assert
 
             Assert.NotNull(pagedMessageList);
-            Assert.True(pagedMessageList.IsT0);
-            Assert.IsType<PagedListResponse<MessageResponse>>(pagedMessageList.AsT0.Value);
+            Assert.True(pagedMessageList.IsSuccess);
+            Assert.IsType<PagedListResponse<MessageResponse>>(pagedMessageList.AsSuccess.Value);
 
             Dispose();
         }
 
-        public void Dispose()
+        private void Dispose()
         {
             _inMemoryDbContext.Dispose(); // Dispose of the in-memory database context
         }

@@ -57,7 +57,7 @@ namespace AnswerMe.Infrastructure.Hubs
         {
             try
             {
-                if (Context.GetHttpContext().Request.Headers.TryGetValue("GroupId", out var groupIdValues))
+                if (Context.GetHttpContext()!.Request.Headers.TryGetValue("GroupId", out var groupIdValues))
                 {
 
                         var groupId = Guid.Parse(groupIdValues.ToString());
@@ -87,7 +87,7 @@ namespace AnswerMe.Infrastructure.Hubs
                     Context.Abort();
                 }
             }
-            catch (Exception exception)
+            catch (Exception)
             {
                 Context.Abort();
             }

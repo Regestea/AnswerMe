@@ -32,14 +32,14 @@ namespace AnswerMe.Api.Controllers
         /// <response code="200">OK: The list of private rooms.</response>
         [HttpGet]
         [ProducesResponseType(typeof(PagedListResponse<PrivateRoomResponse>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetList([FromQuery] PaginationRequest paginationRequest)
+        public async Task<IActionResult> GetListAsync([FromQuery] PaginationRequest paginationRequest)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _privateRoomRepository.GetListAsync(loggedInUser.id, paginationRequest);
 
-            return Ok(result.AsT0.Value);
+            return Ok(result.AsSuccess.Value);
         }
 
         /// <summary>
@@ -53,21 +53,21 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(typeof(PrivateRoomResponse),StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Get(Guid roomId)
+        public async Task<IActionResult> GetAsync(Guid roomId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _privateRoomRepository.GetAsync(loggedInUser.id, roomId);
 
-            if (result.IsT0)
+            if (result.IsSuccess)
             {
-                return Ok(result.AsT0.Value);
+                return Ok(result.AsSuccess.Value);
             }
 
-            if (result.IsT1)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
             return NotFound();
@@ -83,24 +83,24 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(typeof(RoomLastSeenResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetLastSeenStatus([FromRoute] Guid roomId, [FromRoute] Guid userId)
+        public async Task<IActionResult> GetLastSeenStatusAsync([FromRoute] Guid roomId, [FromRoute] Guid userId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _privateRoomRepository.GetLastSeenAsync(loggedInUser.id, roomId, userId);
 
-            if (result.IsT1)
+            if (result.IsAccessDenied)
             {
                 return StatusCode(StatusCodes.Status403Forbidden);
             }
 
-            if (result.IsT2)
+            if (result.IsNotFound)
             {
                 return NotFound();
             }
 
-            return Ok(result.AsT0.Value);
+            return Ok(result.AsSuccess.Value);
         }
 
     }

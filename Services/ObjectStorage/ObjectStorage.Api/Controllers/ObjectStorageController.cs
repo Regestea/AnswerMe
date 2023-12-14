@@ -43,7 +43,7 @@ namespace ObjectStorage.Api.Controllers
 
         [HttpPost]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> UploadChunk([FromBody] FileChunkRequest request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UploadChunkAsync([FromBody] FileChunkRequest request, CancellationToken cancellationToken = default)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
@@ -58,7 +58,7 @@ namespace ObjectStorage.Api.Controllers
             if (stashChunkDetail != null)
             {
                 var currentChunkSize = request.Data.SizeMB();
-                var isSizeOutOfDeal = stashChunkDetail.TotalUploadedSizeMB + currentChunkSize > stashChunkDetail.FileSizeMB;
+                var isSizeOutOfDeal = stashChunkDetail.TotalUploadedSizeMb + currentChunkSize > stashChunkDetail.FileSizeMb;
                 var containerName = Enum.Parse<ContainerName>(stashChunkDetail.PartitionKey);
 
                 if (isSizeOutOfDeal)
@@ -70,7 +70,7 @@ namespace ObjectStorage.Api.Controllers
                     //delete commit data form blob storage
                     await _fileUploadService.DeleteObjectAsync(containerName, stashChunkDetail.RowKey);
 
-                    return BadRequest($"the size of chunks is more than {stashChunkDetail.FileSizeMB} MB please request new upload token");
+                    return BadRequest($"the size of chunks is more than {stashChunkDetail.FileSizeMb} MB please request new upload token");
                 }
 
                 if (request.CurrentChunk < 0)
@@ -88,6 +88,7 @@ namespace ObjectStorage.Api.Controllers
                     Data = request.Data,
                     AccessTier = stashChunkDetail.AccessTier,
                     CurrentChunk = request.CurrentChunk,
+                    TotalUploadedChunks = stashChunkDetail.TotalUploadedChunks
                 };
 
                 await _fileUploadService.UploadChunkAsync(fileChunkDto, cancellationToken);
@@ -110,7 +111,7 @@ namespace ObjectStorage.Api.Controllers
                     {
                         objectIndex.BlurHash = stashChunkDetail.BlurHash;
                     }
-
+                    
                     // ReSharper disable once MethodSupportsCancellation
                     await _blobClientFactory.BlobTableClient(TableName.IndexObjectFile)
                         .AddEntityAsync(objectIndex);
@@ -119,11 +120,11 @@ namespace ObjectStorage.Api.Controllers
                     await _blobClientFactory.BlobTableClient(TableName.StashChunkDetail)
                         .DeleteEntityAsync(fileChunkDto.ContainerName.ToString(), fileChunkDto.FileName);
 
-                    return Ok(new TokenResponse() { Token = objectIndex.Token });
+                    return Ok(new TokenResponse() { FieldName = "Upload Token",Token = objectIndex.Token });
                 }
 
                 stashChunkDetail.TotalUploadedChunks += 1;
-                stashChunkDetail.TotalUploadedSizeMB += request.Data.SizeMB();
+                stashChunkDetail.TotalUploadedSizeMb += request.Data.SizeMB();
 
                 // ReSharper disable once MethodSupportsCancellation
                 await blobTableClient.UpdateEntityAsync(stashChunkDetail, ETag.All);
@@ -131,7 +132,7 @@ namespace ObjectStorage.Api.Controllers
                 return StatusCode(StatusCodes.Status201Created, new ChunkUploadResponse()
                 {
                     TotalUploadedChunks = stashChunkDetail.TotalUploadedChunks,
-                    TotalUploadedSizeMB = stashChunkDetail.TotalUploadedSizeMB
+                    TotalUploadedSizeMB = stashChunkDetail.TotalUploadedSizeMb
                 });
             }
 
@@ -142,7 +143,7 @@ namespace ObjectStorage.Api.Controllers
 
         [HttpPost("Profile")]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> RequestUploadProfileImageToken([FromBody] ProfileImageUploadRequest request)
+        public async Task<IActionResult> RequestUploadProfileImageTokenAsync([FromBody] ProfileImageUploadRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
@@ -155,23 +156,23 @@ namespace ObjectStorage.Api.Controllers
                 UserId = loggedInUser.id,
                 AccessTier = AccessTier.Archive.ToString(),
                 ETag = ETag.All,
-                FileSizeMB = request.FileSizeMB + 0.01,
+                FileSizeMb = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
                 TotalUploadedChunks = 0,
-                TotalUploadedSizeMB = 0
+                TotalUploadedSizeMb = 0
             };
 
             var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
             await blobTableClient.AddEntityAsync(stashChunkDetail);
 
-            return Ok(new TokenResponse() { Token = stashChunkDetail.RowKey });
+            return Ok(new TokenResponse() { FieldName = "Upload Token",Token = stashChunkDetail.RowKey });
         }
 
 
         [HttpPost("Image")]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> RequestUploadImageToken([FromBody] ImageUploadRequest request)
+        public async Task<IActionResult> RequestUploadImageTokenAsync([FromBody] ImageUploadRequest request)
         {
             var isValidBlurHash = await _blurHashService.ValidateBlurHash(request.BlurHash);
 
@@ -192,24 +193,24 @@ namespace ObjectStorage.Api.Controllers
                 UserId = loggedInUser.id,
                 AccessTier = AccessTier.Archive.ToString(),
                 ETag = ETag.All,
-                FileSizeMB = request.FileSizeMB + 0.01,
+                FileSizeMb = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
                 BlurHash = request.BlurHash,
                 TotalUploadedChunks = 0,
-                TotalUploadedSizeMB = 0
+                TotalUploadedSizeMb = 0
             };
 
             var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
             await blobTableClient.AddEntityAsync(stashChunkDetail);
 
-            return Ok(new TokenResponse() { Token = stashChunkDetail.RowKey });
+            return Ok(new TokenResponse() { FieldName = "Upload Token",Token = stashChunkDetail.RowKey });
         }
 
 
         [HttpPost("Audio")]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> RequestUploadProfileImageToken([FromBody] AudioUploadRequest request)
+        public async Task<IActionResult> RequestUploadAudioTokenAsync([FromBody] AudioUploadRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
@@ -222,22 +223,22 @@ namespace ObjectStorage.Api.Controllers
                 UserId = loggedInUser.id,
                 AccessTier = AccessTier.Archive.ToString(),
                 ETag = ETag.All,
-                FileSizeMB = request.FileSizeMB + 0.01,
+                FileSizeMb = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
                 TotalUploadedChunks = 0,
-                TotalUploadedSizeMB = 0
+                TotalUploadedSizeMb = 0
             };
             var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
             await blobTableClient.AddEntityAsync(stashChunkDetail);
 
-            return Ok(new TokenResponse() { Token = stashChunkDetail.RowKey });
+            return Ok(new TokenResponse() { FieldName = "Upload Token",Token = stashChunkDetail.RowKey });
         }
 
 
         [HttpPost("Video")]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> RequestUploadVideoToken([FromBody] VideoUploadRequest request)
+        public async Task<IActionResult> RequestUploadVideoTokenAsync([FromBody] VideoUploadRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
@@ -250,22 +251,22 @@ namespace ObjectStorage.Api.Controllers
                 UserId = loggedInUser.id,
                 AccessTier = AccessTier.Archive.ToString(),
                 ETag = ETag.All,
-                FileSizeMB = request.FileSizeMB + 0.01,
+                FileSizeMb = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
                 TotalUploadedChunks = 0,
-                TotalUploadedSizeMB = 0
+                TotalUploadedSizeMb = 0
             };
             var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
             await blobTableClient.AddEntityAsync(stashChunkDetail);
 
-            return Ok(new TokenResponse() { Token = stashChunkDetail.RowKey });
+            return Ok(new TokenResponse() { FieldName = "Upload Token",Token = stashChunkDetail.RowKey });
         }
 
 
         [HttpPost("Other")]
         [AuthorizeByIdentityServer]
-        public async Task<IActionResult> RequestUploadOtherToken([FromBody] OtherUploadRequest request)
+        public async Task<IActionResult> RequestUploadOtherTokenAsync([FromBody] OtherUploadRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
@@ -278,16 +279,16 @@ namespace ObjectStorage.Api.Controllers
                 UserId = loggedInUser.id,
                 AccessTier = AccessTier.Archive.ToString(),
                 ETag = ETag.All,
-                FileSizeMB = request.FileSizeMB + 0.01,
+                FileSizeMb = request.FileSizeMB + 0.01,
                 Timestamp = DateTimeOffset.UtcNow,
                 TotalUploadedChunks = 0,
-                TotalUploadedSizeMB = 0
+                TotalUploadedSizeMb = 0
             };
             var blobTableClient = _blobClientFactory.BlobTableClient(TableName.StashChunkDetail);
 
             await blobTableClient.AddEntityAsync(stashChunkDetail);
 
-            return Ok(new TokenResponse() { Token = stashChunkDetail.RowKey });
+            return Ok(new TokenResponse() { FieldName = "Upload Token",Token = stashChunkDetail.RowKey });
         }
     }
 }

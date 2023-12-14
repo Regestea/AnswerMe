@@ -167,7 +167,7 @@ namespace AnswerMe.Infrastructure.Repositories
                     {
                         id = message.id,
                         CreatedDate = message.CreatedDate,
-                        MediaList = message.MediaList.Select(x => new MediaResponse
+                        MediaList = message.MediaList!.Select(x => new MediaResponse
                         {
                             Id = x.Id,
                             Type = (MediaTypeResponse)x.Type,

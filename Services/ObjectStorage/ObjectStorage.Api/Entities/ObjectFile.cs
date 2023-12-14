@@ -9,10 +9,10 @@ namespace ObjectStorage.Api.Entities
     public class ObjectFile : ITableEntity
     {
         //blobName (Guid file name)
-        public string RowKey { get; set; }
+        public required string RowKey { get; set; }
 
         //containerName it can be a number like 879435789098 and should be uniq
-        public string PartitionKey { get; set; }
+        public required string PartitionKey { get; set; }
 
         public DateTimeOffset? Timestamp { get; set; }
 

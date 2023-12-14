@@ -36,14 +36,11 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(typeof(GroupResponse), StatusCodes.Status200OK)] // Specify the expected response type
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpGet("{inviteToken}")]
-        public async Task<IActionResult> GetGroupPreview([FromRoute] string inviteToken)
+        public async Task<IActionResult> GetGroupPreviewAsync([FromRoute] string inviteToken)
         {
-            var requestToken = _jwtTokenRepository.GetJwtToken();
-            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
-
             var result = await _groupInviteRepository.GetGroupPreviewAsync(inviteToken);
 
-            if (result.IsT0)
+            if (result.IsSuccess)
             {
                 return Ok(result);
             }
@@ -65,27 +62,27 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpPost("{groupId:guid}")]
-        public async Task<IActionResult> Create([FromRoute] Guid groupId, [FromBody] CreateInviteTokenRequest inviteTokenRequest)
+        public async Task<IActionResult> CreateAsync([FromRoute] Guid groupId, [FromBody] CreateInviteTokenRequest inviteTokenRequest)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupInviteRepository.CreateAsync(loggedInUser.id, groupId, inviteTokenRequest);
 
-            if (result.IsT0)
+            if (result.IsSuccess)
             {
-                return Ok(result.AsT0.Value);
+                return Ok(result.AsSuccess.Value);
             }
 
-            if (result.IsT2)
+            if (result.IsValidationFailure)
             {
-                ModelState.AddModelError(result.AsT2.Field, result.AsT2.Error);
+                ModelState.AddModelError(result.AsValidationFailure.Field, result.AsValidationFailure.Error);
                 return BadRequest(ModelState);
             }
 
-            if (result.IsT4)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
             return NotFound();
@@ -102,21 +99,21 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(typeof(IdResponse), StatusCodes.Status200OK)] // Specify the expected response type
         [ProducesResponseType(StatusCodes.Status400BadRequest)] // Specify another expected response type
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> JoinGroup([FromRoute] string inviteToken)
+        public async Task<IActionResult> JoinGroupAsync([FromRoute] string inviteToken)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupInviteRepository.JoinGroupAsync(loggedInUser.id, inviteToken);
 
-            if (result.IsT0)
+            if (result.IsSuccess)
             {
-                return Ok(result.AsT0.Value);
+                return Ok(result.AsSuccess.Value);
             }
 
-            if (result.IsT2)
+            if (result.IsValidationFailure)
             {
-                ModelState.AddModelError(result.AsT2.Field, result.AsT2.Error);
+                ModelState.AddModelError(result.AsValidationFailure.Field, result.AsValidationFailure.Error);
                 return BadRequest(ModelState);
             }
 

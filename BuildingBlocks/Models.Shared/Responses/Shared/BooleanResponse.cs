@@ -8,7 +8,7 @@ namespace Models.Shared.Responses.Shared
 {
     public class BooleanResponse
     {
-        public string FieldName { get; set; }
+        public required string FieldName { get; set; }
         public bool Result { get; set; }
     }
 }

@@ -9,16 +9,16 @@ namespace ObjectStorage.Api.Services
 {
     public class BlurHashService : IBlurHashService
     {
-        public async Task<ReadResponse<bool>> ValidateBlurHash(string blurHash)
+        public Task<ReadResponse<bool>> ValidateBlurHash(string blurHash)
         {
             try
             {
                 Blurhasher.Decode(blurHash, 1, 1, 1);
-                return new Success<bool>(true);
+                return Task.FromResult<ReadResponse<bool>>(new Success<bool>(true));
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException)
             {
-                return new Success<bool>(false);
+                return Task.FromResult<ReadResponse<bool>>(new Success<bool>(false));
             }
         }
     }

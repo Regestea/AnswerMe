@@ -30,16 +30,16 @@ namespace AnswerMe.Api.Controllers
         /// <response code="200">OK: The user's profile information.</response>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetUser()
+        public async Task<IActionResult> GetUserAsync()
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var userResponse = await _userRepository.GetByIdAsync(loggedInUser.id);
 
-            if (userResponse.IsT1)
+            if (userResponse.IsNotFound)
             {
-                var addUserResponse = await _userRepository.AddAsync(new AddUserDto()
+                await _userRepository.AddAsync(new AddUserDto()
                 {
                     id = loggedInUser.id,
                     IdName = loggedInUser.IdName,
@@ -48,7 +48,7 @@ namespace AnswerMe.Api.Controllers
                 userResponse = await _userRepository.GetByIdAsync(loggedInUser.id);
             }
 
-            return Ok(userResponse.AsT0);
+            return Ok(userResponse.AsSuccess.Value);
         }
 
         /// <summary>
@@ -56,20 +56,20 @@ namespace AnswerMe.Api.Controllers
         /// </summary>
         /// <param name="id">The unique identifier of the user to retrieve.</param>
         /// <response code="200">OK: The user's profile information.</response>
-        /// <response code="400">Bad Request: Invalid user or user not found.</response>
+        /// <response code="404">Not Found: user not found.</response>
         [HttpGet("{id:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetUserById([FromRoute] Guid id)
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetUserByIdAsync([FromRoute] Guid id)
         {
             var userResponse = await _userRepository.GetByIdAsync(id);
 
-            if (userResponse.IsT0)
+            if (userResponse.IsSuccess)
             {
-                return Ok(userResponse.AsT0);
+                return Ok(userResponse.AsSuccess.Value);
             }
 
-            return BadRequest(userResponse.AsT1);
+            return NotFound();
         }
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace AnswerMe.Api.Controllers
         /// <response code="204">No Content: User profile updated successfully.</response>
         [HttpPatch]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> EditUser(EditUserRequest request)
+        public async Task<IActionResult> EditUserAsync(EditUserRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
@@ -96,13 +96,13 @@ namespace AnswerMe.Api.Controllers
         [HttpGet("{userId:guid}/IsOnline")]
         [ProducesResponseType(typeof(BooleanResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> IsOnline([FromRoute] Guid userId)
+        public async Task<IActionResult> IsOnlineAsync([FromRoute] Guid userId)
         {
             var result = await _userRepository.IsOnlineAsync(userId);
 
-            if (result.IsT0)
+            if (result.IsSuccess)
             {
-                return Ok(result.AsT0.Value);
+                return Ok(result.AsSuccess.Value);
             }
 
             return NotFound();
@@ -115,11 +115,11 @@ namespace AnswerMe.Api.Controllers
         /// <returns>True if the user exists; otherwise, false.</returns>
         [HttpGet("{userId:guid}/Exist")]
         [ProducesResponseType(typeof(BooleanResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> Exist([FromRoute] Guid userId)
+        public async Task<IActionResult> ExistAsync([FromRoute] Guid userId)
         {
             var result = await _userRepository.ExistAsync(userId);
 
-            return Ok(result.AsT0.Value);
+            return Ok(result.AsSuccess.Value);
         }
     }
 }

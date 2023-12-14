@@ -1,27 +1,28 @@
-﻿using Azure.Core;
-using Grpc.Core;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
+﻿using Microsoft.AspNetCore.Mvc.Testing;
 using Models.Shared.Requests.ObjectStorage;
 using Models.Shared.Responses.Shared;
 using ObjectStorage.Api.Test.DataConvertor;
-using ObjectStorage.Api.Test.DataGenerator;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+using Azure.Data.Tables;
+using Azure.Storage.Blobs;
+using IdentityServer.Shared.Client.DTOs;
+using IdentityServer.Shared.Client.Repositories.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+using Models.Shared.Responses.ObjectStorage;
+using Moq;
+using ObjectStorage.Api.Context;
+using ObjectStorage.Api.Controllers;
+using ObjectStorage.Api.Entities;
+using ObjectStorage.Api.Services;
+using ObjectStorage.Api.Test.Extensions;
 using Xunit.Abstractions;
 
 namespace ObjectStorage.Api.Test.Controllers
 {
-    public class ObjectStorageControllerTest 
+    public class ObjectStorageControllerTest
     {
+        private const string BlobTestServer =
+            "AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;DefaultEndpointsProtocol=http;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;";
+
         private readonly ITestOutputHelper _testOutputHelper;
         private readonly HttpClient _httpClient;
 
@@ -31,85 +32,93 @@ namespace ObjectStorage.Api.Test.Controllers
             var webAppFactory = new WebApplicationFactory<Program>();
             _httpClient = webAppFactory.CreateDefaultClient();
         }
-
+        
+        
         [Fact]
         public async Task Should_Upload_ProfileImage_ByChunk()
         {
-            var fileStream = TextToImageStream.ConvertTextToImageStream("test image");
-            var chunks = await fileStream.ConvertStreamToChunksAsync(10);
+            //Arrange
+            var mockBlobClientFactory = new Mock<IBlobClientFactory>();
+            mockBlobClientFactory.Setup(f => f.BlobStorageClient(ContainerName.profile))
+                .Returns(() => new BlobContainerClient(BlobTestServer, ContainerName.profile.ToString()));
+            
+            mockBlobClientFactory.Setup(f => f.BlobTableClient(TableName.StashChunkDetail))
+                .Returns(() => new TableClient(BlobTestServer, TableName.StashChunkDetail.ToString()));
+            
+            mockBlobClientFactory.Setup(f => f.BlobTableClient(TableName.IndexObjectFile))
+                .Returns(() => new TableClient(BlobTestServer, TableName.IndexObjectFile.ToString()));
 
-            TokenResponse? token = null;
+            var fakeToken = "this is a fake token";
 
-            for (int i = 0; i < chunks.Count; i++)
-            {
-                if (token == null)
+            var mockJwtTokenRepository = new Mock<IJwtTokenRepository>();
+            mockJwtTokenRepository.Setup(f => f.GetJwtToken())
+                .Returns(() => fakeToken);
+
+            mockJwtTokenRepository.Setup(f => f.ExtractUserDataFromToken(fakeToken))
+                .Returns(() => new UserDto()
                 {
-                    var request = new ImageUploadRequest
-                    {
-                        FileSizeMB = ConvertBytesToMegabytes(fileStream.Length),
-                        FileFormat = "jpg"
-                    };
-                    var jsonContent = JsonSerializer.Serialize(request);
-                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                    id = new Guid("02dd9a9a-eac2-43be-90b8-d0201b80a31d"),
+                    PhoneNumber = "123456789123",
+                    IdName = "fakeId"
+                });
 
-                    var tokenResponse = await _httpClient.PostAsync("/api/ObjectStorage/Profile", content);
-                    var responseJsonContent = await tokenResponse.Content.ReadAsStringAsync();
-                     token = JsonSerializer.Deserialize<TokenResponse>(responseJsonContent, new JsonSerializerOptions{
-                        DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
-                        WriteIndented = true,
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                        PropertyNameCaseInsensitive = true,
-                    });
-
-                    _testOutputHelper.WriteLine(token.Token);
-
-                    Assert.NotNull(token);
-                }
-            }
-        }
-        public double ConvertBytesToMegabytes(long bytes)
-        {
-            return (double)bytes / (1024 * 1024);
-        }
-
-        [Fact]
-        public async Task Should_Return_OK()
-        {
-            var response = await _httpClient.GetAsync("/api/ObjectStorage");
-            var stringResult = await response.Content.ReadAsStringAsync();
-
-            Assert.Equal("hello world", stringResult);
-        }
-
-        [Fact]
-        public async Task Should_Upload_Stream_And_Return_OK()
-        {
-            _httpClient.Timeout = TimeSpan.FromMinutes(2);
-
-            Stream fileStream = TextToImageStream.ConvertTextToImageStream("test");
-
-            var streamContent = new StreamContent(fileStream);
-
-            streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-   
-            var formData = new MultipartFormDataContent();
-
-            string fileName = "something.png";
-
-            formData.Add(streamContent, "file", "file");
-            formData.Add(new StringContent(fileName), "fileName");
-
-            var apiUrl = "/api/ObjectStorage/UploadStream"; // Replace with your API endpoint
-            var response = await _httpClient.PostAsync(apiUrl, formData);
+            var fileUploadService = new FileUploadService(mockBlobClientFactory.Object);
 
 
-            if (response.IsSuccessStatusCode)
-            {
-                
-            }
+            var controller = new ObjectStorageController(fileUploadService, mockBlobClientFactory.Object,
+                mockJwtTokenRepository.Object, null!);
+            
+            // Get the directory of the assembly (test project)
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            
+            // Navigate up to the project directory
+            string projectDirectory = Path.GetFullPath(Path.Combine(baseDirectory, @"..\..\..\"));
+            
+            // Combine it with the relative path to your image file
+            string filePath = Path.Combine(projectDirectory, "Images", "TestImage.jpg");
 
+
+            FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            
+            var chunks = await fileStream.ConvertStreamToChunksAsync(20);
             
 
+            //Act
+
+            var responseToken = await controller.RequestUploadProfileImageTokenAsync(new ProfileImageUploadRequest()
+            {
+                FileSizeMB = fileStream.Length.SizeMB(),
+                FileFormat = "jpg"
+            });
+            var resultToken =(OkObjectResult) responseToken;
+
+            var tokenResponse =(TokenResponse) resultToken.Value!;
+
+            
+            for (int i = 0; i < chunks.Count; i++)
+            {
+                var isLastChunk = chunks[i] == chunks.Last();
+                var fileChunkRequest = new FileChunkRequest()
+                {
+                    Data = chunks[i],
+                    CurrentChunk = i,
+                    LastChunk =isLastChunk ,
+                    UploadToken = new Guid(tokenResponse.Token)
+                };
+                
+              var result= await controller.UploadChunkAsync(fileChunkRequest);
+              
+              
+              //Assert
+              if (isLastChunk)
+              {
+                  Assert.IsType<TokenResponse>(((OkObjectResult)result).Value);
+              }
+              else
+              {
+                  Assert.IsType<ChunkUploadResponse>(((ObjectResult)result).Value);
+              }
+            }
         }
     }
 }

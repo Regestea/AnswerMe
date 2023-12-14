@@ -39,24 +39,24 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(typeof(PagedListResponse<MessageResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetList([FromRoute] Guid groupId, [FromQuery] PaginationRequest paginationRequest)
+        public async Task<IActionResult> GetListAsync([FromRoute] Guid groupId, [FromQuery] PaginationRequest paginationRequest)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupMessageService.GetListAsync(loggedInUser.id, groupId, paginationRequest);
 
-            if (result.IsT1)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
-            if (result.IsT2)
+            if (result.IsNotFound)
             {
                 return NotFound();
             }
 
-            return Ok();
+            return Ok(result.AsSuccess.Value);
         }
 
         /// <summary>
@@ -71,21 +71,21 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(typeof(IdResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Send([FromRoute] Guid groupId, [FromBody] SendMessageRequest request)
+        public async Task<IActionResult> SendAsync([FromRoute] Guid groupId, [FromBody] SendMessageRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupMessageService.SendAsync(loggedInUser.id, groupId, request);
 
-            if (result.IsT4)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
-            if (result.IsT0)
+            if (result.IsSuccess)
             {
-                return Ok(result.AsT0.Value);
+                return Ok(result.AsSuccess.Value);
             }
 
             return NotFound();
@@ -104,19 +104,19 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)] // No content as the response doesn't contain a body
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Edit([FromRoute] Guid messageId, EditMessageRequest request)
+        public async Task<IActionResult> EditAsync([FromRoute] Guid messageId, EditMessageRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupMessageService.UpdateAsync(loggedInUser.id, messageId, request);
 
-            if (result.IsT4)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
-            if (result.IsT5)
+            if (result.IsNotFound)
             {
                 return NotFound();
             }
@@ -135,21 +135,21 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)] // No content as the response doesn't contain a body
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> Delete([FromRoute] Guid messageId)
+        public async Task<IActionResult> DeleteAsync([FromRoute] Guid messageId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupMessageService.DeleteAsync(loggedInUser.id, messageId);
 
-            if (result.IsT2)
+            if (result.IsNotFound)
             {
                 return NotFound();
             }
 
-            if (result.IsT1)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
             return NoContent();
@@ -172,26 +172,26 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> EditMedia([FromRoute] Guid messageId, [FromRoute] Guid mediaId, EditMessageMediaRequest request)
+        public async Task<IActionResult> EditMediaAsync([FromRoute] Guid messageId, [FromRoute] Guid mediaId, EditMessageMediaRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupMessageService.UpdateMediaAsync(loggedInUser.id, messageId, mediaId, request);
 
-            if (result.IsT5)
+            if (result.IsNotFound)
             {
                 return NotFound();
             }
 
-            if (result.IsT4)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
-            if (result.IsT2)
+            if (result.IsValidationFailure)
             {
-                var validationError = result.AsT2;
+                var validationError = result.AsValidationFailure;
                 ModelState.AddModelError(validationError.Field, validationError.Error);
                 return BadRequest(ModelState);
             }
@@ -209,14 +209,14 @@ namespace AnswerMe.Api.Controllers
         [HttpDelete("{messageId:guid}/Media/{mediaId:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)] // No content as the response doesn't contain a body
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteMedia([FromRoute] Guid messageId, [FromRoute] Guid mediaId)
+        public async Task<IActionResult> DeleteMediaAsync([FromRoute] Guid messageId, [FromRoute] Guid mediaId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupMessageService.DeleteMediaAsync(loggedInUser.id, messageId, mediaId);
 
-            if (result.IsT2)
+            if (result.IsNotFound)
             {
                 return NotFound();
             }

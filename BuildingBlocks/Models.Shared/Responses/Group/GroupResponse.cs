@@ -10,7 +10,7 @@ namespace Models.Shared.Responses.Group
     {
         public Guid Id { get; set; }
 
-        public string Name { get; set; }
+        public required string Name { get; set; }
 
         public string? RoomImage { get; set; }
 

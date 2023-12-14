@@ -35,7 +35,7 @@ namespace IdentityServer.Api.Repositories
                     validationErrorList.Add(new ValidationFailed()
                     {
                         Field = nameof(request.IdName),
-                        Error = $"this {nameof(request.IdName)} is taken try different {nameof(request.IdName)}"
+                        Error = $"this {nameof(request.IdName)} is used"
                     });
                 }
 
@@ -44,7 +44,7 @@ namespace IdentityServer.Api.Repositories
                     validationErrorList.Add(new ValidationFailed()
                     {
                         Field = nameof(request.PhoneNumber),
-                        Error = $"this {nameof(request.PhoneNumber)} is taken try different {nameof(request.PhoneNumber)}"
+                        Error = $"this {nameof(request.PhoneNumber)} is used"
                     });
                 }
 
@@ -60,7 +60,7 @@ namespace IdentityServer.Api.Repositories
             };
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
-            return new Success<IdResponse>(new IdResponse() { Id = user.id });
+            return new Success<IdResponse>(new IdResponse() {  FieldName = "UserId",Id = user.id });
         }
 
         public async Task<ReadResponse<UserDto>> GetUserAsync(LoginUserRequest request)

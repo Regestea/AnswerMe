@@ -28,7 +28,6 @@ namespace IdentityServer.Api.GrpcServices
         /// " and then selects the values of those claims. The values are
         /// then stored in a list.
         /// </summary>
-        /// <param name="claimsPrincipal">The claims principal for which the roles are being retrieved.</param>
         /// <returns>A list of roles associated with the claims principal.</returns>
         public override Task<ValidateTokenResponse> ValidateJwtBearerToken(ValidateTokenRequest request,
             ServerCallContext context)

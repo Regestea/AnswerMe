@@ -1,22 +1,18 @@
 ﻿using AnswerMe.Application.Common.Interfaces;
 using AnswerMe.Application.Extensions;
-using AnswerMe.Infrastructure.Hubs;
 using AnswerMe.Infrastructure.Persistence;
 using AnswerMe.Infrastructure.Repositories;
 using AnswerMe.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using ObjectStorage.Api.Protos;
-using System.Reflection;
 using AnswerMe.Infrastructure.Configs;
 
 
 namespace AnswerMe.Infrastructure
 {
     /// This class provides methods to add infrastructure services to the IServiceCollection.
-    /// </summary>
     public static class ConfigureServices
     {
         /// <summary>

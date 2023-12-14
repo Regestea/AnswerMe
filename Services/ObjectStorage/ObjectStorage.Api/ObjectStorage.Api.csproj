@@ -2,8 +2,11 @@
 
 	<PropertyGroup>
 		<TargetFramework>net7.0</TargetFramework>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
+    	<Nullable>enable</Nullable>
+    	<ImplicitUsings>enable</ImplicitUsings>
+    	<InvariantGlobalization>true</InvariantGlobalization>
+	    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+	  	<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>

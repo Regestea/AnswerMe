@@ -40,7 +40,7 @@ namespace AnswerMe.Infrastructure.Hubs
         {
             try
             {
-                if (Context.GetHttpContext().Request.Headers.TryGetValue("RoomId", out var roomIdValues))
+                if (Context.GetHttpContext()!.Request.Headers.TryGetValue("RoomId", out var roomIdValues))
                 {
                     var roomId = Guid.Parse(roomIdValues.ToString());
 
@@ -72,7 +72,7 @@ namespace AnswerMe.Infrastructure.Hubs
                     Context.Abort();
                 }
             }
-            catch (Exception exception)
+            catch (Exception)
             {
                 Context.Abort();
             }

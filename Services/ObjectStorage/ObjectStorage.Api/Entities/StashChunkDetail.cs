@@ -6,15 +6,15 @@ namespace ObjectStorage.Api.Entities
 {
     public class StashChunkDetail: ITableEntity
     {
-        public double FileSizeMB { get; set; }
-        public double TotalUploadedSizeMB { get; set; }
+        public double FileSizeMb { get; set; }
+        public double TotalUploadedSizeMb { get; set; }
         public int TotalUploadedChunks { get; set; }
         public string FileFormat { get; set; } = null!;
         public string? BlurHash { get; set; }
         public Guid UserId { get; set; }
-        public string AccessTier { get; set; }
-        public string PartitionKey { get; set; }
-        public string RowKey { get; set; }
+        public required string AccessTier { get; set; }
+        public required string PartitionKey { get; set; }
+        public required string RowKey { get; set; }
         public DateTimeOffset? Timestamp { get; set; }
         public ETag ETag { get; set; }
     }

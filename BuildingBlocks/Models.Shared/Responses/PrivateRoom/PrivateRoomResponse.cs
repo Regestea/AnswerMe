@@ -10,6 +10,6 @@ namespace Models.Shared.Responses.PrivateRoom
     public class PrivateRoomResponse
     {
         public Guid Id { get; set; }
-        public PreviewUserResponse Contact { get; set; }
+        public required PreviewUserResponse Contact { get; set; }
     }
 }

@@ -27,7 +27,6 @@ namespace AnswerMe.Api.Controllers
         }
 
 
-
         /// <summary>
         /// Get group by groupId
         /// </summary>
@@ -38,19 +37,20 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpGet("{groupId:guid}")]
-        public async Task<IActionResult> GetGroup([FromRoute] Guid groupId)
+        public async Task<IActionResult> GetGroupAsync([FromRoute] Guid groupId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
             var result = await _groupRepository.GetAsync(loggedInUser.id, groupId);
 
-            if (result.IsT1)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
-            if (result.IsT0)
+
+            if (result.IsSuccess)
             {
-                return Ok(result.AsT0.Value);
+                return Ok(result.AsSuccess.Value);
             }
 
             return NotFound();
@@ -63,14 +63,14 @@ namespace AnswerMe.Api.Controllers
         /// <response code="200">Success: Get list of group</response>
         [ProducesResponseType(typeof(PagedListResponse<GroupResponse>), StatusCodes.Status200OK)]
         [HttpGet("List")]
-        public async Task<IActionResult> GetGroupList([FromQuery] PaginationRequest paginationRequest)
+        public async Task<IActionResult> GetGroupListAsync([FromQuery] PaginationRequest paginationRequest)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupRepository.GetListAsync(loggedInUser.id, paginationRequest);
 
-            return Ok(result.AsT0.Value);
+            return Ok(result.AsSuccess.Value);
         }
 
         /// <summary>
@@ -83,21 +83,22 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpGet("{groupId:guid}/User/List")]
-        public async Task<IActionResult> GetGroupUserList([FromRoute] Guid groupId, [FromQuery] PaginationRequest paginationRequest)
+        public async Task<IActionResult> GetGroupUserListAsync([FromRoute] Guid groupId,
+            [FromQuery] PaginationRequest paginationRequest)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupRepository.UserListAsync(loggedInUser.id, groupId, paginationRequest);
 
-            if (result.IsT1)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
-            if (result.IsT0)
+            if (result.IsSuccess)
             {
-                return Ok(result.AsT0.Value);
+                return Ok(result.AsSuccess.Value);
             }
 
             return NotFound();
@@ -108,25 +109,16 @@ namespace AnswerMe.Api.Controllers
         /// Create group
         /// </summary>
         /// <response code="200">Success: Group Id</response>
-        /// <response code="400">BadRequest</response>
         [ProducesResponseType(typeof(IdResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpPost]
-        public async Task<IActionResult> CreateGroup(CreateGroupRequest request)
+        public async Task<IActionResult> CreateGroupAsync(CreateGroupRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupRepository.CreateAsync(loggedInUser.id, request);
-
-            if (result.IsT0)
-            {
-                return Ok(result.AsT0.Value);
-            }
-
-            return BadRequest();
+            return Ok(result.AsSuccess.Value);
         }
-
 
 
         /// <summary>
@@ -139,26 +131,25 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpPatch("{groupId:guid}")]
-        public async Task<IActionResult> EditGroup([FromRoute] Guid groupId, EditGroupRequest request)
+        public async Task<IActionResult> EditGroupAsync([FromRoute] Guid groupId, EditGroupRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupRepository.EditAsync(loggedInUser.id, groupId, request);
 
-            if (result.IsT4)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
-            if (result.IsT5)
+            if (result.IsNotFound)
             {
                 return NotFound();
             }
 
             return NoContent();
         }
-
 
 
         /// <summary>
@@ -171,24 +162,24 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpPost("Group/{groupId:guid}/User/{userId:guid}")]
-        public async Task<IActionResult> JoinUserToGroup([FromRoute] Guid groupId, [FromRoute] Guid userId)
+        public async Task<IActionResult> JoinUserToGroupAsync([FromRoute] Guid groupId, [FromRoute] Guid userId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupRepository.JoinUserAsync(loggedInUser.id, groupId, userId);
 
-            if (result.IsT4)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
-            if (result.IsT5)
+            if (result.IsNotFound)
             {
                 return NotFound();
             }
 
-            return Ok(result.AsT0);
+            return Ok(result.AsSuccess.Value);
         }
 
         /// <summary>
@@ -201,21 +192,21 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpDelete("{groupId:guid}/User/{userId:guid}")]
-        public async Task<IActionResult> KickUserFromGroup([FromRoute] Guid groupId, [FromRoute] Guid userId)
+        public async Task<IActionResult> KickUserFromGroupAsync([FromRoute] Guid groupId, [FromRoute] Guid userId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupRepository.KickUserAsync(loggedInUser.id, groupId, userId);
 
-            if (result.IsT2)
+            if (result.IsNotFound)
             {
                 return NotFound();
             }
 
-            if (result.IsT1)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
             return NoContent();
@@ -233,24 +224,24 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(typeof(IdResponse), StatusCodes.Status200OK)] // Specify the expected response type
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> SetUserAsGroupAdmins([FromRoute] Guid groupId, [FromRoute] Guid userId)
+        public async Task<IActionResult> SetUserAsGroupAdminsAsync([FromRoute] Guid groupId, [FromRoute] Guid userId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupRepository.SetUserAsAdminAsync(loggedInUser.id, groupId, userId);
 
-            if (result.IsT4)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
-            if (result.IsT5)
+            if (result.IsNotFound)
             {
                 return NotFound();
             }
 
-            return Ok(result.AsT0.Value);
+            return Ok(result.AsSuccess.Value);
         }
 
         /// <summary>
@@ -265,21 +256,21 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> RemoveUserFromGroupAdmins(Guid groupId, Guid userId)
+        public async Task<IActionResult> RemoveUserFromGroupAdminsAsync(Guid groupId, Guid userId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
             var result = await _groupRepository.RemoveUserFromAdminsAsync(loggedInUser.id, groupId, userId);
 
-            if (result.IsT0)
+            if (result.IsSuccess)
             {
                 return NoContent();
             }
 
-            if (result.IsT1)
+            if (result.IsAccessDenied)
             {
-                return StatusCode(403);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
             return NotFound();
@@ -294,19 +285,14 @@ namespace AnswerMe.Api.Controllers
         [HttpDelete("Group/{groupId:guid}/Leave")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> LeaveGroup([FromRoute] Guid groupId)
+        public async Task<IActionResult> LeaveGroupAsync([FromRoute] Guid groupId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
-            var result = await _groupRepository.LeaveGroupAsync(loggedInUser.id, groupId);
+            await _groupRepository.LeaveGroupAsync(loggedInUser.id, groupId);
 
-            if (result.IsT0)
-            {
-                return NoContent();
-            }
-
-            return BadRequest();
+            return NoContent();
         }
     }
 }

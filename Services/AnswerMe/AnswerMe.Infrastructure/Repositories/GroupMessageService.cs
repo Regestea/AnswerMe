@@ -32,12 +32,7 @@ namespace AnswerMe.Infrastructure.Repositories
             _fileStorageService = fileStorageService;
             _groupHubService = groupHubService;
         }
-
-        public GroupMessageService(AnswerMeDbContext context)
-        {
-            _context = context;
-        }
-
+        
         public async Task<CreateResponse<IdResponse>> SendAsync(Guid loggedInUserId, Guid groupId, SendMessageRequest request)
         {
             var existGroup = await _context.GroupChats.IsAnyAsync(x => x.id == groupId);
@@ -162,7 +157,7 @@ namespace AnswerMe.Infrastructure.Repositories
                     {
                         id = message.id,
                         CreatedDate = message.CreatedDate,
-                        MediaList = message.MediaList.Select(x => new MediaResponse
+                        MediaList = message.MediaList!.Select(x => new MediaResponse
                         {
                             Id = x.Id,
                             Type = (MediaTypeResponse)x.Type,

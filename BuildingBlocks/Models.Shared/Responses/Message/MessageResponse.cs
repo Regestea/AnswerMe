@@ -19,7 +19,7 @@ namespace Models.Shared.Responses.Message
 
         public string? GroupInviteToken { get; set; }
 
-        public PreviewUserResponse UserSender { get; set; }
+        public required PreviewUserResponse UserSender { get; set; }
 
         public Guid? ReplyMessageId { get; set; }
 

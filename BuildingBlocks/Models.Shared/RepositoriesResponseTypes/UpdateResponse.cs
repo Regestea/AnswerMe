@@ -6,58 +6,31 @@ namespace Models.Shared.RepositoriesResponseTypes
 {
     public class UpdateResponse : OneOfBase<Success, List<ValidationFailed>, ValidationFailed, Error<string>, AccessDenied, NotFound>
     {
-        /// <summary>
-        /// Initializes a new instance of the UpdateResponse
-        /// class.
-        /// </summary>
-        /// <param name="input">The result of the update operation.</param>
-        protected UpdateResponse(OneOf<Success, List<ValidationFailed>, ValidationFailed, Error<string>, AccessDenied, NotFound> input)
+        private UpdateResponse(OneOf<Success, List<ValidationFailed>, ValidationFailed, Error<string>, AccessDenied, NotFound> input)
             : base(input)
         {
         }
+        
+        public Success AsSuccess => AsT0;
+        public List<ValidationFailed> AsValidationFailureList => AsT1;
+        public ValidationFailed AsValidationFailure => AsT2;
+        public Error<string> AsError => AsT3;
+        public AccessDenied AsAccessDenied => AsT4;
+        public NotFound AsNotFound => AsT5;
 
-        /// <summary>
-        /// Implicitly converts a <see cref="Success"/> object to an <see cref="UpdateResponse"/> object.
-        /// </summary>
-        /// <param name="_">The <see cref="Success"/> object to convert.</param>
-        /// <returns>An <see cref="UpdateResponse"/> object initialized with the given <see cref="Success"/> object.</returns>
-        public static implicit operator UpdateResponse(Success _) => new(_);
-
-        /// <summary>
-        /// Implicitly converts a NotFound object to an UpdateResponse object.
-        /// </summary>
-        /// <param name="_">The NotFound object to convert.</param>
-        /// <returns>The converted UpdateResponse object.</returns>
-        public static implicit operator UpdateResponse(NotFound _) => new(_);
-
-        /// <summary>
-        /// Implicitly converts an <see cref="Error{T}"/> to an <see cref="UpdateResponse"/>.
-        /// </summary>
-        /// <param name="_">The <see cref="Error{T}"/> object to be converted.</param>
-        /// <returns>The converted <see cref="UpdateResponse"/> object.</returns>
-        public static implicit operator UpdateResponse(Error<string> _) => new(_);
-
-        /// <summary>
-        /// Implicitly converts an <see cref="AccessDenied"/> object to an <see cref="UpdateResponse"/> object
-        /// .
-        /// </summary>
-        /// <param name="_">The <see cref="AccessDenied"/> object to be converted.</param>
-        /// <returns>The converted <see cref="UpdateResponse"/> object.</returns>
-        public static implicit operator UpdateResponse(AccessDenied _) => new(_);
-
-        /// <summary>
-        /// Implicitly converts a List of ValidationFailed objects to an UpdateResponse object.
-        /// </summary>
-        /// <param name="_">The List of ValidationFailed objects to be converted.</param>
-        /// <returns>The converted UpdateResponse object.</returns>
-        public static implicit operator UpdateResponse(List<ValidationFailed> _) => new(_);
-
-        /// <summary>
-        /// Implicitly converts a <see cref="ValidationFailed"/> instance to an <see cref="UpdateResponse
-        /// "/> instance.
-        /// </summary>
-        /// <param name="_">The <see cref="ValidationFailed"/> instance to be converted.</param>
-        /// <returns>An <see cref="UpdateResponse"/> instance.</returns>
-        public static implicit operator UpdateResponse(ValidationFailed _) => new(_);
+        public bool IsSuccess => IsT0;
+        public bool IsValidationFailure => IsT1;
+        public bool IsSingleValidationFailure => IsT2;
+        public bool IsError => IsT3;
+        public bool IsAccessDenied => IsT4;
+        public bool IsNotFound => IsT5;
+        
+        
+        public static implicit operator UpdateResponse(Success success) => new(success);
+        public static implicit operator UpdateResponse(NotFound notFound) => new(notFound);
+        public static implicit operator UpdateResponse(Error<string> error) => new(error);
+        public static implicit operator UpdateResponse(AccessDenied accessDenied) => new(accessDenied);
+        public static implicit operator UpdateResponse(List<ValidationFailed> validationFailures) => new(validationFailures);
+        public static implicit operator UpdateResponse(ValidationFailed validationFailure) => new(validationFailure);
     }
 }

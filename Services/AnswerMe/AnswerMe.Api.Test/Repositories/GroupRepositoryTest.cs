@@ -33,7 +33,7 @@ namespace AnswerMe.Api.Test.Repositories
         public async Task GroupGetList_Should_GetListOfUserGroup()
         {
             //Arrange
-            var mockGroupRepository = new GroupRepository(_inMemoryDbContext, null);
+            var mockGroupRepository = new GroupRepository(_inMemoryDbContext, null!);
 
             var userId = Guid.NewGuid();
 
@@ -90,11 +90,11 @@ namespace AnswerMe.Api.Test.Repositories
             //Assert
 
             Assert.NotNull(pagedGroupList);
-            Assert.True(pagedGroupList.IsT0);
-            Assert.IsType<PagedListResponse<GroupResponse>>(pagedGroupList.AsT0.Value);
-            Assert.NotNull(pagedGroupList.AsT0.Value.Items);
-            Assert.True(pagedGroupList.AsT0.Value.Items.Any());
-            Assert.Equal(3, pagedGroupList.AsT0.Value.Items.Count);
+            Assert.True(pagedGroupList.IsSuccess);
+            Assert.IsType<PagedListResponse<GroupResponse>>(pagedGroupList.AsSuccess.Value);
+            Assert.NotNull(pagedGroupList.AsSuccess.Value.Items);
+            Assert.True(pagedGroupList.AsSuccess.Value.Items.Any());
+            Assert.Equal(3, pagedGroupList.AsSuccess.Value.Items.Count);
 
             Dispose();
         }
@@ -157,16 +157,16 @@ namespace AnswerMe.Api.Test.Repositories
 
             //Assert
             Assert.NotNull(pagedUser);
-            Assert.True(pagedUser.IsT0);
+            Assert.True(pagedUser.IsSuccess);
             Assert.IsType<PagedListResponse<PreviewGroupUserResponse>>(pagedUser.AsT0.Value);
-            Assert.NotNull(pagedUser.AsT0.Value.Items);
-            Assert.True(pagedUser.AsT0.Value.Items.Any());
-            Assert.Equal(4, pagedUser.AsT0.Value.Items.Count);
+            Assert.NotNull(pagedUser.AsSuccess.Value.Items);
+            Assert.True(pagedUser.AsSuccess.Value.Items.Any());
+            Assert.Equal(4, pagedUser.AsSuccess.Value.Items.Count);
 
             Dispose();
         }
 
-        public void Dispose()
+        private void Dispose()
         {
             _inMemoryDbContext.Dispose(); // Dispose of the in-memory database context
         }

@@ -35,7 +35,7 @@ public class FileUploadServiceTest
             .Returns(() => new BlobContainerClient(BlobTestServer, ContainerName.image.ToString()));
 
         var fileStream = TextToImageStream.ConvertTextToImageStream("test image");
-        var chunks = await fileStream.ConvertStreamToChunksAsync(1);
+        var chunks = await fileStream.ConvertStreamToChunksAsync(2);
 
         var fileUploadService = new FileUploadService(mockBlobClientFactory.Object);
 
@@ -61,7 +61,7 @@ public class FileUploadServiceTest
             // Assert
             Assert.NotNull(result);
             Assert.IsType<UpdateResponse>(result);
-            Assert.True(result.IsT0);
+            Assert.True(result.IsSuccess);
         }
 
 

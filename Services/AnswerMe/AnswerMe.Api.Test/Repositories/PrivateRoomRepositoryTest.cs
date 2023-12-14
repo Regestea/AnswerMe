@@ -74,11 +74,11 @@ namespace AnswerMe.Api.Test.Repositories
             //Assert
 
             Assert.NotNull(pagedPrivateRoom);
-            Assert.True(pagedPrivateRoom.IsT0);
-            Assert.IsType<PagedListResponse<PrivateRoomResponse>>(pagedPrivateRoom.AsT0.Value);
-            Assert.NotNull(pagedPrivateRoom.AsT0.Value.Items);
-            Assert.True(pagedPrivateRoom.AsT0.Value.Items.Any());
-            Assert.Equal(4, pagedPrivateRoom.AsT0.Value.Items.Count);
+            Assert.True(pagedPrivateRoom.IsSuccess);
+            Assert.IsType<PagedListResponse<PrivateRoomResponse>>(pagedPrivateRoom.AsSuccess.Value);
+            Assert.NotNull(pagedPrivateRoom.AsSuccess.Value.Items);
+            Assert.True(pagedPrivateRoom.AsSuccess.Value.Items.Any());
+            Assert.Equal(4, pagedPrivateRoom.AsSuccess.Value.Items.Count);
 
             Dispose();
         }

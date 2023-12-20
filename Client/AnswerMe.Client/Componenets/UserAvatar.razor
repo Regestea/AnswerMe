@@ -1,0 +1,53 @@
+﻿@if (!string.IsNullOrWhiteSpace(ImageUrl))
+{
+    <img class="@Class" src="@ImageUrl"  />
+}
+else
+{
+    <div class="avatar placeholder">
+        <div class="bg-neutral text-neutral-content rounded-full w-24" style="background-color: @_backgroundColor">
+            <span class="text-3xl" style="color:wheat">@Letter</span>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter] public string? ImageUrl { get; set; }
+
+    [Parameter] public required string Letter { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    private string? _backgroundColor;
+    
+
+    private Dictionary<string, string> LetterColors = new()
+    {
+        { "A", "#f44336" }, { "B", "#e91e63" }, { "C", "#9c27b0" }, { "D", "#673ab7" },
+        { "E", "#3f51b5" }, { "F", "#2196f3" }, { "G", "#03a9f4" }, { "H", "#00bcd4" },
+        { "I", "#009688" }, { "J", "#4caf50" }, { "K", "#ffeb3b" }, { "L", "#ffc107" },
+        { "M", "#ff9800" }, { "N", "#ff5722" }, { "O", "#2196f3" }, { "P", "#ffeb3b" },
+        { "Q", "#00bcd4" }, { "R", "#ffc107" }, { "S", "#ff5722" }, { "T", "#00bcd4" },
+        { "U", "#ffc107" }, { "V", "#00bcd4" }, { "W", "#03a9f4" }, { "X", "#ff9800" },
+        { "Y", "#00bcd4" }, { "Z", "#03a9f4" }
+    };
+
+
+    protected override void OnInitialized()
+    {
+        _backgroundColor = GetColorByLetter(Letter);
+    }
+
+
+    string GetColorByLetter(string letter)
+    {
+        if (LetterColors.TryGetValue(letter, out string color))
+        {
+            return color;
+        }
+
+        return "#3f51b5";
+    }
+
+}

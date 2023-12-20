@@ -14,8 +14,16 @@ namespace AnswerMe.Client.Core
         {
             services.AddAuthorizationCore();
             services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
-            services.AddScoped<AuthStateProvider>();
+            services.AddScoped<IPrivateMessageService, PrivateMessageService>();
+            services.AddScoped<IObjectStorageService, ObjectStorageService>();
+            services.AddScoped<IGroupMessageService, GroupMessageService>();
+            services.AddScoped<IPrivateRoomService, PrivateRoomService>();
+            services.AddScoped<IGroupInviteService, GroupInviteService>();
+            services.AddScoped<IGroupService, GroupService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IObjectHelperService, ObjectHelperService>();
+            services.AddScoped<AuthStateProvider>();
             services.AddBlazoredLocalStorage();
             services.AddCascadingAuthenticationState();
 

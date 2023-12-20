@@ -20,27 +20,39 @@ function ResizeComponent() {
         if (isAtHome) {
             let mainBody = document.getElementById("ChatBody");
             let sidebar = document.getElementById("SidebarMenu");
+            let accountMenu = document.getElementById("AccountMenu");
             
             if (mainBody !=null && sidebar !=null ){
                 sidebar.classList.add('w-full');
                 sidebar.classList.add('-translate-x-0');
+
+                accountMenu.classList.add('w-full');
+                accountMenu.classList.add('-translate-x-0');
+                
                 mainBody.classList.add('-translate-x-full');
                 mainBody.classList.add('hidden');
             }
         }
         else {
             let sidebar = document.getElementById("SidebarMenu");
+            let accountMenu = document.getElementById("AccountMenu");
             
             sidebar.classList.add('-translate-x-full');
+            accountMenu.classList.add('-translate-x-full');
         }
         
     } else {
         let mainBody = document.getElementById("ChatBody");
         let sidebar = document.getElementById("SidebarMenu");
+        let accountMenu = document.getElementById("AccountMenu");
         
         if (mainBody !=null && sidebar !=null){
             sidebar.classList.remove('-translate-x-0');
             sidebar.classList.remove('w-full');
+
+            accountMenu.classList.remove('-translate-x-0');
+            accountMenu.classList.remove('w-full');
+            
             mainBody.classList.remove('-translate-x-full');
             mainBody.classList.remove('hidden');
         }

@@ -7,9 +7,9 @@ namespace AnswerMe.Client.Core.Services.Interfaces
     public interface IAuthService
     {
         // Register return id
-        Task<CreateResponse<IdResponse>> Register(RegisterUserRequest request);
+        Task<CreateResponse<IdResponse>> RegisterAsync(RegisterUserRequest request);
 
         // Login return string token
-        Task<ReadResponse<TokenResponse>> Login(LoginUserRequest request);
+        Task<ReadResponse<TokenResponse>> LoginAsync(LoginUserRequest request);
     }
 }

@@ -20,13 +20,23 @@
 
 <AuthorizeView>
     <Authorized>
+      <div class="nav-section transition-transform @AccountMenuClass">
 
-        <div class="nav-section menu-on ">
-
-            <aside id="SidebarMenu" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 " style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
-                <NavMenu/>
+            <aside id="AccountMenu" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 " style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
+                <AccountMenu AccountMenuClass="AccountMenuClass" ChatsMenuClass="NavMenuClass" AccountMenuClassChanged="AccountMenuChanged" ChatsMenuClassChanged="ChatsMenuChanged"/>
             </aside>
         </div>
+        
+        <div class="nav-section transition-transform @NavMenuClass">
+
+            <aside id="SidebarMenu" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 " style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
+
+                <NavMenu AccountMenuClass="AccountMenuClass" ChatsMenuClass="NavMenuClass" AccountMenuClassChanged="AccountMenuChanged" ChatsMenuClassChanged="ChatsMenuChanged"/>
+
+            </aside>
+        </div>
+
+  
 
         <div id="ChatBody" class="body-content transition-transform @_chatBodyClass">
             @Body
@@ -42,10 +52,13 @@
 
 @code
 {
-    public bool IsAtHome = false;
-    public string? ScreenSize;
+    private bool IsAtHome = false;
+    private string? ScreenSize;
     private string _chatBodyClass = "";
     private string _sidebarClass = "-translate-x-full";
+
+    private string AccountMenuClass = "-translate-x-full";
+    private string NavMenuClass = "-translate-x-0";
 
     [Inject] public IJSRuntime JSRuntime { get; set; }
 
@@ -78,4 +91,15 @@
 
         await base.OnInitializedAsync();
     }
+
+    private void AccountMenuChanged(string updateClass)
+    {
+        AccountMenuClass = updateClass;
+    }
+
+    private void ChatsMenuChanged(string updateClass)
+    {
+        NavMenuClass = updateClass;
+    }
+
 }

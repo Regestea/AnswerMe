@@ -58,7 +58,7 @@ namespace Models.Shared.Attribute
 
         private string GetErrorMessage()
         {
-            return string.Format("Allowed file size is between {0} KB and {1} KB", _minFileSize,
+            return string.Format("Allowed file size is between {0} MB and {1} MB", _minFileSize,
                 _maxFileSize);
         }
     }

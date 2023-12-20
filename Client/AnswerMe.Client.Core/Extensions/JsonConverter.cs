@@ -1,5 +1,8 @@
 ﻿using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using AnswerMe.Client.Core.DTOs.Response;
+using Microsoft.AspNetCore.Components.Forms;
 using Models.Shared.OneOfTypes;
 
 namespace AnswerMe.Client.Core.Extensions
@@ -30,53 +33,25 @@ namespace AnswerMe.Client.Core.Extensions
         {
             return Task.FromResult(JsonSerializer.Serialize(content, _options));
         }
-
+        
         public static async Task<List<ValidationFailed>> ToValidationFailedList(string content)
         {
-            try
+            var validationProblemDetails = JsonSerializer.Deserialize<ValidationDto>(content);
+            var validationList = new List<ValidationFailed>();
+            if (validationProblemDetails is { Errors: not null })
             {
-                var errorDict = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(content);
-                var validationFailedList = new List<ValidationFailed>();
-
-                if (errorDict != null)
-                    foreach (var error in errorDict)
-                    {
-                        foreach (string errorMessage in error.Value)
-                        {
-                            validationFailedList.Add(new ValidationFailed() { Field = error.Key, Error = errorMessage });
-                        }
-                    }
-
-                return validationFailedList;
-            }
-            catch (Exception e)
-            {
-                JsonDocument jsonDocument = JsonDocument.Parse(content);
-
-                // Navigate to the "errors" field
-                JsonElement errorsElement = jsonDocument.RootElement.GetProperty("errors");
-
-                // Check if the "errors" field is an object
-                if (errorsElement.ValueKind == JsonValueKind.Object)
+                foreach (var error in validationProblemDetails.Errors)
                 {
-                    // Access the value of the "FileFormat" key
-                    JsonElement fileFormatElement = errorsElement.GetProperty("FileFormat");
-
-                    // Check if the "FileFormat" value is an array
-                    if (fileFormatElement.ValueKind == JsonValueKind.Array)
+                    if (!string.IsNullOrWhiteSpace(error.Value.ToString()))
                     {
-                        // Access the first element of the array
-                        JsonElement firstErrorElement = fileFormatElement.EnumerateArray().FirstOrDefault();
-
-                        // Get the value as a string
-                        string firstErrorValue = firstErrorElement.GetString();
-
-                        return new List<ValidationFailed>() {new ValidationFailed(){Field = "error",Error = firstErrorValue} };
+                        
+                        var errorString = string.Join( " ",error.Value);
+                        validationList.Add(new ValidationFailed(){Field = error.Key,Error = errorString});
                     }
                 }
             }
 
-            return new List<ValidationFailed>() { new ValidationFailed(){Field = "error",Error = "some error happend"} };
+            return validationList;
         }
     }
 }

@@ -6,8 +6,6 @@ function setDotnetReference(pDotNetReference) {
     GLOBAL.DotNetReference = pDotNetReference;
 }
 
-
-
 window.addEventListener('resize', ResizeComponent);
 
 
@@ -20,27 +18,39 @@ function ResizeComponent() {
         if (isAtHome) {
             let mainBody = document.getElementById("ChatBody");
             let sidebar = document.getElementById("SidebarMenu");
+            let accountMenu = document.getElementById("AccountMenu");
             
             if (mainBody !=null && sidebar !=null ){
                 sidebar.classList.add('w-full');
                 sidebar.classList.add('-translate-x-0');
+
+                accountMenu.classList.add('w-full');
+                accountMenu.classList.add('-translate-x-0');
+                
                 mainBody.classList.add('-translate-x-full');
                 mainBody.classList.add('hidden');
             }
         }
         else {
             let sidebar = document.getElementById("SidebarMenu");
+            let accountMenu = document.getElementById("AccountMenu");
             
             sidebar.classList.add('-translate-x-full');
+            accountMenu.classList.add('-translate-x-full');
         }
         
     } else {
         let mainBody = document.getElementById("ChatBody");
         let sidebar = document.getElementById("SidebarMenu");
+        let accountMenu = document.getElementById("AccountMenu");
         
         if (mainBody !=null && sidebar !=null){
             sidebar.classList.remove('-translate-x-0');
             sidebar.classList.remove('w-full');
+
+            accountMenu.classList.remove('-translate-x-0');
+            accountMenu.classList.remove('w-full');
+            
             mainBody.classList.remove('-translate-x-full');
             mainBody.classList.remove('hidden');
         }
@@ -68,29 +78,61 @@ function getScreenSizeCategory() {
 }
 
 
+function ValidationMessageBox(validationErrors){
+    const modalBox=document.getElementById("modal-box");
+    const modal = document.getElementById("Modal-Message");
+    modalBox.innerHTML="";
+
+    validationErrors.forEach(function (error) {
+
+        let newDiv=document.createElement("div");
+        newDiv.innerText=error.field;
+        newDiv.className="mt-6 stat-value text-secondary";
+       
+        let newText=document.createElement("p");
+        newText.innerText=error.error;
+        newText.className="mt-6 ml-4";
+
+        modalBox.insertBefore(newText,modalBox.firstChild);
+        modalBox.insertBefore(newDiv,modalBox.firstChild);
+    });
+    modal.showModal();
+}
+
 
 function MessageShow(messageType, messageHeader, messageText) {
-    const modalHeader = document.getElementById("Modal-Message-Header");
-    const modalText = document.getElementById("Modal-Text");
+    const modalBox=document.getElementById("modal-box");
     const modal = document.getElementById("Modal-Message");
+    modalBox.innerHTML="";
+    let modalHeaderClass="";
 
     switch (messageType) {
         case "info":
-            modalHeader.className = "stat-value text-info";
+            modalHeaderClass = "mt-4 stat-value text-info";
             break;
         case "success":
-            modalHeader.className = "stat-value text-accent";
+            modalHeaderClass = "mt-4 stat-value text-accent";
             break;
         case "error":
-            modalHeader.className = "stat-value text-secondary";
+            modalHeaderClass = "mt-4 stat-value text-secondary";
             break;
         default:
-            modalHeader.className = "stat-value text-info";
+            modalHeaderClass = "mt-4 stat-value text-info";
             break;
     }
 
-    modalHeader.innerText = messageHeader;
-    modalText.innerText = messageText;
+
+    let newDiv=document.createElement("div");
+    newDiv.innerText=messageHeader;
+    newDiv.className=modalHeaderClass;
+
+    let newText=document.createElement("p");
+    newText.innerText=messageText;
+    newText.className="mt-4 ml-4";
+
+    modalBox.insertBefore(newText,modalBox.firstChild);
+    modalBox.insertBefore(newDiv,modalBox.firstChild);
+    
 
     modal.showModal();
 }

@@ -96,7 +96,7 @@
 
 @code
 {
-    [Inject] public IJSRuntime JSRuntime { get; set; }
+    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
 
     [SupplyParameterFromForm(FormName = "login")]
     private LoginUserRequest LoginUserRequest { get; set; } = new();
@@ -140,17 +140,17 @@
 
     private async Task LoginHandler()
     {
-        var result = await AuthService.Login(LoginUserRequest);
+        var result = await AuthService.LoginAsync(LoginUserRequest);
 
         //success login set token redirect to home hide login and register link and show logout
-        if (result.IsT0)
+        if (result.IsSuccess)
         {
             await LocalStorage.SetItemAsStringAsync("authToken", result.AsT0.Value.Token);
             NavigationManager.NavigateTo("/", true);
         }
 
         //user not found
-        if (!result.IsT0)
+        if (!result.IsSuccess)
         {
             _loginMessageStore?.Clear();
             AddValidationError(_loginMessageStore, LoginUserRequest, nameof(LoginUserRequest.PhoneNumber), "User not found");
@@ -162,17 +162,17 @@
 
     private async Task RegisterHandler()
     {
-        var result = await AuthService.Register(RegisterUserRequest);
+        var result = await AuthService.RegisterAsync(RegisterUserRequest);
 
-        if (result.IsT0)
+        if (result.IsSuccess)
         {
-            await JSRuntime.InvokeVoidAsync("MessageShow", "success", "SuccessFull", "Your account created successfully please login");
+            await JsRuntime.InvokeVoidAsync("MessageShow", "success", "SuccessFull", "Your account created successfully please login");
         }
 
-        if (result.IsT1)
+        if (result.IsValidationFailureList)
         {
             _registerMessageStore?.Clear();
-            foreach (var validation in result.AsT1)
+            foreach (var validation in result.AsValidationFailureList)
             {
                 _registerMessageStore?.Add(new FieldIdentifier(RegisterUserRequest, validation.Field), validation.Error);
             }

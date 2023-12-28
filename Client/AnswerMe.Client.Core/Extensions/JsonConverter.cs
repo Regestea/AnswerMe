@@ -1,5 +1,8 @@
 ﻿using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using AnswerMe.Client.Core.DTOs.Response;
+using Microsoft.AspNetCore.Components.Forms;
 using Models.Shared.OneOfTypes;
 
 namespace AnswerMe.Client.Core.Extensions
@@ -14,7 +17,7 @@ namespace AnswerMe.Client.Core.Extensions
             PropertyNameCaseInsensitive = true,
         };
 
-        public static Task<T> ToObject<T>(string content) 
+        public static Task<T> ToObject<T>(string content)
         {
             return Task.FromResult(JsonSerializer.Deserialize<T>(content, _options) ??
                                    throw new InvalidOperationException());
@@ -30,22 +33,25 @@ namespace AnswerMe.Client.Core.Extensions
         {
             return Task.FromResult(JsonSerializer.Serialize(content, _options));
         }
-
+        
         public static Task<List<ValidationFailed>> ToValidationFailedList(string content)
         {
-            var errorDict = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(content);
-            var validationFailedList = new List<ValidationFailed>();
-
-            if (errorDict != null)
-                foreach (var error in errorDict)
+            var validationProblemDetails = JsonSerializer.Deserialize<ValidationDto>(content);
+            var validationList = new List<ValidationFailed>();
+            if (validationProblemDetails is { Errors: not null })
+            {
+                foreach (var error in validationProblemDetails.Errors)
                 {
-                    foreach (string errorMessage in error.Value)
+                    if (!string.IsNullOrWhiteSpace(error.Value.ToString()))
                     {
-                        validationFailedList.Add(new ValidationFailed() { Field = error.Key, Error = errorMessage });
+                        
+                        var errorString = string.Join( " ",error.Value);
+                        validationList.Add(new ValidationFailed(){Field = error.Key,Error = errorString});
                     }
                 }
+            }
 
-            return Task.FromResult(validationFailedList);
+            return Task.FromResult(validationList);
         }
     }
 }

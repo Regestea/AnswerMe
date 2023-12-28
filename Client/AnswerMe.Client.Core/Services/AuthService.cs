@@ -21,7 +21,7 @@ public class AuthService:IAuthService
         _httpClient = httpClientFactory.CreateClient(nameof(Enums.HttpClients.IdentityServer));
     }
     
-    public async Task<CreateResponse<IdResponse>> Register(RegisterUserRequest request)
+    public async Task<CreateResponse<IdResponse>> RegisterAsync(RegisterUserRequest request)
     {
         var requestStringContent = await JsonConverter.ToStringContent(request);
 
@@ -41,7 +41,7 @@ public class AuthService:IAuthService
         return new Error<string>("unknown issue");
     }
 
-    public async Task<ReadResponse<TokenResponse>> Login(LoginUserRequest request)
+    public async Task<ReadResponse<TokenResponse>> LoginAsync(LoginUserRequest request)
     {
         var requestStringContent = await JsonConverter.ToStringContent(request);
 

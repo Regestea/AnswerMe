@@ -10,7 +10,7 @@ namespace Models.Shared.Requests.ObjectStorage
     public class FileChunkRequest
     {
         public Guid UploadToken { get; set; }
-        [FileSizeMegabyte(0.01,4)]
+        [FileSizeMegabyte(0.000001,4)]
         public required byte[] Data { get; set; }
         public int CurrentChunk { get; set; }
         public bool LastChunk { get; set; }

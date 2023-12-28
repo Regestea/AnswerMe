@@ -1,13 +1,11 @@
 ﻿@inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Authorization
-@using AnswerMe.Client.Componenets
 @inject NavigationManager NavigationManager
-
 
 <dialog id="Modal-Message" class="modal">
     <div class="modal-box glass-box ">
-        <div id="Modal-Message-Header"></div>
-        <p id="Modal-Text" class="py-4"></p>
+        <div id="modal-box">
+        </div>
         <div class="modal-action">
             <form method="dialog">
                 <!-- if there is a button in form, it will close the modal -->
@@ -17,14 +15,17 @@
     </div>
 </dialog>
 
-
 <AuthorizeView>
     <Authorized>
-
-        <div class="nav-section menu-on ">
-
+      <div class="nav-section transition-transform @AccountMenuClass">
+            <aside id="AccountMenu" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 " style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
+                <AccountMenu AccountMenuClass="AccountMenuClass" ChatsMenuClass="NavMenuClass" AccountMenuClassChanged="AccountMenuChanged" ChatsMenuClassChanged="ChatsMenuChanged"/>
+            </aside>
+        </div>
+        
+        <div class="nav-section transition-transform @NavMenuClass">
             <aside id="SidebarMenu" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 " style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
-                <NavMenu/>
+                <NavMenu AccountMenuClass="AccountMenuClass" ChatsMenuClass="NavMenuClass" AccountMenuClassChanged="AccountMenuChanged" ChatsMenuClassChanged="ChatsMenuChanged"/>
             </aside>
         </div>
 
@@ -42,12 +43,15 @@
 
 @code
 {
-    public bool IsAtHome = false;
-    public string? ScreenSize;
+    private bool IsAtHome = false;
+    private string? ScreenSize;
     private string _chatBodyClass = "";
     private string _sidebarClass = "-translate-x-full";
 
-    [Inject] public IJSRuntime JSRuntime { get; set; }
+    private string AccountMenuClass = "-translate-x-full";
+    private string NavMenuClass = "-translate-x-0";
+
+    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -56,7 +60,7 @@
             IsAtHome = true;
         }
 
-        ScreenSize = await JSRuntime.InvokeAsync<string>("getScreenSizeCategory");
+        ScreenSize = await JsRuntime.InvokeAsync<string>("getScreenSizeCategory");
 
         if (ScreenSize is "sm" or "md" or "lg" or "xl")
         {
@@ -78,4 +82,15 @@
 
         await base.OnInitializedAsync();
     }
+
+    private void AccountMenuChanged(string updateClass)
+    {
+        AccountMenuClass = updateClass;
+    }
+
+    private void ChatsMenuChanged(string updateClass)
+    {
+        NavMenuClass = updateClass;
+    }
+
 }

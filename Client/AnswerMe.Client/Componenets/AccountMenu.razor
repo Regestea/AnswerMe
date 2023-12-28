@@ -1,0 +1,215 @@
+@using Models.Shared.Requests.ObjectStorage
+@using AnswerMe.Client.Core.Extensions
+@inject IUserService UserService
+@inject IObjectStorageService StorageService
+@inject IObjectHelperService ObjectHelperService
+
+<div class="flex">
+    <div class="dropdown dropdown-right" style="z-index: 2">
+        <button @onclick="ViewMenuAsync" role="button" class="btn btn-circle" style="width: 60px;height: 60px;margin: 20px 0 20px 35px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" id="backarrow">
+                <path fill="none" d="M0 0h24v24H0V0z" opacity=".87"></path><path d="M16.62 2.99c-.49-.49-1.28-.49-1.77 0L6.54 11.3c-.39.39-.39 1.02 0 1.41l8.31 8.31c.49.49 1.28.49 1.77 0s.49-1.28 0-1.77L9.38 12l7.25-7.25c.48-.48.48-1.28-.01-1.76z" fill="#a6adbb" class="color000000 svgShape"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="flex" style="position: absolute;width: 100%;justify-content: center;margin-top: 10px">
+        <div class="avatar" style="align-self: center">
+            <div class="w-16 h-16 rounded-full">
+                <img src="image/Logo.jpeg"/>
+            </div>
+        </div>
+        <h1 style="align-self: center;margin-left: 5px;font-weight: bold">Answer Me</h1>
+    </div>
+</div>
+
+
+<div class="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100" style="display:contents">
+    <form class="card-body" style="display:grid;justify-content: center">
+        <div class="form-control mt-6" style="display:grid">
+            <div class="avatar" style="display: grid">
+                <div class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2" style="justify-self: center">
+                    <UserAvatar ImageUrl="@ImageUrl" Letter="H"/>
+                </div>
+            </div>
+            @if (UploadProgress != null)
+            {
+                <progress class="progress progress-primary w-56 mt-12" value="@UploadProgress" max="100" style="justify-self: center"></progress>
+                <button type="button" @onclick="CancelUpload" class="btn btn-outline btn-secondary mt-6">Cancel</button>
+            }
+            else
+            {
+                <InputFile  OnChange="ImageChanged" type="file" class="file-input file-input-bordered file-input-primary w-full max-w-xs mt-12 "/>
+            }
+            
+
+        </div>
+
+        <div class="form-control mt-6">
+            <label class="label">
+                <span class="label-text">Display Name</span>
+            </label>
+            <input type="text" @bind-value="_editUserRequest.FullName" placeholder="Display Name" class="input input-bordered" required/>
+        </div>
+
+        <div class="form-control mt-6">
+            <button @onclick="SaveChanges" type="button" class="btn btn-outline btn-primary">Save</button>
+        </div>
+    </form>
+</div>
+
+
+@code {
+
+    private EditUserRequest _editUserRequest = new();
+
+    [Parameter] public string? ChatsMenuClass { get; set; }
+
+    [Parameter] public string? AccountMenuClass { get; set; }
+
+    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
+
+    [Parameter] public EventCallback<string> ChatsMenuClassChanged { get; set; }
+
+    [Parameter] public EventCallback<string> AccountMenuClassChanged { get; set; }
+
+
+    private string? ImageUrl;
+
+    private int? UploadProgress;
+
+    private bool UploadCancel = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetAndSetUserData();
+    }
+
+    private async Task SaveChanges()
+    {
+        await UserService.EditUserAsync(_editUserRequest);
+        await JsRuntime.InvokeVoidAsync("MessageShow", "success", "success", "Profile Updated ✅");
+        await GetAndSetUserData();
+    }
+    
+    
+    private async Task GetAndSetUserData()
+    {
+        var user = await UserService.GetUserAsync();
+        
+        if (user.IsSuccess)
+        {
+            ImageUrl = user.AsSuccess.Value.ProfileImage;
+            _editUserRequest.FullName = user.AsSuccess.Value.FullName;
+        }
+        else
+        {
+            await JsRuntime.InvokeVoidAsync("MessageShow", "error", "error", "there is a problem loading your profile");
+        }
+    }
+
+    async Task ViewMenuAsync()
+    {
+        ChatsMenuClass = "-translate-x-0";
+        AccountMenuClass = "-translate-x-full";
+
+        await ChatsMenuClassChanged.InvokeAsync(ChatsMenuClass);
+        await AccountMenuClassChanged.InvokeAsync(AccountMenuClass);
+    }
+
+    private void CancelUpload()
+    {
+        UploadCancel = true;
+    }
+
+    private async Task ImageChanged(InputFileChangeEventArgs inputFile)
+    {
+        await LoadImage(inputFile.File);
+
+        UploadCancel = false;
+        StateHasChanged();
+        
+        var result = await StorageService.GetUploadTokenAsync(new ProfileImageUploadRequest()
+        {
+            FileFormat = inputFile.File.ContentType.Split("/")[1],
+            FileSizeMB = inputFile.File.Size.SizeMB()
+        });
+
+       
+
+
+        if (result.IsSuccess)
+        {
+            var chunksCount = ObjectHelperService.CalculateChunkCount(inputFile.File.Size.SizeMB());
+            var chunkPercentage = 100 / chunksCount;
+            var maxFileSize = unchecked(1024 * 1024 * 20);
+            await using var filestream = inputFile.File.OpenReadStream(maxFileSize);
+            
+            
+            UploadProgress = 0;
+            StateHasChanged();
+            
+            await foreach (var chunk in ObjectHelperService.GetStreamChunksAsync(filestream, chunksCount))
+            {
+
+                if (UploadCancel)
+                {
+                    break;
+                }
+                
+                var fileChunkRequest = new FileChunkRequest()
+                {
+                    Data = chunk.ToArray(),
+                    UploadToken = Guid.Parse(result.AsSuccess.Value.Token)
+                };
+
+                var chunkUploadResponse = await StorageService.UploadChunkAsync(fileChunkRequest);
+
+                UploadProgress += (1*chunkPercentage);
+                StateHasChanged();
+            }
+
+            if (!UploadCancel)
+            {
+                var fileTokenResponse = await StorageService.FinalizeUploadAsync(result.AsSuccess.Value.Token);
+                if (fileTokenResponse.IsSuccess)
+                {
+                    _editUserRequest.ProfileImageToken = fileTokenResponse.AsSuccess.Value.Token;
+                }
+
+                if (fileTokenResponse.IsValidationFailureList)
+                {
+                    await JsRuntime.InvokeVoidAsync("ValidationMessageBox", fileTokenResponse.AsValidationFailureList);
+                }
+                
+            }
+
+            UploadProgress = null;
+            StateHasChanged();
+        }
+
+        if (result.IsValidationFailureList)
+        {
+            await JsRuntime.InvokeVoidAsync("MessageShow", "error", "error", result.AsValidationFailureList[0].Error);
+        }
+        
+    }
+
+    private async Task LoadImage(IBrowserFile file)
+    {
+        if (file.ContentType is "image/png" or "image/gif" or "image/jpg" or "image/jpeg")
+        {
+            var image = await file.RequestImageFileAsync("image/png,image/gif,image/jpg,image/jpeg", 1920, 1080);
+
+            using Stream imageStream = image.OpenReadStream(1024 * 1024 * 15);
+
+            using MemoryStream ms = new();
+            //copy imageStream to Memory stream
+            await imageStream.CopyToAsync(ms);
+
+            //convert stream to base64
+            ImageUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+        }
+    }
+
+}

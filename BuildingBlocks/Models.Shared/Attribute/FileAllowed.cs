@@ -27,7 +27,7 @@ namespace Models.Shared.Attribute
 
         private string GetErrorMessage()
         {
-            return "ThisExtensionIsNotAllowed";
+            return "This Extension Is Not Allowed";
         }
     }
 }

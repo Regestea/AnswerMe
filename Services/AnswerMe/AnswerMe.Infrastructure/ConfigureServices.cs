@@ -30,11 +30,19 @@ namespace AnswerMe.Infrastructure
                     configuration.GetSection("DatabaseSettings:PrimaryKey").Value ?? throw new InvalidOperationException(),
                     configuration.GetSection("DatabaseSettings:DatabaseName").Value ?? throw new InvalidOperationException())
             );
-            //services.AddScoped<IUserRepository, UserRepository>();
             services.AddGrpcClient<ObjectStorageService.ObjectStorageServiceClient>(o =>
                 o.Address = new Uri(configuration.GetSection("ObjectStorageServer:GrpcUrl").Value ?? throw new InvalidOperationException()));
             services.AddScoped<FileStorageService>();
             services.AddScoped<ICacheRepository, CacheRepository>();
+            services.AddScoped<IGroupHubService, GroupHubService>();
+            services.AddScoped<IGroupInviteRepository, GroupInviteRepository>();
+            services.AddScoped<IGroupMessageService, GroupMessageService>();
+            services.AddScoped<IGroupRepository, GroupRepository>();
+            services.AddScoped<IOnlineHubService, OnlineHubService>();
+            services.AddScoped<IPrivateHubService, PrivateHubService>();
+            services.AddScoped<IPrivateMessageService, PrivateMessageService>();
+            services.AddScoped<IPrivateRoomRepository, PrivateRoomRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
             services.AddSignalR();
             #region Redis Cache
 
@@ -50,7 +58,7 @@ namespace AnswerMe.Infrastructure
             //services.AddSignalR()
             //    .AddAzureSignalR(configuration.GetConnectionString("Azure:SignalRUrl"));
 
-            FileStorageHelper.Initialize(configuration.GetSection("ObjectStorageServer:GrpcUrl").Value ?? throw new InvalidOperationException());
+            FileStorageHelper.Initialize(configuration.GetSection("Blob:StorageUrl").Value ?? throw new InvalidOperationException());
             return services;
         }
     }

@@ -5,6 +5,7 @@ using IdentityServer.Shared.Client.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Models.Shared.Requests.User;
 using Models.Shared.Responses.Shared;
+using Models.Shared.Responses.User;
 
 namespace AnswerMe.Api.Controllers
 {
@@ -29,7 +30,7 @@ namespace AnswerMe.Api.Controllers
         /// </summary>
         /// <response code="200">OK: The user's profile information.</response>
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserResponse),StatusCodes.Status200OK)]
         public async Task<IActionResult> GetUserAsync()
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
@@ -58,7 +59,7 @@ namespace AnswerMe.Api.Controllers
         /// <response code="200">OK: The user's profile information.</response>
         /// <response code="404">Not Found: user not found.</response>
         [HttpGet("{id:guid}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserResponse),StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetUserByIdAsync([FromRoute] Guid id)
         {

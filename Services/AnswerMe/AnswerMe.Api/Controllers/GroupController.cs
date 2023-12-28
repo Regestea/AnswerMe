@@ -161,7 +161,7 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(typeof(IdResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [HttpPost("Group/{groupId:guid}/User/{userId:guid}")]
+        [HttpPost("{groupId:guid}/User/{userId:guid}/Join")]
         public async Task<IActionResult> JoinUserToGroupAsync([FromRoute] Guid groupId, [FromRoute] Guid userId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
@@ -191,7 +191,7 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(typeof(GroupResponse), StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [HttpDelete("{groupId:guid}/User/{userId:guid}")]
+        [HttpDelete("{groupId:guid}/User/{userId:guid}/Kick")]
         public async Task<IActionResult> KickUserFromGroupAsync([FromRoute] Guid groupId, [FromRoute] Guid userId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
@@ -282,9 +282,9 @@ namespace AnswerMe.Api.Controllers
         /// </summary>
         /// <param name="groupId">The ID of the group to leave.</param>
         /// <returns>No content on success, BadRequest on failure.</returns>
-        [HttpDelete("Group/{groupId:guid}/Leave")]
+        [HttpDelete("{groupId:guid}/Leave")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> LeaveGroupAsync([FromRoute] Guid groupId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();

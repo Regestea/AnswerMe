@@ -24,7 +24,7 @@ namespace ObjectStorage.Api.Test.DataGenerator
             graphics.DrawString(text, font, brush, new PointF(20, 20));
 
             // Save the bitmap as a PNG image to a memory stream
-            MemoryStream memoryStream = new MemoryStream();
+            MemoryStream memoryStream = new();
             bitmap.Save(memoryStream, ImageFormat.Png);
 
             // Reset the position of the memory stream to the beginning

@@ -26,6 +26,13 @@ public interface IFileUploadService
     /// @return A task that represents the asynchronous delete operation.
     /// The task result contains a DeleteResponse object with the status and response
     /// properties.
-    /// /
     public Task<DeleteResponse> DeleteObjectAsync(ContainerName containerName, string fileName);
+
+    /// Deletes an object in the specified container asynchronously.
+    /// @param containerName The name of the container where the object is stored.
+    /// @param fileName The name of the object to be deleted.
+    /// @return A task that represents the asynchronous delete operation.
+    /// The task result contains a DeleteResponse object with the status and response
+    /// properties.
+    Task<UpdateResponse> FinalizeUpload(FinalizeUploadDto finalizeUploadDto);
 }

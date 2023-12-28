@@ -18,7 +18,7 @@ namespace AnswerMe.Api.Test.Repositories
     {
         private readonly DbContextOptions<AnswerMeDbContext> dbContextOptions;
 
-        private AnswerMeDbContext _inMemoryDbContext;
+        private readonly AnswerMeDbContext _inMemoryDbContext;
 
         public GroupRepositoryTest()
         {
@@ -104,7 +104,7 @@ namespace AnswerMe.Api.Test.Repositories
         public async Task GroupGetUserList_Should_GetListOfUserInGroup()
         {
             //Arrange
-            var mockGroupRepository = new GroupRepository(_inMemoryDbContext, null);
+            var mockGroupRepository = new GroupRepository(_inMemoryDbContext, null!);
 
             var groupChat = new GroupChat()
             {

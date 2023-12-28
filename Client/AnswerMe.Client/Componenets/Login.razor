@@ -96,7 +96,7 @@
 
 @code
 {
-    [Inject] public IJSRuntime JSRuntime { get; set; }
+    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
 
     [SupplyParameterFromForm(FormName = "login")]
     private LoginUserRequest LoginUserRequest { get; set; } = new();
@@ -166,7 +166,7 @@
 
         if (result.IsSuccess)
         {
-            await JSRuntime.InvokeVoidAsync("MessageShow", "success", "SuccessFull", "Your account created successfully please login");
+            await JsRuntime.InvokeVoidAsync("MessageShow", "success", "SuccessFull", "Your account created successfully please login");
         }
 
         if (result.IsValidationFailureList)

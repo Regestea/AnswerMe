@@ -42,7 +42,7 @@ else
 
     string GetColorByLetter(string letter)
     {
-        if (LetterColors.TryGetValue(letter, out string color))
+        if (LetterColors.TryGetValue(letter, out var color))
         {
             return color;
         }

@@ -23,7 +23,7 @@ public class ObjectStorageService : IObjectStorageService
         _httpClient = httpClientFactory.CreateClient(nameof(Enums.HttpClients.ObjectStorage));
     }
     
-    public async Task<CreateResponse<ChunkUploadMultiResponse>> UploadChunkAsync(FileChunkRequest request)
+    public async Task<CreateResponse<ChunkUploadResponse>> UploadChunkAsync(FileChunkRequest request)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
@@ -33,9 +33,25 @@ public class ObjectStorageService : IObjectStorageService
 
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            var uploadResponse = await JsonConverter.ToObject<ChunkUploadMultiResponse>(response.Content);
+            var uploadResponse = await JsonConverter.ToObject<ChunkUploadResponse>(response.Content);
 
-            return new Success<ChunkUploadMultiResponse>(uploadResponse);
+            return new Success<ChunkUploadResponse>(uploadResponse);
+        }
+
+        return await JsonConverter.ToValidationFailedList(response.Content);
+    }
+
+    public async Task<CreateResponse<TokenResponse>> FinalizeUploadAsync(string uploadToken)
+    {
+        await _httpClient.AddAuthHeader(_localStorageService);
+        
+        var response = await _httpClient.SendRequestAsync($"ObjectStorage/Finalize/{uploadToken}", HttpMethod.Post);
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            var tokenResponse = await JsonConverter.ToObject<TokenResponse>(response.Content);
+
+            return new Success<TokenResponse>(tokenResponse);
         }
 
         return await JsonConverter.ToValidationFailedList(response.Content);

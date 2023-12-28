@@ -7,7 +7,8 @@ namespace AnswerMe.Client.Core.Services.Interfaces;
 
 public interface IObjectStorageService
 {
-    Task<CreateResponse<ChunkUploadMultiResponse>> UploadChunkAsync(FileChunkRequest request);
+    Task<CreateResponse<ChunkUploadResponse>> UploadChunkAsync(FileChunkRequest request);
+    Task<CreateResponse<TokenResponse>> FinalizeUploadAsync(string uploadToken);
     Task<CreateResponse<TokenResponse>> GetUploadTokenAsync(ProfileImageUploadRequest request);
     Task<CreateResponse<TokenResponse>> GetUploadTokenAsync(ImageUploadRequest request);
     Task<CreateResponse<TokenResponse>> GetUploadTokenAsync(AudioUploadRequest request);

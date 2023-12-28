@@ -34,7 +34,7 @@ namespace AnswerMe.Client.Core.Extensions
             return Task.FromResult(JsonSerializer.Serialize(content, _options));
         }
         
-        public static async Task<List<ValidationFailed>> ToValidationFailedList(string content)
+        public static Task<List<ValidationFailed>> ToValidationFailedList(string content)
         {
             var validationProblemDetails = JsonSerializer.Deserialize<ValidationDto>(content);
             var validationList = new List<ValidationFailed>();
@@ -51,7 +51,7 @@ namespace AnswerMe.Client.Core.Extensions
                 }
             }
 
-            return validationList;
+            return Task.FromResult(validationList);
         }
     }
 }

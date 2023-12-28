@@ -18,69 +18,41 @@ namespace AnswerMe.Client.Core.Services
 
             return chunkCount;
         }
-
-        // public  async Task<List<byte[]>> ConvertStreamToChunksAsync( Stream inputStream, int numberOfChunks)
-        // {
-        //     List<byte[]> chunks = new List<byte[]>();
-        //     byte[] buffer = new byte[inputStream.Length / numberOfChunks]; // Calculate chunk size
-        //
-        //     for (int i = 0; i < numberOfChunks; i++)
-        //     {
-        //         int bytesRead = await inputStream.ReadAsync(buffer, 0, buffer.Length);
-        //         if (bytesRead > 0)
-        //         {
-        //             byte[] chunk = new byte[bytesRead];
-        //             Array.Copy(buffer, chunk, bytesRead);
-        //             chunks.Add(chunk);
-        //         }
-        //     }
-        //
-        //     return chunks;
-        // }
-
-        public async Task<List<byte[]>> ConvertStreamToChunksAsync(Stream inputStream, int numberOfChunks)
+        
+        
+        public async IAsyncEnumerable<Memory<byte>> GetStreamChunksAsync(Stream inputStream, int numberOfChunks)
         {
-            List<byte[]> chunks = new List<byte[]>();
-            byte[] buffer = new byte[inputStream.Length / numberOfChunks]; // Calculate chunk size
-
+          
+            if (numberOfChunks <= 0 || inputStream == null || !inputStream.CanRead)
+            {
+                throw new ArgumentException("Invalid arguments");
+            }
+        
+            if (inputStream.Length <= 0)
+            {
+                // Handle streams with unknown or non-positive length
+                throw new InvalidOperationException("Stream length is non-positive or unknown.");
+            }
+        
+            int bufferSize = (int)Math.Ceiling((double)inputStream.Length / numberOfChunks);
+        
             for (int i = 0; i < numberOfChunks; i++)
             {
-                int bytesRead = await inputStream.ReadAsync(buffer, 0, buffer.Length);
+                byte[] buffer = new byte[bufferSize];
+                var bytesRead = await inputStream.ReadAtLeastAsync(buffer, buffer.Length, throwOnEndOfStream: false);
+
+                Console.WriteLine("byte read "+ bytesRead);
+                
                 if (bytesRead > 0)
                 {
-                    byte[] chunk = new byte[bytesRead];
-                    Array.Copy(buffer, chunk, bytesRead);
-                    chunks.Add(chunk);
+                    yield return buffer.AsMemory(0, bytesRead);
+                }
+                else
+                {
+                    // Terminate the loop if there is nothing more to read
+                    yield break;
                 }
             }
-
-            return chunks;
-        }
-
-        public async Task<byte[]> GetStreamChunkAsync(Stream inputStream, int numberOfChunks, int currentChunk)
-        {
-            if (numberOfChunks <= 0 || currentChunk < 0 || currentChunk >= numberOfChunks)
-            {
-                throw new ArgumentOutOfRangeException("Invalid numberOfChunks or currentChunk values");
-            }
-
-            int bufferSize = (int)Math.Ceiling((double)inputStream.Length / numberOfChunks);
-            
-            // int startPosition = currentChunk * bufferSize;
-            
-            long remainingBytes = Math.Min(bufferSize, inputStream.Length - inputStream.Position);
-            
-            byte[] buffer =new byte[remainingBytes];
-
-            int bytesRead = await inputStream.ReadAsync(buffer, 0, buffer.Length);
-
-            if (bytesRead > 0)
-            {
-                return buffer;
-            }
-
-            // Return null if no bytes were read (unexpected end of stream)
-            return null;
         }
     }
 }

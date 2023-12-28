@@ -352,9 +352,11 @@ namespace AnswerMe.Infrastructure.Repositories
             {
                 _context.UserGroups.Remove(userGroup);
                 await _context.SaveChangesAsync();
+                
+                return new Success();
             }
 
-            return new Success();
+            return new NotFound();
         }
     }
 }

@@ -19,7 +19,7 @@ namespace AnswerMe.Api.Test.Repositories
     {
         private readonly DbContextOptions<AnswerMeDbContext> dbContextOptions;
 
-        private AnswerMeDbContext _inMemoryDbContext;
+        private readonly AnswerMeDbContext _inMemoryDbContext;
 
         public PrivateRoomRepositoryTest()
         {
@@ -83,7 +83,7 @@ namespace AnswerMe.Api.Test.Repositories
             Dispose();
         }
 
-        public void Dispose()
+        private void Dispose()
         {
             _inMemoryDbContext.Dispose(); // Dispose of the in-memory database context
         }

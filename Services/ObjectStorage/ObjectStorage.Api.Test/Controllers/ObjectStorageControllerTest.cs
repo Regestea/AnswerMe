@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 using Models.Shared.Requests.ObjectStorage;
 using Models.Shared.Responses.Shared;
-using ObjectStorage.Api.Test.DataConvertor;
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using IdentityServer.Shared.Client.DTOs;
@@ -79,9 +78,13 @@ namespace ObjectStorage.Api.Test.Controllers
 
 
             FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+
+            var dataConvertor = new DataConvertor();
+ 
+            var numberOfChunks = 20;
             
-            var chunks = await fileStream.ConvertStreamToChunksAsync(20);
-            
+            await using var fs = fileStream;
+
 
             //Act
 
@@ -93,32 +96,45 @@ namespace ObjectStorage.Api.Test.Controllers
             var resultToken =(OkObjectResult) responseToken;
 
             var tokenResponse =(TokenResponse) resultToken.Value!;
-
             
-            for (int i = 0; i < chunks.Count; i++)
+            await foreach (var chunk in dataConvertor.GetStreamChunksAsync(fs, numberOfChunks))
             {
-                var isLastChunk = chunks[i] == chunks.Last();
                 var fileChunkRequest = new FileChunkRequest()
                 {
-                    Data = chunks[i],
-                    CurrentChunk = i,
-                    LastChunk =isLastChunk ,
-                    UploadToken = new Guid(tokenResponse.Token)
+                    Data =chunk.ToArray(),
+                    UploadToken = Guid.Parse(tokenResponse.Token) 
                 };
-                
-              var result= await controller.UploadChunkAsync(fileChunkRequest);
-              
-              
-              //Assert
-              if (isLastChunk)
-              {
-                  Assert.IsType<TokenResponse>(((OkObjectResult)result).Value);
-              }
-              else
-              {
-                  Assert.IsType<ChunkUploadResponse>(((ObjectResult)result).Value);
-              }
+            
+                var uploadResult = await controller.UploadChunkAsync(fileChunkRequest);
+
+           
+                //Assert
+
+                var chunkUploadObjectResult = (ObjectResult)uploadResult;
+                var chunkUploadResult =(ChunkUploadResponse)chunkUploadObjectResult.Value!;
+
+                Assert.NotNull(chunkUploadResult);
+                Assert.NotNull(chunkUploadObjectResult);
+                Assert.IsType<ObjectResult>(uploadResult);
+                Assert.IsType<ChunkUploadResponse>(chunkUploadObjectResult.Value);
+                _testOutputHelper.WriteLine("Total Uploaded Chunks : " + (chunkUploadResult.TotalUploadedChunks));
+                _testOutputHelper.WriteLine("Total Uploaded Size MB : " + chunkUploadResult.TotalUploadedSizeMB);
             }
+
+            var finalizeResult= await controller.FinalizeUpload(tokenResponse.Token);
+          
+            //Assert
+            
+            var finalizeUploadObjectResult = (ObjectResult)finalizeResult;
+            var finalizeUploadResult =(TokenResponse)finalizeUploadObjectResult.Value!;
+
+            Assert.NotNull(finalizeUploadResult);
+            Assert.NotNull(finalizeUploadObjectResult);
+            Assert.IsType<OkObjectResult>(finalizeResult);
+            Assert.IsType<TokenResponse>(finalizeUploadObjectResult.Value);
+            
+            _testOutputHelper.WriteLine("Uploaded File Token : "+ finalizeUploadResult.Token);
+            
         }
     }
 }

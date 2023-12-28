@@ -8,7 +8,6 @@ using Models.Shared.Requests.ObjectStorage;
 using ObjectStorage.Api.Services;
 using Xunit.Abstractions;
 using ObjectStorage.Api.Test.DataGenerator;
-using ObjectStorage.Api.Test.DataConvertor;
 using Models.Shared.Responses.ObjectStorage;
 using ObjectStorage.Api.DTOs;
 using ObjectStorage.Api.Extensions;
@@ -49,7 +48,6 @@ public class FileUploadServiceTest
             {
                 Data = chunks[i],
                 CurrentChunk = i,
-                LastChunk = chunks[i] == chunks.Last(),
                 AccessTier = AccessTier.Archive.ToString(),
                 ContainerName = ContainerName.image,
                 FileFormat = ".png",

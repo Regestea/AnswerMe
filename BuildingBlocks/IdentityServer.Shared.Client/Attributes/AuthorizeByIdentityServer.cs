@@ -40,10 +40,7 @@ namespace IdentityServer.Shared.Client.Attributes
 
             var jwtToken = authorizationHeader.ToString().Replace("Bearer ", "");
 
-            ValidateTokenResponse? response;
-
-            // try to get token and roles from cache
-            response = await tokenCache.GetAsync<ValidateTokenResponse>(jwtToken);
+            var response = await tokenCache.GetAsync<ValidateTokenResponse>(jwtToken);
 
             if (response == null)
             {

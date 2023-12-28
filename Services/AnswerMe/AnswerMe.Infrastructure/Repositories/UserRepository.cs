@@ -21,7 +21,8 @@ namespace AnswerMe.Infrastructure.Repositories
         private readonly FileStorageService _fileStorageService;
         private readonly IOnlineHubService _onlineHubService;
 
-        public UserRepository(AnswerMeDbContext context, FileStorageService fileStorageService, IOnlineHubService onlineHubService)
+        public UserRepository(AnswerMeDbContext context, FileStorageService fileStorageService,
+            IOnlineHubService onlineHubService)
         {
             _context = context;
             _fileStorageService = fileStorageService;
@@ -91,12 +92,18 @@ namespace AnswerMe.Infrastructure.Repositories
                 user.FullName = request.FullName;
             }
 
+            var oldProfileImage = user.ProfileImage;
             if (!string.IsNullOrWhiteSpace(request.ProfileImageToken))
             {
                 var response = await _fileStorageService.GetObjectPathAsync(loggedInUserId, request.ProfileImageToken);
                 if (!string.IsNullOrWhiteSpace(response.FilePath) && !string.IsNullOrWhiteSpace(response.FileFormat))
                 {
                     user.ProfileImage = response.FilePath;
+                    if (!string.IsNullOrWhiteSpace(oldProfileImage))
+                    {
+                        Console.WriteLine("try to remove "+oldProfileImage);
+                        await _fileStorageService.DeleteObjectAsync(loggedInUserId, oldProfileImage);
+                    }
                 }
             }
 

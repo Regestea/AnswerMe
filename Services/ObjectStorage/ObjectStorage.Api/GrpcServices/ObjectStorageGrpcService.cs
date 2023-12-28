@@ -51,9 +51,10 @@ namespace ObjectStorage.Api.GrpcServices
         {
             Guid userId = Guid.Parse(request.UserId);
             var path = request.FilePath.Split("/");
+            var rowKey = path[1].Split(".")[0];
 
             var tableClient = _blobClientFactory.BlobTableClient(TableName.IndexObjectFile);
-            var response = tableClient.Query<ObjectFile>(x => x.PartitionKey == path[0] && x.RowKey == path[1] && x.UserId == userId).SingleOrDefault();
+            var response = tableClient.Query<ObjectFile>(x => x.PartitionKey == path[0] && x.RowKey == rowKey && x.UserId == userId).SingleOrDefault();
             if (response != null)
             {
                 response.HaveUse = false;

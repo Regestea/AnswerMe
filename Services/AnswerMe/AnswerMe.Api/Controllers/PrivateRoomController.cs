@@ -43,6 +43,34 @@ namespace AnswerMe.Api.Controllers
         }
 
         /// <summary>
+        /// Create a private room with the specified contact.
+        /// </summary>
+        /// <param name="contactId">The ID of the contact to create the private room with.</param>
+        /// <returns>
+        /// Returns OK status with the created private room details if successful.
+        /// Returns NotFound if the operation fails.
+        /// </returns>
+        /// <response code="200">Returns Id of private room.</response>
+        /// <response code="404">If the operation fails, returns a not found status.</response>
+        [HttpPost("{contactId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IdResponse))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CreateAsync(Guid contactId)
+        {
+            var requestToken = _jwtTokenRepository.GetJwtToken();
+            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+
+            var result =await _privateRoomRepository.CreateAsync(loggedInUser.id, contactId);
+
+            if (result.IsSuccess)
+            {
+                return Ok(result.AsSuccess.Value);
+            }
+
+            return NotFound();
+        }
+
+        /// <summary>
         /// Get a private room by ID.
         /// </summary>
         /// <param name="roomId">The unique identifier of the private room to retrieve.</param>

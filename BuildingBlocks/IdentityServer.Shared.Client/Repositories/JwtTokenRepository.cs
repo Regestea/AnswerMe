@@ -42,8 +42,19 @@ namespace IdentityServer.Shared.Client.Repositories
         public string GetJwtToken()
         {
             _httpContextAccessor.HttpContext!.Request.Headers.TryGetValue("Authorization", out var authorizationHeader);
-            var jwtToken = authorizationHeader.ToString().Replace("Bearer ", "");
-            return jwtToken;
+           
+            if (string.IsNullOrWhiteSpace(authorizationHeader))
+            {
+                _httpContextAccessor.HttpContext!.Request.Query.TryGetValue("access_token", out  authorizationHeader);
+            }
+
+            if (!string.IsNullOrWhiteSpace(authorizationHeader))
+            {
+                var jwtToken = authorizationHeader.ToString().Replace("Bearer ", "");
+                return jwtToken;
+            }
+
+            return "";
         }
     }
 }

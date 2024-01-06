@@ -3,6 +3,7 @@ using AnswerMe.Application.DTOs;
 using IdentityServer.Shared.Client.Attributes;
 using IdentityServer.Shared.Client.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Models.Shared.Requests.Shared;
 using Models.Shared.Requests.User;
 using Models.Shared.Responses.Shared;
 using Models.Shared.Responses.User;
@@ -30,7 +31,7 @@ namespace AnswerMe.Api.Controllers
         /// </summary>
         /// <response code="200">OK: The user's profile information.</response>
         [HttpGet]
-        [ProducesResponseType(typeof(UserResponse),StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetUserAsync()
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
@@ -52,6 +53,26 @@ namespace AnswerMe.Api.Controllers
             return Ok(userResponse.AsSuccess.Value);
         }
 
+
+        /// <summary>
+        /// Search for users based on a keyword with pagination.
+        /// </summary>
+        /// <param name="keyWord">The keyword to search for users.</param>
+        /// <param name="paginationRequest">Pagination parameters.</param>
+        /// <returns>
+        /// Returns a <see cref="Task{TResult}"/> representing the asynchronous operation.
+        /// The result is an <see cref="IActionResult"/> with a <see cref="PagedListResponse{T}"/> of <see cref="UserResponse"/>.
+        /// </returns>
+        /// <response code="200">Successfully retrieved the list of users matching the keyword.</response>
+        [ProducesResponseType(typeof(PagedListResponse<UserResponse>), StatusCodes.Status200OK)]
+        [HttpGet("Search")]
+        public async Task<IActionResult> SearchUser([FromQuery] string keyWord, [FromQuery] PaginationRequest paginationRequest)
+        {
+            var result = await _userRepository.SearchUserAsync(keyWord, paginationRequest);
+
+            return Ok(result.AsSuccess.Value);
+        }
+
         /// <summary>
         /// Get a user by ID.
         /// </summary>
@@ -59,7 +80,7 @@ namespace AnswerMe.Api.Controllers
         /// <response code="200">OK: The user's profile information.</response>
         /// <response code="404">Not Found: user not found.</response>
         [HttpGet("{id:guid}")]
-        [ProducesResponseType(typeof(UserResponse),StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetUserByIdAsync([FromRoute] Guid id)
         {

@@ -37,6 +37,33 @@ namespace AnswerMe.Infrastructure.Repositories
             return new Success<BooleanResponse>(isOnline.AsT0.Value);
         }
 
+        public async Task<ReadResponse<PagedListResponse<UserResponse>>> SearchUserAsync(string keyWord,
+            PaginationRequest paginationRequest)
+        {
+            var userQuery = _context.Users
+                .Where(x => x.PhoneNumber
+                    .Contains(keyWord) || x.IdName
+                    .Contains(keyWord.ToLower()))
+                .Select(x => new UserResponse()
+                {
+                    id = x.id,
+                    FullName = x.FullName,
+                    IdName = x.IdName,
+                    CreatedDate = x.CreatedDate,
+                    ModifiedDate = x.ModifiedDate,
+                    PhoneNumber = x.PhoneNumber,
+                    ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
+                })
+                .AsQueryable();
+
+            var pagedResult = await PagedListResponse<UserResponse>.CreateAsync(
+                userQuery,
+                paginationRequest
+            );
+
+            return new Success<PagedListResponse<UserResponse>>(pagedResult);
+        }
+
         public async Task<ReadResponse<BooleanResponse>> ExistAsync(Guid id)
         {
             var response = await _context.Users.AnyAsync(x => x.id == id);
@@ -101,11 +128,12 @@ namespace AnswerMe.Infrastructure.Repositories
                     user.ProfileImage = response.FilePath;
                     if (!string.IsNullOrWhiteSpace(oldProfileImage))
                     {
-                        Console.WriteLine("try to remove "+oldProfileImage);
+                        Console.WriteLine("try to remove " + oldProfileImage);
                         await _fileStorageService.DeleteObjectAsync(loggedInUserId, oldProfileImage);
                     }
                 }
             }
+            user.ModifiedDate=DateTimeOffset.Now;
 
             _context.Users.Update(user);
 

@@ -19,6 +19,17 @@ public interface IPrivateRoomRepository
     Task<ReadResponse<PrivateRoomResponse>> GetAsync(Guid loggedInUserId, Guid roomId);
 
     /// <summary>
+    /// Creates a relationship between two users asynchronously.
+    /// </summary>
+    /// <param name="loggedInUserId">The ID of the user initiating the relationship.</param>
+    /// <param name="contactId">The ID of the user to establish a relationship with.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// The task result contains a response with the ID of the created relationship.
+    /// </returns>
+    Task<CreateResponse<IdResponse>> CreateAsync(Guid loggedInUserId, Guid contactId);
+
+    /// <summary>
     /// Retrieves a paged list of private rooms asynchronously
     /// .
     /// </summary>
@@ -28,7 +39,8 @@ public interface IPrivateRoomRepository
     /// operation. The task result contains a response
     /// object
     /// containing the paged list of private rooms.</returns>
-    Task<ReadResponse<PagedListResponse<PrivateRoomResponse>>> GetListAsync(Guid loggedInUserId, PaginationRequest paginationRequest);
+    Task<ReadResponse<PagedListResponse<PrivateRoomResponse>>> GetListAsync(Guid loggedInUserId,
+        PaginationRequest paginationRequest);
 
     /// <summary>
     /// Retrieves the last seen information for a specific user in a room.
@@ -40,4 +52,3 @@ public interface IPrivateRoomRepository
     /// being a <see cref="ReadResponse{T}"/> containing the last seen information of type <see cref="RoomLastSeenResponse"/>.</returns>
     Task<ReadResponse<RoomLastSeenResponse>> GetLastSeenAsync(Guid loggedInUserId, Guid roomId, Guid userId);
 }
-

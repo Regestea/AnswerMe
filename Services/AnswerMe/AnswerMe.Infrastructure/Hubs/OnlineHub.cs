@@ -5,6 +5,7 @@ using AnswerMe.Domain.Entities;
 using AnswerMe.Infrastructure.Persistence;
 using IdentityServer.Shared.Client.Attributes;
 using IdentityServer.Shared.Client.Repositories.Interfaces;
+using IdentityServer.Shared.Client.Service;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using SignalRSwaggerGen.Attributes;
@@ -18,13 +19,17 @@ namespace AnswerMe.Infrastructure.Hubs
         private ICacheRepository _cacheRepository;
         private AnswerMeDbContext _context;
         private IHubContext<PrivateRoomHub> _privateRoomHub;
+        private IAuthenticationService _authenticationService;
 
-        public OnlineHub(IJwtTokenRepository jwtTokenRepository, ICacheRepository cacheRepository, AnswerMeDbContext context, IHubContext<PrivateRoomHub> privateRoomHub)
+        public OnlineHub(IJwtTokenRepository jwtTokenRepository, ICacheRepository cacheRepository,
+            AnswerMeDbContext context, IHubContext<PrivateRoomHub> privateRoomHub,
+            IAuthenticationService authenticationService)
         {
             _jwtTokenRepository = jwtTokenRepository;
             _cacheRepository = cacheRepository;
             _context = context;
             _privateRoomHub = privateRoomHub;
+            _authenticationService = authenticationService;
         }
 
 
@@ -36,48 +41,60 @@ namespace AnswerMe.Infrastructure.Hubs
         /// Sends an "OnlineUserMessage" to the online contacts if there are any.
         /// </summary>
         /// <returns>A Task representing the asynchronous operation.</returns>
-        [AuthorizeByIdentityServer]
         public override async Task OnConnectedAsync()
         {
-                var jwtToken = _jwtTokenRepository.GetJwtToken();
+            var jwtToken = _jwtTokenRepository.GetJwtToken();
+            var isAuthenticated = await _authenticationService.IsAuthenticatedAsync(jwtToken);
+
+            Console.WriteLine("is user authenticated "+isAuthenticated);
+            if (isAuthenticated)
+            {
+                           
                 var userDto = _jwtTokenRepository.ExtractUserDataFromToken(jwtToken);
 
-            await _cacheRepository.SetAsync(userDto.id.ToString(), new UserOnlineDto()
-            {
-                UserId = userDto.id,
-                ConnectionId = Context.ConnectionId
-            }, TimeSpan.FromDays(7));
+                await _cacheRepository.SetAsync(userDto.id.ToString(), new UserOnlineDto()
+                {
+                    UserId = userDto.id,
+                    ConnectionId = Context.ConnectionId
+                }, TimeSpan.FromDays(7));
 
-            await _cacheRepository.SetAsync(Context.ConnectionId, new UserOnlineDto()
-            {
-                UserId = userDto.id,
-                ConnectionId = Context.ConnectionId
-            }, TimeSpan.FromDays(7));
+                await _cacheRepository.SetAsync(Context.ConnectionId, new UserOnlineDto()
+                {
+                    UserId = userDto.id,
+                    ConnectionId = Context.ConnectionId
+                }, TimeSpan.FromDays(7));
 
 
-            var userContactIds = await _context.PrivateChats
-                .Where(chat => (chat.User1Id == userDto.id || chat.User2Id == userDto.id) && (chat.User1Id != chat.User2Id))
-                .Select(chat => chat.User1Id == userDto.id ? chat.User2Id : chat.User1Id)
-                .Distinct()
-                .ToListAsync();
+                var userContactIds = await _context.PrivateChats
+                    .Where(chat => (chat.User1Id == userDto.id || chat.User2Id == userDto.id) && (chat.User1Id != chat.User2Id))
+                    .Select(chat => chat.User1Id == userDto.id ? chat.User2Id : chat.User1Id)
+                    .Distinct()
+                    .ToListAsync();
 
                 var onlineContactConnectionIdList = new List<string>();
 
-            foreach (var contactId in userContactIds)
-            {
-                    var inRoomOnlineUser = await _cacheRepository.GetAsync<RoomConnectionDto>(contactId.ToString());
-                if (inRoomOnlineUser != null)
+                foreach (var contactId in userContactIds)
                 {
-                    onlineContactConnectionIdList.Add(inRoomOnlineUser.ConnectionId);
+                    var inRoomOnlineUser = await _cacheRepository.GetAsync<RoomConnectionDto>(contactId.ToString());
+                    if (inRoomOnlineUser != null)
+                    {
+                        onlineContactConnectionIdList.Add(inRoomOnlineUser.ConnectionId);
+                    }
                 }
-            }
             
-            if (onlineContactConnectionIdList.Any())
-            {
-                await _privateRoomHub.Clients.Clients(onlineContactConnectionIdList).SendAsync("OnlineUserMessage", userDto.id);
+                if (onlineContactConnectionIdList.Any())
+                {
+                    await _privateRoomHub.Clients.Clients(onlineContactConnectionIdList).SendAsync("UserWentOnline", userDto.id);
+                }
+
+                await base.OnConnectedAsync();
             }
 
-            await base.OnConnectedAsync();
+            if (!isAuthenticated)
+            {
+                Context.Abort();
+            }
+            
         }
 
         /// <summary>
@@ -96,7 +113,6 @@ namespace AnswerMe.Infrastructure.Hubs
         /// Finally, the base implementation of the OnDisconnectedAsync method is invoked to complete the disconnection
         /// process.
         /// </remarks>
-        [AuthorizeByIdentityServer]
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var userOnlineDto = await _cacheRepository.GetAsync<UserOnlineDto>(Context.ConnectionId);
@@ -106,7 +122,8 @@ namespace AnswerMe.Infrastructure.Hubs
             if (userOnlineDto != null)
             {
                 await _cacheRepository.RemoveAsync(userOnlineDto.UserId.ToString());
-                await _context.OnlineStatusUsers.AddAsync(new OnlineStatusUser() { UserId = userOnlineDto.UserId, LastOnlineDateTime = DateTimeOffset.UtcNow });
+                await _context.OnlineStatusUsers.AddAsync(new OnlineStatusUser()
+                    { UserId = userOnlineDto.UserId, LastOnlineDateTime = DateTimeOffset.UtcNow });
                 await _context.SaveChangesAsync();
             }
 

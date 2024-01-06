@@ -19,7 +19,6 @@ namespace AnswerMe.Api.Test.Services
             dbContextOptions = new DbContextOptionsBuilder<AnswerMeDbContext>()
                 .UseInMemoryDatabase(databaseName: "AnswerMe")
                 .Options;
-            _inMemoryDbContext = new AnswerMeDbContext(dbContextOptions);
         }
 
 
@@ -27,6 +26,7 @@ namespace AnswerMe.Api.Test.Services
         public async Task MessageResponseList_Should_GetListOfPagedMessageResponse()
         {
             //Arrange
+            _inMemoryDbContext = new AnswerMeDbContext(dbContextOptions);
             
             var mockGroupMessage = new GroupMessageService(_inMemoryDbContext,null!,null!);
 

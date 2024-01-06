@@ -8,12 +8,9 @@ using IdentityServer.Api.Protos;
 
 namespace IdentityServer.Shared.Client.Attributes
 {
-
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
-
     public class AuthorizeByIdentityServer : ActionFilterAttribute, IAsyncActionFilter
     {
-
         private readonly string? requiredRoles;
 
         public AuthorizeByIdentityServer(string? requiredRoles = null)
@@ -23,16 +20,20 @@ namespace IdentityServer.Shared.Client.Attributes
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            
             var authorizationGrpcServices =
                 context.HttpContext.RequestServices.GetService<AuthorizationGrpcServices>() ??
                 throw new ArgumentNullException(nameof(AuthorizationGrpcServices));
 
             var tokenCache = context.HttpContext.RequestServices.GetService<IJwtCacheRepository>() ??
                              throw new ArgumentNullException(nameof(IJwtCacheRepository));
+            context.HttpContext.Request.Headers.TryGetValue("Authorization", out var authorizationHeader);
 
+            if (string.IsNullOrWhiteSpace(authorizationHeader))
+            {
+                context.HttpContext!.Request.Query.TryGetValue("access_token", out authorizationHeader);
+            }
 
-            if (!context.HttpContext.Request.Headers.TryGetValue("Authorization", out var authorizationHeader))
+            if (string.IsNullOrWhiteSpace(authorizationHeader))
             {
                 context.Result = new StatusCodeResult(StatusCodes.Status401Unauthorized);
                 return;

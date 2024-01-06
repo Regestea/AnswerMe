@@ -6,10 +6,23 @@ function setDotnetReference(pDotNetReference) {
     GLOBAL.DotNetReference = pDotNetReference;
 }
 
+window.addEventListener('hashchange', () => {
+    console.log('Hash changed! New URL:', window.location.href);
+});
+window.addEventListener('popstate', (event) => {
+    console.log('URL changed! New URL:', window.location.href);
+});
+
 window.addEventListener('resize', ResizeComponent);
 
+function ViewAccountMenu(){
+    let accountMenu = document.getElementById("AccountMenu");
+    accountMenu.classList.remove('-translate-x-full');
+    accountMenu.classList.add('-translate-x-0');
+}
 
 function ResizeComponent() {
+
     const sizeCategory = getScreenSizeCategory();
     const isAtHome = IsAtHomePage();
 
@@ -22,6 +35,7 @@ function ResizeComponent() {
             
             if (mainBody !=null && sidebar !=null ){
                 sidebar.classList.add('w-full');
+                sidebar.classList.remove('-translate-x-full');
                 sidebar.classList.add('-translate-x-0');
 
                 accountMenu.classList.add('w-full');
@@ -34,7 +48,10 @@ function ResizeComponent() {
         else {
             let sidebar = document.getElementById("SidebarMenu");
             let accountMenu = document.getElementById("AccountMenu");
+            let mainBody = document.getElementById("ChatBody");
             
+            mainBody.classList.remove('-translate-x-full');
+            mainBody.classList.remove('hidden');
             sidebar.classList.add('-translate-x-full');
             accountMenu.classList.add('-translate-x-full');
         }

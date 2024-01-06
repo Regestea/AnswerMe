@@ -1,5 +1,6 @@
 ﻿@inject NavigationManager NavigationManager
 @inject ILocalStorageService LocalStorage
+@inject IJSRuntime JsRuntime
 
 <div class="flex">
     <div class="dropdown dropdown-right" style="z-index: 2">
@@ -29,21 +30,14 @@
         </ul>
     </div>
 
-    <div class="flex" style="position: absolute;width: 100%;justify-content: center;margin-top: 10px">
-        <div class="avatar" style="align-self: center">
-            <div class="w-16 h-16 rounded-full">
-                <img src="image/Logo.jpeg"/>
-            </div>
-        </div>
-        <h1 style="align-self: center;margin-left: 5px;font-weight: bold">Answer Me</h1>
-    </div>
+    <Logo/>
 </div>
 
 
 <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-900">
     <div role="tablist" class="tabs tabs-boxed grid grid-cols-2 tab-primary" style="background-color: #111827">
 
-        <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Private Chat" style="color: wheat">
+        <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Private Chat" style="color: wheat" checked>
         <div role="tabpanel" class="tab-content ">
             <ul class="space-y-2 font-medium" style="background-color: #111827">
                 @for (var i = 0; i < 20; i++)
@@ -74,7 +68,7 @@
             </ul>
         </div>
 
-        <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Group Chat" style="color: wheat" checked/>
+        <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Group Chat" style="color: wheat" />
         <div role="tabpanel" class="tab-content ">
             <ul class="space-y-2 font-medium" style="background-color: #111827">
                 @for (var i = 0; i < 20; i++)
@@ -109,20 +103,19 @@
 </div>
 
 
+
+
+
 @code {
 
-    [Parameter] 
-    public string? ChatsMenuClass { get; set; }
-    
-    [Parameter] 
-    public string? AccountMenuClass { get; set; }
-    
-    
-    [Parameter]
-    public EventCallback<string> ChatsMenuClassChanged { get; set; }
-    
-    [Parameter]
-    public EventCallback<string> AccountMenuClassChanged { get; set; }
+    [Parameter] public string? ChatsMenuClass { get; set; }
+
+    [Parameter] public string? AccountMenuClass { get; set; }
+
+
+    [Parameter] public EventCallback<string> ChatsMenuClassChanged { get; set; }
+
+    [Parameter] public EventCallback<string> AccountMenuClassChanged { get; set; }
 
     async Task Logout()
     {
@@ -134,129 +127,10 @@
     {
         ChatsMenuClass = "-translate-x-full";
         AccountMenuClass = "-translate-x-0";
-        
+        await JsRuntime.InvokeVoidAsync("ViewAccountMenu");
+
         await ChatsMenuClassChanged.InvokeAsync(ChatsMenuClass);
         await AccountMenuClassChanged.InvokeAsync(AccountMenuClass);
     }
 
-    // protected override async Task OnAfterRenderAsync(bool firstRender)
-    // {
-    //     await ShouldContentFullScreen.InvokeAsync(true);
-    //     if (firstRender)
-    //     {
-    //         var lDotNetReference = DotNetObjectReference.Create(this);
-    //
-    //         await JSRuntime.InvokeVoidAsync("setDotnetReference", lDotNetReference);
-    //
-    //         var screenSize = await JSRuntime.InvokeAsync<string>("getScreenSizeCategory");
-    //         await OnWindowResized(screenSize);
-    //         StateHasChanged();
-    //     }
-    //
-    //
-    //     await base.OnAfterRenderAsync(firstRender);
-    // }
-
-    @*     [JSInvokable] *@
-    @*     public async Task OnWindowResized(string screenSize) *@
-    @*     { *@
-    @*         await ShouldContentFullScreen.InvokeAsync(true); *@
-    @*         if (screenSize is "sm" or "md") *@
-    @*         { *@
-    @*             var isInHome = IsHomePage(NavigationManager.Uri); *@
-    @*             if (!isInHome) *@
-    @*             { *@
-    @*                 NavMenuClass = "menu-off"; *@
-    @*                 StateHasChanged(); *@
-    @*             } *@
-    @* *@
-    @*     //if user is not at home page witch is / *@
-    @*     //hidden sidebar by menu-off *@
-    @* *@
-    @*     //else fullscreen the sidebar *@
-    @*         } *@
-    @*         else *@
-    @*         { *@
-    @*             NavMenuClass = "menu-on"; *@
-    @*             StateHasChanged(); *@
-    @*         } *@
-    @*     } *@
-    @* *@
-    @*     public static bool IsHomePage(string uri) *@
-    @*     { *@
-    @*     // Check if the current URL is the home page *@
-    @*         return string.IsNullOrEmpty(new Uri(uri).AbsolutePath) || new Uri(uri).AbsolutePath == "/"; *@
-    @*     } *@
-    @* *@
-    @* *@
-    @* *@
-    @* } *@
-
-
-    @* @inject IJSRuntime JSRuntime
-
-@code {
-    private string ScreenSizeCategory { get; set; }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JSRuntime.InvokeVoidAsync("eval", "function getScreenSizeCategory() { /* ... JavaScript function code ... */ }");
-            await JSRuntime.InvokeVoidAsync("eval", "window.addEventListener('resize', function () { DotNet.invokeMethodAsync('YourAssemblyName', 'OnResize').then(size => { console.log('Screen size category: ' + size); }); });");
-        }
-    }
-
-    [JSInvokable]
-    public async Task<string> OnResize()
-    {
-        ScreenSizeCategory = await JSRuntime.InvokeAsync<string>("getScreenSizeCategory");
-    // Perform actions based on the ScreenSizeCategory, or use it as needed
-
-    // Call any C# method or update UI based on the ScreenSizeCategory
-        StateHasChanged();
-        return ScreenSizeCategory;
-    }
 }
- *@
-
-
-    @* @code
-{
-    private string NavMenuClass = "menu-on";
-    private string ThemeMenuClass = "menu-off";
-    private string ProfileMenuClass = "menu-off";
-    private string SidebarHiddenOrShow = "";
-
-
-    private void LogResize()
-    {
-
-    }
-
-
-    private void ToggleNavMenu()
-    {
-        if (ThemeMenuClass == "menu-on") ThemeMenuClass = "menu-off";
-        if (ProfileMenuClass == "menu-on") ProfileMenuClass = "menu-off";
-
-        NavMenuClass = NavMenuClass == "menu-on" ? "menu-off" : "menu-on";
-    }
-
-    private void ToggleThemeMenu()
-    {
-        if (NavMenuClass == "menu-on") NavMenuClass = "menu-off";
-        if (ProfileMenuClass == "menu-on") ProfileMenuClass = "menu-off";
-
-        ThemeMenuClass = ThemeMenuClass == "menu-on" ? "menu-off" : "menu-on";
-    }
-
-    private void ToggleProfileMenu()
-    {
-        if (NavMenuClass == "menu-on") NavMenuClass = "menu-off";
-        if (ThemeMenuClass == "menu-on") ThemeMenuClass = "menu-off";
-
-        ProfileMenuClass = ProfileMenuClass == "menu-on" ? "menu-off" : "menu-on";
-    }
-}
- *@}

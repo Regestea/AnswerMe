@@ -5,7 +5,7 @@
 else
 {
     <div class="avatar placeholder">
-        <div class="bg-neutral text-neutral-content rounded-full w-24" style="background-color: @_backgroundColor">
+        <div class="bg-neutral text-neutral-content rounded-full @Class" style="background-color: @SetColor()">
             <span class="text-3xl" style="color:wheat">@Letter</span>
         </div>
     </div>
@@ -15,7 +15,7 @@ else
 @code {
     [Parameter] public string? ImageUrl { get; set; }
 
-    [Parameter] public required string Letter { get; set; }
+    [Parameter] public  string? Letter { get; set; } 
 
     [Parameter] public string? Class { get; set; }
 
@@ -34,17 +34,20 @@ else
     };
 
 
-    protected override void OnInitialized()
+   
+
+    string SetColor()
     {
         _backgroundColor = GetColorByLetter(Letter);
+        return _backgroundColor;
+        
     }
 
-
-    string GetColorByLetter(string letter)
+    string GetColorByLetter(string? letter)
     {
-        if (LetterColors.TryGetValue(letter, out var color))
+        if (!string.IsNullOrWhiteSpace(letter))
         {
-            return color;
+            return LetterColors.GetValueOrDefault(letter.ToUpper(), "#3f51b5");
         }
 
         return "#3f51b5";

@@ -1,4 +1,5 @@
 ﻿using AnswerMe.Client.Core.Auth;
+using AnswerMe.Client.Core.DTOs.Base;
 using AnswerMe.Client.Core.Enums;
 using AnswerMe.Client.Core.Services;
 using AnswerMe.Client.Core.Services.Interfaces;
@@ -10,7 +11,7 @@ namespace AnswerMe.Client.Core
 {
     public static class ConfigureServices
     {
-        public static IServiceCollection AddCoreServices(this IServiceCollection services)
+        public static IServiceCollection AddCoreServices(this IServiceCollection services,AppSettings appSettings)
         {
             services.AddAuthorizationCore();
             services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
@@ -26,16 +27,19 @@ namespace AnswerMe.Client.Core
             services.AddScoped<AuthStateProvider>();
             services.AddBlazoredLocalStorage();
             services.AddCascadingAuthenticationState();
+            services.AddScoped<IOnlineHubService, OnlineHubService>();
+            services.AddScoped<HubClient>();
+            
 
             services.AddHttpClient(nameof(HttpClients.AnswerMe),
-                client => { client.BaseAddress = new Uri("https://localhost:7156/api/"); });
+                client => { client.BaseAddress = new Uri(appSettings.AnswerMe ?? throw new InvalidOperationException()); });
 
             services.AddHttpClient(nameof(HttpClients.IdentityServer),
-                client => { client.BaseAddress = new Uri("https://localhost:7216/api/"); });
+                client => { client.BaseAddress = new Uri(appSettings.IdentityServer ?? throw new InvalidOperationException()); });
 
             services.AddHttpClient(nameof(HttpClients.ObjectStorage),
-                client => { client.BaseAddress = new Uri("https://localhost:7205/api/"); });
-
+                client => { client.BaseAddress = new Uri(appSettings.ObjectStorage ?? throw new InvalidOperationException()); });
+            
             return services;
         }
     }

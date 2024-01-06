@@ -1,0 +1,80 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using System.Net.Http.Headers
+@using AnswerMe.Client.Core.DTOs.Base
+@using AnswerMe.Client.Core.Services
+@using Microsoft.AspNetCore.Http.Connections
+@inject IOnlineHubService OnlineHubService
+@inject IUserService UserService
+@inject ILocalStorageService localStorageService
+@inject AppSettings AppSettings
+
+<div class="flex" style="position: absolute;width: 100%;justify-content: center;margin-top: 10px">
+    <div class="avatar @OnlineStatusClass" style="align-self: center">
+        <div class="w-16 h-16 rounded-full">
+            <img src="image/Logo.jpeg"/>
+        </div>
+    </div>
+
+    <h1 class="" style="align-self: center;margin-left: 5px;font-weight: bold;padding: 10px">
+        <span  style="position: relative">@Title</span>
+
+    </h1>
+</div>
+
+@code {
+
+    private string OnlineStatusClass = "offline";
+    private string Title = "Answer Me";
+    private HubConnection hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ConnectToHub();
+    }
+
+    private async Task ConnectToHub()
+    {
+        hubConnection =
+            new HubConnectionBuilder()
+                .WithUrl(AppSettings.OnlineHub!, option =>
+                {
+                    option.AccessTokenProvider =
+                        async () => { return await localStorageService.GetItemAsStringAsync("authToken"); };
+                }).Build();
+
+        hubConnection.Closed += OnClosed;
+
+        try
+        {
+            await hubConnection.StartAsync();
+            Title = "Answer Me";
+            OnlineStatusClass = "online";
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            await Reconnect();
+        }
+    }
+
+    private async Task Reconnect()
+    {
+        Title = "Connecting .....";
+        StateHasChanged();
+        await Task.Delay(5000);
+
+        await ConnectToHub();
+    }
+
+    private async Task OnClosed(Exception exception)
+    {
+        // Log the disconnection event
+        Title = "Connecting .....";
+        OnlineStatusClass = "offline";
+        StateHasChanged();
+        await Task.Delay(5000);
+        await ConnectToHub();
+    }
+    
+
+}

@@ -29,7 +29,7 @@
         <div class="form-control mt-6" style="display:grid">
             <div class="avatar" style="display: grid">
                 <div class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2" style="justify-self: center">
-                    <UserAvatar ImageUrl="@ImageUrl" Letter="H"/>
+                    <UserAvatar Class="w-24" ImageUrl="@ImageUrl" Letter="@_editUserRequest.FullName?.FirstLetter()"/>
                 </div>
             </div>
             @if (UploadProgress != null)
@@ -49,7 +49,7 @@
             <label class="label">
                 <span class="label-text">Display Name</span>
             </label>
-            <input type="text" @bind-value="_editUserRequest.FullName" placeholder="Display Name" class="input input-bordered" required/>
+            <input type="text" @oninput="DisplayNameChange" value="@_editUserRequest.FullName" placeholder="Display Name" class="input input-bordered" required/>
         </div>
 
         <div class="form-control mt-6">
@@ -91,7 +91,11 @@
         await JsRuntime.InvokeVoidAsync("MessageShow", "success", "success", "Profile Updated ✅");
         await GetAndSetUserData();
     }
-    
+    private  void DisplayNameChange(ChangeEventArgs e)
+    {
+        _editUserRequest.FullName = e.Value.ToString();
+        StateHasChanged();
+    }
     
     private async Task GetAndSetUserData()
     {
@@ -124,7 +128,7 @@
 
     private async Task ImageChanged(InputFileChangeEventArgs inputFile)
     {
-        await LoadImage(inputFile.File);
+        ImageUrl= await inputFile.File.GetPreviewUrl();
 
         UploadCancel = false;
         StateHasChanged();
@@ -194,22 +198,6 @@
         }
         
     }
-
-    private async Task LoadImage(IBrowserFile file)
-    {
-        if (file.ContentType is "image/png" or "image/gif" or "image/jpg" or "image/jpeg")
-        {
-            var image = await file.RequestImageFileAsync("image/png,image/gif,image/jpg,image/jpeg", 1920, 1080);
-
-            using Stream imageStream = image.OpenReadStream(1024 * 1024 * 15);
-
-            using MemoryStream ms = new();
-            //copy imageStream to Memory stream
-            await imageStream.CopyToAsync(ms);
-
-            //convert stream to base64
-            ImageUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
-        }
-    }
+    
 
 }

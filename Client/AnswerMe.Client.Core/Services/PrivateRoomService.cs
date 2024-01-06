@@ -35,6 +35,22 @@ public class PrivateRoomService:IPrivateRoomService
         return new Success<PagedListResponse<PrivateRoomResponse>>(privateRooms);
     }
 
+    public async Task<CreateResponse<IdResponse>> CreateAsync(Guid contactId)
+    {
+        await _httpClient.AddAuthHeader(_localStorageService);
+
+        var response = await _httpClient.SendRequestAsync($"PrivateRoom/{contactId}", HttpMethod.Post);
+
+        if (response.StatusCode==HttpStatusCode.NotFound)
+        {
+            return new NotFound();
+        }
+        
+        var privateRoomId = await JsonConverter.ToObject<IdResponse>(response.Content);
+
+        return new Success<IdResponse>(privateRoomId);
+    }
+
     public async Task<ReadResponse<PrivateRoomResponse>> GetPrivateRoomByIdAsync(Guid id)
     {
         await _httpClient.AddAuthHeader(_localStorageService);

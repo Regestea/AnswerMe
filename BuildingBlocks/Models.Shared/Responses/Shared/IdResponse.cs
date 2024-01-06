@@ -9,6 +9,6 @@ namespace Models.Shared.Responses.Shared
     public class IdResponse
     {
         public required string FieldName { get; set; }
-        public Guid Id { get; set; }
+        public required Guid Id { get; set; }
     }
 }

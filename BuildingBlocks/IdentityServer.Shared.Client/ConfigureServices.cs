@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using IdentityServer.Shared.Client.Repositories;
 using IdentityServer.Shared.Client.Repositories.Interfaces;
+using IdentityServer.Shared.Client.Service;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 
@@ -22,6 +23,8 @@ namespace IdentityServer.Shared.Client
             services.AddScoped<AuthorizationGrpcServices>();
 
             services.AddScoped<IJwtCacheRepository, JwtCacheRepository>();
+
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
 
             services.AddScoped<IJwtTokenRepository, JwtTokenRepository>();
 

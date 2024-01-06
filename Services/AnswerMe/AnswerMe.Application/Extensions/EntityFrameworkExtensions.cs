@@ -31,18 +31,5 @@ namespace AnswerMe.Application.Extensions
 
             return await source.Where(predicate).CountAsync() >= 1;
         }
-
-        /// <summary>
-        /// Provides pagination functionality for an <see cref
-        /// ="IQueryable{T}"/> object.
-        /// </summary>
-        /// <typeparam name="BaseEntity">The type of the entities in the <see cref="IQueryable{T}"/>.</typeparam>
-        /// <param name="queryable">The <see cref="IQueryable{T}"/> object to paginate.</param>
-        /// <param name="request">The pagination request.</param>
-        /// <returns>The paginated <see cref="IQueryable{T}"/> object.</returns>
-        public static IQueryable<BaseEntity> Paginate<BaseEntity>(this IQueryable<BaseEntity> queryable, PaginationRequest request)
-        {
-            return queryable.Skip((request.CurrentPage - 1) * request.PageSize).Take(request.PageSize);
-        }
     }
 }

@@ -54,19 +54,19 @@ namespace AnswerMe.Api.Controllers
         /// <summary>
         /// Send a private message to a room.
         /// </summary>
-        /// <param name="roomId">The unique identifier of the room.</param>
+        /// <param name="contactId">The unique identifier of the room.</param>
         /// <param name="request">The message to send.</param>
         /// <response code="200">OK: The message was successfully sent.</response>
         /// <response code="404">Not Found: The room or user could not be found.</response>
-        [HttpPost("{roomId:guid}")]
+        [HttpPost("{contactId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IdResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> SendAsync([FromRoute] Guid roomId, [FromBody] SendMessageRequest request)
+        public async Task<IActionResult> SendAsync([FromRoute] Guid contactId, [FromBody] SendMessageRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
-            var result = await _privateMessageService.SendAsync(loggedInUser.id, roomId, request);
+            var result = await _privateMessageService.SendAsync(loggedInUser.id, contactId, request);
 
             if (result.IsSuccess)
             {

@@ -67,6 +67,43 @@ namespace AnswerMe.Infrastructure.Repositories
             return new Success<PrivateRoomResponse>(privateRoomResponse);
         }
 
+        public async Task<CreateResponse<IdResponse>> CreateAsync(Guid loggedInUserId, Guid contactId)
+        {
+            var existContact =await _context.Users.IsAnyAsync(x => x.id == contactId);
+
+            if (!existContact)
+            {
+                return new NotFound();
+            }
+
+            var privateChat = await _context.PrivateChats.Where(x =>
+                (x.User1Id == loggedInUserId && x.User2Id == contactId) ||
+                x.User2Id == loggedInUserId && x.User1Id == contactId)
+                .SingleOrDefaultAsync();
+
+            if (privateChat != null)
+            {
+                return new Success<IdResponse>(new IdResponse() { FieldName = "Private Room Id", Id = privateChat.id });
+            }
+
+            privateChat = new PrivateChat()
+            {
+                id = Guid.NewGuid(),
+                User1Id = loggedInUserId,
+                User2Id = contactId,
+                CreatedDate = DateTimeOffset.UtcNow
+            };
+            
+            await _context.PrivateChats.AddAsync(privateChat);
+            await _context.SaveChangesAsync();
+            
+            return new Success<IdResponse>(new IdResponse()
+            {
+                Id = privateChat.id,
+                FieldName = "Private Room Id"
+            });
+        }
+
         public async Task<ReadResponse<PagedListResponse<PrivateRoomResponse>>> GetListAsync(Guid loggedInUserId, PaginationRequest paginationRequest)
         {
             var privateRoomListQuery = _context.PrivateChats
@@ -89,8 +126,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var pagedResult = await PagedListResponse<PrivateRoomResponse>.CreateAsync(
                 privateRoomListQuery,
-                paginationRequest.PageSize,
-                paginationRequest.CurrentPage
+                paginationRequest
             );
 
             foreach (var privateRoomResponse in pagedResult.Items)

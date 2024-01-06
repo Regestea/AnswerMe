@@ -179,8 +179,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var pagedResult = await PagedListResponse<MessageResponse>.CreateAsync(
                 messagesQuery,
-                paginationRequest.PageSize,
-                paginationRequest.CurrentPage
+                paginationRequest
                 );
 
             return new Success<PagedListResponse<MessageResponse>>(pagedResult);

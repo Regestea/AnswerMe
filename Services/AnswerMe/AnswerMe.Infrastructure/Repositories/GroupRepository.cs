@@ -41,7 +41,8 @@ namespace AnswerMe.Infrastructure.Repositories
                 return new NotFound();
             }
 
-            var isUserInGroup = await _context.UserGroups.IsAnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
+            var isUserInGroup =
+                await _context.UserGroups.IsAnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
 
             if (!isUserInGroup)
             {
@@ -67,7 +68,8 @@ namespace AnswerMe.Infrastructure.Repositories
             return new Success<GroupResponse>(groupResponse);
         }
 
-        public async Task<ReadResponse<PagedListResponse<GroupResponse>>> GetListAsync(Guid loggedInUserId, PaginationRequest paginationRequest)
+        public async Task<ReadResponse<PagedListResponse<GroupResponse>>> GetListAsync(Guid loggedInUserId,
+            PaginationRequest paginationRequest)
         {
             var groupIdList = await _context.UserGroups
                 .OrderByDescending(x => x.CreatedDate)
@@ -87,14 +89,14 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var pagedResult = await PagedListResponse<GroupResponse>.CreateAsync(
                 groupQuery,
-                paginationRequest.PageSize,
-                paginationRequest.CurrentPage
+                paginationRequest
             );
 
             return new Success<PagedListResponse<GroupResponse>>(pagedResult);
         }
 
-        public async Task<ReadResponse<PagedListResponse<PreviewGroupUserResponse>>> UserListAsync(Guid loggedInUserId, Guid groupId, PaginationRequest paginationRequest)
+        public async Task<ReadResponse<PagedListResponse<PreviewGroupUserResponse>>> UserListAsync(Guid loggedInUserId,
+            Guid groupId, PaginationRequest paginationRequest)
         {
             var existGroup = await _context.GroupChats.IsAnyAsync(x => x.id == groupId);
 
@@ -103,7 +105,8 @@ namespace AnswerMe.Infrastructure.Repositories
                 return new NotFound();
             }
 
-            var isUserInGroup = await _context.UserGroups.IsAnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
+            var isUserInGroup =
+                await _context.UserGroups.IsAnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
 
             if (!isUserInGroup)
             {
@@ -129,8 +132,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var pagedResult = await PagedListResponse<PreviewGroupUserResponse>.CreateAsync(
                 previewUserQuery,
-                paginationRequest.PageSize,
-                paginationRequest.CurrentPage
+                paginationRequest
             );
 
             var adminIdList = await _context.GroupAdmins
@@ -144,13 +146,15 @@ namespace AnswerMe.Infrastructure.Repositories
                 {
                     item.IsAdmin = true;
                 }
+
                 return item;
             }).ToList();
 
             return new Success<PagedListResponse<PreviewGroupUserResponse>>(pagedResult);
         }
 
-        public async Task<CreateResponse<IdResponse>> SetUserAsAdminAsync(Guid loggedInUserId, Guid groupId, Guid userId)
+        public async Task<CreateResponse<IdResponse>> SetUserAsAdminAsync(Guid loggedInUserId, Guid groupId,
+            Guid userId)
         {
             var isAdmin = await _context.GroupAdmins.IsAnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
 
@@ -200,7 +204,8 @@ namespace AnswerMe.Infrastructure.Repositories
 
             if (isAdmin)
             {
-                var admin = await _context.GroupAdmins.SingleOrDefaultAsync(x => x.UserId == userId && x.RoomId == groupId);
+                var admin = await _context.GroupAdmins.SingleOrDefaultAsync(x =>
+                    x.UserId == userId && x.RoomId == groupId);
 
                 if (admin != null)
                 {
@@ -210,7 +215,6 @@ namespace AnswerMe.Infrastructure.Repositories
 
                     return new Success();
                 }
-
             }
 
             return new AccessDenied();
@@ -328,7 +332,8 @@ namespace AnswerMe.Infrastructure.Repositories
 
             if (isAdmin)
             {
-                var userGroup = await _context.UserGroups.SingleOrDefaultAsync(x => x.UserId == kickUserId && x.GroupId == groupId);
+                var userGroup =
+                    await _context.UserGroups.SingleOrDefaultAsync(x => x.UserId == kickUserId && x.GroupId == groupId);
 
                 if (userGroup != null)
                 {
@@ -346,13 +351,14 @@ namespace AnswerMe.Infrastructure.Repositories
 
         public async Task<DeleteResponse> LeaveGroupAsync(Guid loggedInUserId, Guid groupId)
         {
-            var userGroup = await _context.UserGroups.SingleOrDefaultAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
+            var userGroup =
+                await _context.UserGroups.SingleOrDefaultAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
 
             if (userGroup != null)
             {
                 _context.UserGroups.Remove(userGroup);
                 await _context.SaveChangesAsync();
-                
+
                 return new Success();
             }
 

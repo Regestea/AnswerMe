@@ -8,7 +8,7 @@ namespace AnswerMe.Client.Core.Services.Interfaces;
 
 public interface IPrivateMessageService
 {
-    Task<ReadResponse<PagedListResponse<MessageResponse>>> GetPrivateMessagesAsync(Guid roomId, PaginationRequest request);
+    Task<ReadResponse<PagedListResponse<MessageResponse>>> GetPrivateMessagesAsync(Guid roomId,bool jumpToUnRead, PaginationRequest request);
     Task<CreateResponse<IdResponse>> SendMessageAsync(Guid roomId,SendMessageRequest request);
     Task<UpdateResponse> EditMessageTextAsync(Guid messageId, EditMessageRequest request);
     Task<DeleteResponse> DeleteMessageAsync(Guid messageId);

@@ -44,20 +44,26 @@ namespace AnswerMe.Client.Core.Auth
 
         }
 
-        public async Task<UserDto> ExtractUserDataFromLocalToken()
+        public async Task<UserDto> ExtractUserDataFromLocalTokenAsync()
         {
-            var authToken = await _localStorageService.GetItemAsStringAsync("authToken");
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var jwtToken = tokenHandler.ReadJwtToken(authToken);
-            var userId = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            var idName = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-            var phoneNumber = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.MobilePhone)?.Value;
+             var authToken = await _localStorageService.GetItemAsStringAsync("authToken");
+             var tokenHandler = new JwtSecurityTokenHandler();
+             var jwtToken = tokenHandler.ReadJwtToken(authToken);
+             var id = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.id))?.Value;
+             var idName = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.IdName))?.Value;
+             var phoneNumber = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.PhoneNumber))?.Value;
 
+            //var user = new UserDto()
+            //{
+            //    id = Guid.Parse("943a656d-dd7a-4408-a8d8-7042a5709ddf"),
+            //    IdName = "koby",
+            //    PhoneNumber = "15560465392"
+            //};
             var user = new UserDto()
             {
-                id = Guid.Parse(userId!),
-                IdName = idName!,
-                PhoneNumber = phoneNumber!
+                id = Guid.Parse(id),
+                IdName = idName,
+                PhoneNumber = phoneNumber
             };
 
             return user;

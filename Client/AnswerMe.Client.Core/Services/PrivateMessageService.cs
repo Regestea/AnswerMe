@@ -25,11 +25,21 @@ public class PrivateMessageService:IPrivateMessageService
     }
     
     
-    public async Task<ReadResponse<PagedListResponse<MessageResponse>>> GetPrivateMessagesAsync(Guid roomId, PaginationRequest request)
+    public async Task<ReadResponse<PagedListResponse<MessageResponse>>> GetPrivateMessagesAsync(Guid roomId,bool jumpToUnRead, PaginationRequest request)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
-        var response = await _httpClient.SendRequestAsync($"PrivateMessage/{roomId}".AddPagination(request), HttpMethod.Get);
+        var response = await _httpClient.SendRequestAsync($"PrivateMessage/{roomId}?".AddPagination(request).AddQuery("jumpToUnRead",jumpToUnRead.ToString()), HttpMethod.Get);
+
+        if (response.StatusCode==HttpStatusCode.NotFound)
+        {
+            return new NotFound();
+        }
+
+        if (response.StatusCode==HttpStatusCode.Forbidden)
+        {
+            return new AccessDenied();
+        }
         
         var messages = await JsonConverter.ToObject<PagedListResponse<MessageResponse>>(response.Content);
 

@@ -172,6 +172,8 @@
     {
        var result= await GroupService.CreateAsync(_createGroupRequest);
 
+       _createGroupRequest = new();
+
        if (result.IsSuccess)
        {
            var groupId = result.AsSuccess.Value.Id;
@@ -224,7 +226,7 @@
         {
             var privateRoomId = response.AsSuccess.Value.Id;
             Console.WriteLine(privateRoomId);
-            NavigationManager.NavigateTo("/Counter");
+            NavigationManager.NavigateTo($"/PV/{privateRoomId}");
             await JsRuntime.InvokeVoidAsync("ResizeComponent");
             //redirect to chat component
         }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using Microsoft.Azure.Cosmos.Linq;
+using Microsoft.EntityFrameworkCore;
 using Models.Shared.Requests.Shared;
 
 

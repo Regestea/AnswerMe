@@ -30,7 +30,7 @@ namespace AnswerMe.Infrastructure.Persistence
         {
             modelBuilder.Entity<UserGroup>().ToContainer("GroupUsers");
             modelBuilder.Entity<Message>().ToContainer("Messages");
-            modelBuilder.Entity<Message>().HasMany(x => x.MediaList);
+            modelBuilder.Entity<Message>().HasMany(x => x.MediaList).WithOne();
             modelBuilder.Entity<PrivateChat>().ToContainer("PrivateRoomChats");
             modelBuilder.Entity<GroupChat>().ToContainer("GroupRoomChats");
             modelBuilder.Entity<RoomLastSeen>().ToContainer("RoomLastSeen");

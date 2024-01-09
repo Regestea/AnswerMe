@@ -20,6 +20,6 @@ namespace AnswerMe.Domain.Entities
 
         public Guid? ReplyMessageId { get; set; }
 
-        public ICollection<Media>? MediaList { get; set; }
+        public required ICollection<Media> MediaList { get; set; }
     }
 }

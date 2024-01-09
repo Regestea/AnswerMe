@@ -15,6 +15,7 @@ namespace AnswerMe.Domain.Entities
         public Guid MessageId { get; set; }
 
         public string? BlurHash { get; set; }
+        
 
         [Required]
         public MediaType Type { get; set; }

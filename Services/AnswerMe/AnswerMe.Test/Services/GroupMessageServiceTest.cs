@@ -6,7 +6,7 @@ using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Message;
 using Models.Shared.Responses.Shared;
 
-namespace AnswerMe.Api.Test.Services
+namespace AnswerMe.Test.Services
 {
     public class GroupMessageServiceTest
     {
@@ -69,8 +69,8 @@ namespace AnswerMe.Api.Test.Services
                     Text = "hello World" + Guid.NewGuid(),
                     MediaList = new List<Media>()
                     {
-                        new Media(){Id = Guid.NewGuid(),MessageId = Guid.NewGuid(),Type = MediaType.image,Path = "some/where"},
-                        new Media(){Id = Guid.NewGuid(),MessageId = Guid.NewGuid(),Type = MediaType.image,Path = "some/where"}
+                        new(){Id = Guid.NewGuid(),MessageId = Guid.NewGuid(),Type = MediaType.image,Path = "some/where"},
+                        new(){Id = Guid.NewGuid(),MessageId = Guid.NewGuid(),Type = MediaType.image,Path = "some/where"}
                     }
                 });
             }

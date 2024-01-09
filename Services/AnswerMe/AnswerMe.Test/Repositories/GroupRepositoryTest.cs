@@ -1,18 +1,12 @@
-﻿using AnswerMe.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AnswerMe.Domain.Entities;
+﻿using AnswerMe.Domain.Entities;
+using AnswerMe.Infrastructure.Persistence;
 using AnswerMe.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Group;
-using Models.Shared.Responses.Message;
 using Models.Shared.Responses.Shared;
 
-namespace AnswerMe.Api.Test.Repositories
+namespace AnswerMe.Test.Repositories
 {
     public class GroupRepositoryTest
     {

@@ -1,19 +1,12 @@
-﻿using AnswerMe.Infrastructure.Persistence;
+﻿using AnswerMe.Domain.Entities;
+using AnswerMe.Infrastructure.Persistence;
 using AnswerMe.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AnswerMe.Domain.Entities;
 using Models.Shared.Requests.Shared;
-using Models.Shared.Responses.Group;
 using Models.Shared.Responses.PrivateRoom;
 using Models.Shared.Responses.Shared;
-using AnswerMe.Application.Extensions;
 
-namespace AnswerMe.Api.Test.Repositories
+namespace AnswerMe.Test.Repositories
 {
     public class PrivateRoomRepositoryTest
     {

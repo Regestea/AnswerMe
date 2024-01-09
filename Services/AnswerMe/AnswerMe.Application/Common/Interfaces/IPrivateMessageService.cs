@@ -25,12 +25,13 @@ public interface IPrivateMessageService
     /// </summary>
     /// <param name="loggedInUserId">The unique identifier of the logged-in user</param>
     /// <param name="roomId">The unique identifier of the room to retrieve messages from</param>
+    /// <param name="jumpToUnRead">should jump to unRead page</param>
     /// <param name="request">The pagination request specifying
     /// the number of items to return and the page number</param>
     /// <returns>A task that represents the asynchronous
     /// operation. The task result contains a response
     /// object containing a paged list of message responses</returns>
-    Task<ReadResponse<PagedListResponse<MessageResponse>>> GetListAsync(Guid loggedInUserId, Guid roomId, PaginationRequest request);
+    Task<ReadResponse<PagedListResponse<MessageResponse>>> GetListAsync(Guid loggedInUserId, Guid roomId,bool jumpToUnRead, PaginationRequest request);
 
     /// <summary>
     /// Updates a message asynchronously.

@@ -35,7 +35,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdentityServer.Shared.Clien
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Security.Shared", "BuildingBlocks\Security.Shared\Security.Shared.csproj", "{B4EEB261-6B8C-471D-8A6B-E900F47DAA0A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnswerMe.Api.Test", "Services\AnswerMe\AnswerMe.Api.Test\AnswerMe.Api.Test.csproj", "{32714E4E-8987-4539-8D45-B084AD469C13}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnswerMe.Test", "Services\AnswerMe\AnswerMe.Test\AnswerMe.Test.csproj", "{32714E4E-8987-4539-8D45-B084AD469C13}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnswerMe.Client", "Client\AnswerMe.Client\AnswerMe.Client.csproj", "{202C1312-842C-4474-A9BA-CFC01E6ADACA}"
 EndProject

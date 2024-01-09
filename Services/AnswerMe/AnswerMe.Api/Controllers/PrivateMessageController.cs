@@ -30,22 +30,30 @@ namespace AnswerMe.Api.Controllers
         /// Get a list of private messages in a room.
         /// </summary>
         /// <param name="roomId">The unique identifier of the room.</param>
+        /// <param name="jumpToUnRead">should jump to unRead page</param>
         /// <param name="paginationRequest">Pagination parameters.</param>
         /// <response code="200">OK: The list of private messages was successfully retrieved.</response>
         /// <response code="404">Not Found: The room or user could not be found.</response>
+        /// <response code="403">Forbidden: You can't see this room.</response>
         [HttpGet("{roomId:guid}")]
         [ProducesResponseType(typeof(PagedListResponse<MessageResponse>), StatusCodes.Status200OK )]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetListAsync([FromRoute] Guid roomId, [FromQuery] PaginationRequest paginationRequest)
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetListAsync([FromRoute] Guid roomId, [FromQuery] PaginationRequest paginationRequest,[FromQuery]bool jumpToUnRead=false)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
-
-            var result = await _privateMessageService.GetListAsync(loggedInUser.id, roomId, paginationRequest);
+           
+            var result = await _privateMessageService.GetListAsync(loggedInUser.id, roomId,jumpToUnRead, paginationRequest);
 
             if (result.IsNotFound)
             {
                 return NotFound();
+            }
+
+            if (result.IsAccessDenied)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
             return Ok(result.AsSuccess.Value);

@@ -144,7 +144,7 @@ namespace AnswerMe.Infrastructure.Repositories
             return new Success<IdResponse>(new IdResponse() { FieldName = "MessageId", Id = message.id });
         }
 
-        public async Task<ReadResponse<PagedListResponse<MessageResponse>>> GetListAsync(Guid loggedInUserId, Guid roomId, PaginationRequest paginationRequest)
+        public async Task<ReadResponse<PagedListResponse<MessageResponse>>> GetListAsync(Guid loggedInUserId, Guid roomId,bool jumpToUnRead, PaginationRequest paginationRequest)
         {
             var existRoom = await _context.PrivateChats.IsAnyAsync(x => x.id == roomId);
 
@@ -159,6 +159,16 @@ namespace AnswerMe.Infrastructure.Repositories
                 return new AccessDenied();
             }
 
+            var lastRoomVisit = await _context.RoomLastSeen.Where(x => x.RoomId == roomId && x.UserId == loggedInUserId)
+                .Select(x => x.LastSeenUtc).FirstOrDefaultAsync();
+           
+            if (jumpToUnRead&& lastRoomVisit!=DateTimeOffset.MinValue)
+            {
+                var unReadMessagesCount =await _context.Messages.CountAsync(x => x.RoomChatId == roomId && x.CreatedDate > lastRoomVisit);
+                var page=(int)Math.Ceiling((decimal)unReadMessagesCount / paginationRequest.PageSize);
+                paginationRequest.CurrentPage = page;
+            }
+
             var messagesQuery = _context.Messages
                 .Where(x => x.RoomChatId == roomId)
                 .OrderByDescending(x => x.CreatedDate)
@@ -167,7 +177,7 @@ namespace AnswerMe.Infrastructure.Repositories
                     {
                         id = message.id,
                         CreatedDate = message.CreatedDate,
-                        MediaList = message.MediaList!.Select(x => new MediaResponse
+                        MediaList =  message.MediaList!.Select(x => new MediaResponse
                         {
                             Id = x.Id,
                             Type = (MediaTypeResponse)x.Type,
@@ -179,19 +189,21 @@ namespace AnswerMe.Infrastructure.Repositories
                         GroupInviteToken = message.GroupInvitationToken,
                         ModifiedDate = message.ModifiedDate,
                         ReplyMessageId = message.ReplyMessageId,
-                        UserSender = _context.Users.Select(x => new PreviewUserResponse()
-                        {
-                            Id = x.id,
-                            Name = x.FullName,
-                            ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
-                        }).Single()
+                        UserSender = new PreviewUserResponse()
                     }).AsQueryable();
+           
+            // _context.Users.Where(x=>x.id==message.UserSenderId).Select(x => new PreviewUserResponse()
+            // {
+            //     Id = x.id,
+            //     Name = x.FullName,
+            //     ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
+            // }).Single()
 
             var pagedResult = await PagedListResponse<MessageResponse>.CreateAsync(
                 messagesQuery,
                 paginationRequest
             );
-
+            pagedResult.Items.Reverse();
             return new Success<PagedListResponse<MessageResponse>>(pagedResult);
 
         }

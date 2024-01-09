@@ -24,12 +24,9 @@ namespace AnswerMe.Infrastructure
         /// <returns>The modified <see cref="IServiceCollection"/> with added services.</returns>
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<AnswerMeDbContext>(options =>
-                options.UseCosmos(
-                    configuration.GetSection("DatabaseSettings:ConnectionString").Value ?? throw new InvalidOperationException(),
-                    configuration.GetSection("DatabaseSettings:PrimaryKey").Value ?? throw new InvalidOperationException(),
-                    configuration.GetSection("DatabaseSettings:DatabaseName").Value ?? throw new InvalidOperationException())
-            );
+            //Services.AddEntityFrameworkNpgsql().AddDbContext<AnswerMeDbContext>(
+            //    o => o.UseNpgsql(configuration.GetSection("DatabaseSettings:ConnectionString").Value));
+
             services.AddGrpcClient<ObjectStorageService.ObjectStorageServiceClient>(o =>
                 o.Address = new Uri(configuration.GetSection("ObjectStorageServer:GrpcUrl").Value ?? throw new InvalidOperationException()));
             services.AddScoped<FileStorageService>();

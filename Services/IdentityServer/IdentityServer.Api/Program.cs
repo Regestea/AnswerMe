@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using IdentityServer.Api.Configs;
 using IdentityServer.Api.Context;
+using IdentityServer.Api.Extensions;
 using IdentityServer.Api.GrpcServices;
 using IdentityServer.Api.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,13 +21,8 @@ builder.Services.AddGrpc();
 builder.Services.AddControllers();
 
 #region DatabaseConfig
-
-builder.Services.AddDbContext<IdentityServerDbContext>(options =>
-    options.UseCosmos(
-        builder.Configuration.GetSection("DatabaseSettings:ConnectionString").Value ?? throw new InvalidOperationException(),
-        builder.Configuration.GetSection("DatabaseSettings:PrimaryKey").Value ?? throw new InvalidOperationException(),
-        builder.Configuration.GetSection("DatabaseSettings:DatabaseName").Value ?? throw new InvalidOperationException())
-);
+builder.Services.AddDbContext<IdentityServerDbContext>(
+    o => o.UseNpgsql(builder.Configuration.GetSection("DatabaseSettings:ConnectionString").Value));
 #endregion
 
 builder.Services.AddSwagger();
@@ -83,6 +79,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MigrateDatabase<IdentityServerDbContext>();
 
 app.UseAuthorization();
 

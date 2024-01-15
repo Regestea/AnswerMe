@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using IdentityServer.Api.Context;
+﻿using IdentityServer.Api.Context;
 using IdentityServer.Api.DTOs.User;
 using IdentityServer.Api.Entities;
 using IdentityServer.Api.Extensions;

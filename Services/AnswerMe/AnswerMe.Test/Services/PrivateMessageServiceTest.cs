@@ -88,11 +88,11 @@ namespace AnswerMe.Test.Services
                     {
                         new Media()
                         {
-                            Id = Guid.NewGuid(), MessageId = Guid.NewGuid(), Type = MediaType.image, Path = "some/where"
+                            id = Guid.NewGuid(), MessageId = Guid.NewGuid(), Type = MediaType.image, Path = "some/where"
                         },
                         new Media()
                         {
-                            Id = Guid.NewGuid(), MessageId = Guid.NewGuid(), Type = MediaType.image, Path = "some/where"
+                            id = Guid.NewGuid(), MessageId = Guid.NewGuid(), Type = MediaType.image, Path = "some/where"
                         }
                     }
                 });
@@ -111,11 +111,11 @@ namespace AnswerMe.Test.Services
                     {
                         new Media()
                         {
-                            Id = Guid.NewGuid(), MessageId = Guid.NewGuid(), Type = MediaType.image, Path = "some/where"
+                            id = Guid.NewGuid(), MessageId = Guid.NewGuid(), Type = MediaType.image, Path = "some/where"
                         },
                         new Media()
                         {
-                            Id = Guid.NewGuid(), MessageId = Guid.NewGuid(), Type = MediaType.image, Path = "some/where"
+                            id = Guid.NewGuid(), MessageId = Guid.NewGuid(), Type = MediaType.image, Path = "some/where"
                         }
                     }
                 });

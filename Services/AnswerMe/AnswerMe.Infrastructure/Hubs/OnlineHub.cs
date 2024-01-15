@@ -45,8 +45,7 @@ namespace AnswerMe.Infrastructure.Hubs
         {
             var jwtToken = _jwtTokenRepository.GetJwtToken();
             var isAuthenticated = await _authenticationService.IsAuthenticatedAsync(jwtToken);
-
-            Console.WriteLine("is user authenticated "+isAuthenticated);
+            
             if (isAuthenticated)
             {
                            

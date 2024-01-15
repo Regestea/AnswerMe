@@ -34,30 +34,15 @@ namespace AnswerMe.Infrastructure.Repositories
         }
 
 
-        public async Task<CreateResponse<IdResponse>> SendAsync(Guid loggedInUserId, Guid userReceiverId, SendMessageRequest request)
+        public async Task<CreateResponse<IdResponse>> SendAsync(Guid loggedInUserId, Guid roomId, SendMessageRequest request)
         {
             var room = await _context.PrivateChats
-                .Where(x => (x.User2Id == loggedInUserId || x.User2Id == userReceiverId) && (x.User1Id == loggedInUserId || x.User1Id == userReceiverId))
+                .Where(x=>x.id==roomId&&(x.User1Id==loggedInUserId||x.User2Id==loggedInUserId))
                 .FirstOrDefaultAsync();
-
-            var existReceiver = await _context.Users.IsAnyAsync(x => x.id == userReceiverId);
-
-            if (!existReceiver)
-            {
-                return new NotFound();
-            }
 
             if (room == null)
             {
-                room = new PrivateChat()
-                {
-                    id = Guid.NewGuid(),
-                    CreatedDate = DateTimeOffset.UtcNow,
-                    User1Id = loggedInUserId,
-                    User2Id = userReceiverId
-                };
-                await _context.PrivateChats.AddAsync(room);
-                await _context.SaveChangesAsync();
+                return new NotFound();
             }
 
             var message = new Message()
@@ -87,7 +72,7 @@ namespace AnswerMe.Infrastructure.Repositories
                     {
                         var media = new Media()
                         {
-                            Id = Guid.NewGuid(),
+                            id = Guid.NewGuid(),
                             MessageId = message.id,
                             Path = storageResponse.FilePath,
                             Type = FileStorageHelper.GetMediaType(storageResponse.FileFormat),
@@ -128,7 +113,7 @@ namespace AnswerMe.Infrastructure.Repositories
                 {
                     messageResponse.MediaList.Add(new MediaResponse()
                     {
-                        Id = media.Id,
+                        Id = media.id,
                         Type = (MediaTypeResponse)media.Type,
                         BlurHash = media.BlurHash,
                         Path = FileStorageHelper.GetUrl(media.Path)
@@ -171,6 +156,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var messagesQuery = _context.Messages
                 .Where(x => x.RoomChatId == roomId)
+                .Include(x=>x.MediaList)
                 .OrderByDescending(x => x.CreatedDate)
                 .Select(message =>
                     new MessageResponse
@@ -179,7 +165,7 @@ namespace AnswerMe.Infrastructure.Repositories
                         CreatedDate = message.CreatedDate,
                         MediaList =  message.MediaList!.Select(x => new MediaResponse
                         {
-                            Id = x.Id,
+                            Id = x.id,
                             Type = (MediaTypeResponse)x.Type,
                             BlurHash = x.BlurHash,
                             Path = x.Path
@@ -189,15 +175,15 @@ namespace AnswerMe.Infrastructure.Repositories
                         GroupInviteToken = message.GroupInvitationToken,
                         ModifiedDate = message.ModifiedDate,
                         ReplyMessageId = message.ReplyMessageId,
-                        UserSender = new PreviewUserResponse()
+                        UserSender = _context.Users.Where(x=>x.id==message.UserSenderId).Select(x => new PreviewUserResponse()
+                        {
+                            Id = x.id,
+                            Name = x.FullName,
+                            ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
+                        }).Single()
                     }).AsQueryable();
            
-            // _context.Users.Where(x=>x.id==message.UserSenderId).Select(x => new PreviewUserResponse()
-            // {
-            //     Id = x.id,
-            //     Name = x.FullName,
-            //     ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
-            // }).Single()
+           
 
             var pagedResult = await PagedListResponse<MessageResponse>.CreateAsync(
                 messagesQuery,
@@ -254,7 +240,7 @@ namespace AnswerMe.Infrastructure.Repositories
                 {
                     messageResponse.MediaList.Add(new MediaResponse()
                     {
-                        Id = media.Id,
+                        Id = media.id,
                         Type = (MediaTypeResponse)media.Type,
                         BlurHash = media.BlurHash,
                         Path = FileStorageHelper.GetUrl(media.Path)
@@ -303,7 +289,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var media = new Media()
             {
-                Id = Guid.NewGuid(),
+                id = Guid.NewGuid(),
                 MessageId = message.id,
                 Path = storageResponse.FilePath,
                 Type = FileStorageHelper.GetMediaType(storageResponse.FileFormat),
@@ -320,7 +306,7 @@ namespace AnswerMe.Infrastructure.Repositories
             }
 
             var messageMedias = message.MediaList.ToList();
-            var oldMedia = messageMedias.SingleOrDefault(x => x.Id == mediaId);
+            var oldMedia = messageMedias.SingleOrDefault(x => x.id == mediaId);
 
             if (oldMedia == null)
             {
@@ -333,7 +319,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var newMedia = new Media()
             {
-                Id = oldMedia.Id,
+                id = oldMedia.id,
                 MessageId = oldMedia.MessageId,
                 Path = storageResponse.FilePath,
                 Type = FileStorageHelper.GetMediaType(storageResponse.FileFormat),
@@ -380,7 +366,7 @@ namespace AnswerMe.Infrastructure.Repositories
                 {
                     messageResponse.MediaList.Add(new MediaResponse()
                     {
-                        Id = messageMedia.Id,
+                        Id = messageMedia.id,
                         Type = (MediaTypeResponse)messageMedia.Type,
                         BlurHash = messageMedia.BlurHash,
                         Path = FileStorageHelper.GetUrl(messageMedia.Path)
@@ -438,7 +424,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             if (message?.MediaList != null && message.MediaList.Any())
             {
-                var media = message.MediaList.SingleOrDefault(x => x.Id == mediaId);
+                var media = message.MediaList.SingleOrDefault(x => x.id == mediaId);
                 if (media != null)
                 {
                     await _fileStorageService.DeleteObjectAsync(loggedInUserId, media.Path);
@@ -476,7 +462,7 @@ namespace AnswerMe.Infrastructure.Repositories
                         {
                             messageResponse.MediaList.Add(new MediaResponse()
                             {
-                                Id = messageMedia.Id,
+                                Id = messageMedia.id,
                                 Type = (MediaTypeResponse)messageMedia.Type,
                                 BlurHash = messageMedia.BlurHash,
                                 Path = FileStorageHelper.GetUrl(messageMedia.Path)

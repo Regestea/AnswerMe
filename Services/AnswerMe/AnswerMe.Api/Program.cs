@@ -54,6 +54,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.MigrateDatabaseServices();
+
 app.UseAuthorization();
 
 app.MapControllers();

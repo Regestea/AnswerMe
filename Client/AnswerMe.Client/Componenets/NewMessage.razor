@@ -35,16 +35,16 @@
         </div>
 
         <div class="h-full px-3 pb-4 overflow-y-auto ">
-            <div role="tablist" class="tabs tabs-boxed grid grid-cols-2 tab-primary" style="max-height: 600px">
+            <div role="tablist" class="tabs tabs-boxed grid grid-cols-2 tab-primary" style="min-height: fit-content">
 
                 <input type="radio" name="my_tabs_44" role="tab" class="tab btn" aria-label="New Contact" style="color: wheat;margin: 5px;border-radius: 15px" checked>
                 <div role="tabpanel55" class="tab-content ">
 
-                    <div style="display: grid;justify-content: center">
-                        <input @oninput="OnSearch" type="text" placeholder="Type here" class="input input-bordered input-primary w-full max-w-xs" style="margin-top: 30px"/>
+                    <div style="display: grid;justify-content: center;margin-bottom: 15px">
+                        <input @onkeydown="OnSearch" @bind:event="oninput" @bind="_searchWord" type="text" placeholder="Type here" class="input input-bordered input-primary w-full max-w-xs" style="margin-top: 30px"/>
                     </div>
 
-                    <ul class="space-y-2 font-medium" style="height: 300px">
+                    <ul class="space-y-2 font-medium" style="height: 300px;overflow-y: auto">
                         @if (_users.Count == 0)
                         {
                             <div style="display: grid; justify-content: center;margin-top: 40px;">
@@ -67,7 +67,7 @@
                                     <div class="avatar" style="display: grid">
                                         <div class="w-16 rounded-full  ring-offset-base-100 ring-offset-2" style="justify-self: center">
                                             <UserAvatar Class="w-16" ImageUrl="@ImageUrl" Letter="@user.FullName?.FirstLetter()"/>
-                                        
+
                                         </div>
                                     </div>
                                     <div class="w-full  flex flex-col-reverse">
@@ -92,19 +92,23 @@
                                         </div>
 
                                     </div>
-                                    
+
                                 </li>
                             }
+
+                            <li class="flex " style="border-radius: 0.5em;margin-top:40px ;justify-content: center">
+                                <button @onclick="LoadMore" class="btn btn-outline btn-accent btn-sm">Load More</button>
+                            </li>
                         }
 
                     </ul>
-                     
+
                 </div>
 
                 <input type="radio" name="my_tabs_44" role="tab" class="tab btn" aria-label="Create Group" style="color: wheat;margin: 5px;border-radius: 15px"/>
                 <div role="tabpanel55" class="tab-content ">
                     <div class="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100" style="display:contents">
-                        <form  class="card-body" style="display:grid;justify-content: center">
+                        <form class="card-body" style="display:grid;justify-content: center">
                             <div class="form-control mt-6" style="display:grid">
                                 <div class="avatar" style="display: grid">
                                     <div class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2" style="justify-self: center">
@@ -131,12 +135,12 @@
                                 <input @oninput="GroupLetterChange" type="text" placeholder="Group Name" class="input input-bordered" required/>
                             </div>
 
-                          
-                                <form method="dialog" class="form-control mt-6">
-                                <button @onclick="SaveChanges"  class="btn btn-outline btn-primary">Save</button>
-                                    
-                                </form>
-                          
+
+                            <form method="dialog" class="form-control mt-6">
+                                <button @onclick="SaveChanges" class="btn btn-outline btn-primary">Save</button>
+
+                            </form>
+
                         </form>
                     </div>
                 </div>
@@ -149,18 +153,24 @@
 </dialog>
 
 @code {
-
-    private PaginationRequest _paginationRequest = new() { CurrentPage = 1, PageSize = 5 };
+    private PaginationRequest _paginationRequest = new() { CurrentPage = 1, PageSize = 2 };
     private int _totalPages = 0;
     private List<UserResponse> _users = new();
     private CreateGroupRequest _createGroupRequest = new();
     private bool _showLoading = false;
     private string? ImageUrl;
+    private string? _searchWord;
+
 
     private int? UploadProgress;
 
     private bool UploadCancel = false;
 
+
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
 
     private void GroupLetterChange(ChangeEventArgs e)
     {
@@ -168,54 +178,67 @@
         StateHasChanged();
     }
 
-    private async Task SaveChanges()
+    private async Task LoadMore()
     {
-       var result= await GroupService.CreateAsync(_createGroupRequest);
-
-       _createGroupRequest = new();
-
-       if (result.IsSuccess)
-       {
-           var groupId = result.AsSuccess.Value.Id;
-           Console.WriteLine(groupId);
-           NavigationManager.NavigateTo("/Counter");
-           await JsRuntime.InvokeVoidAsync("ResizeComponent");
-           //go to group chat
-       }
-
-       if (result.IsValidationFailureList)
-       {
-           await JsRuntime.InvokeVoidAsync("MessageShow", "error", "error", result.AsValidationFailureList[0].Error);
-       }
+        _paginationRequest.CurrentPage += 1;
+        await Search();
     }
 
-    private async void OnSearch(ChangeEventArgs e)
+    private async Task SaveChanges()
     {
-        if (e.Value != null && e.Value?.ToString()?.Length >= 3)
+        var result = await GroupService.CreateAsync(_createGroupRequest);
+
+        _createGroupRequest = new();
+
+        if (result.IsSuccess)
+        {
+            var groupId = result.AsSuccess.Value.Id;
+            NavigationManager.NavigateTo("/Counter");
+            await JsRuntime.InvokeVoidAsync("ResizeComponent");
+            //go to group chat
+        }
+
+        if (result.IsValidationFailureList)
+        {
+            await JsRuntime.InvokeVoidAsync("MessageShow", "error", "error", result.AsValidationFailureList[0].Error);
+        }
+    }
+
+    private async void OnSearch()
+    {
+        _users = new();
+        _paginationRequest.CurrentPage = 1;
+
+        if (_searchWord is { Length: >= 3 })
         {
             _showLoading = true;
             StateHasChanged();
 
             await Task.Delay(2000);
-
-            _paginationRequest.CurrentPage = 1;
-            _paginationRequest.PageSize = 5;
-
-            var searchResult = await UserService.SearchAsync(e.Value.ToString()!, _paginationRequest);
-            if (searchResult.IsSuccess)
-            {
-                _users = searchResult.AsSuccess.Value.Items;
-                _paginationRequest.CurrentPage = searchResult.AsSuccess.Value.Page;
-                StateHasChanged();
-            }
-        }
-        else
-        {
-            _users = new();
+            await Search();
         }
 
         _showLoading = false;
         StateHasChanged();
+    }
+
+    private async Task Search()
+    {
+        var searchResult = await UserService.SearchAsync(_searchWord, _paginationRequest);
+        if (searchResult.IsSuccess)
+        {
+            foreach (var user in searchResult.AsSuccess.Value.Items)
+            {
+                var exist =_users.Any(x => x.id == user.id);
+                if (!exist)
+                {
+                    _users.Add(user);
+                }
+                
+            }
+            _paginationRequest.CurrentPage = searchResult.AsSuccess.Value.Page;
+            StateHasChanged();
+        }
     }
 
     private async Task StartMessage(Guid contactId)

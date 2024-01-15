@@ -2,6 +2,17 @@
     font-family: "Comic Sans MS", serif;
 }
 
+.primary-liner-gradient {
+    background: linear-gradient(144deg, rgba(116, 128, 255, 1) 0%, rgba(100, 25, 230, 1) 100%);
+    color: wheat;
+}
+
+.dark-liner-gradient {
+    background: linear-gradient(125deg, #274060 0%, #1B2845 100%);
+    color: antiquewhite;
+}
+
+
 .loginBackground {
     background-image: url("/image/LoginBackground.jpg");
 }

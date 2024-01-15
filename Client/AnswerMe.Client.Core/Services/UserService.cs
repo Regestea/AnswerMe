@@ -40,7 +40,7 @@ public class UserService : IUserService
         PaginationRequest request)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
-
+       
         var response = await _httpClient.SendRequestAsync($"User/Search?".AddPagination(request)
             .AddQuery("keyWord",keyWord), HttpMethod.Get);
 

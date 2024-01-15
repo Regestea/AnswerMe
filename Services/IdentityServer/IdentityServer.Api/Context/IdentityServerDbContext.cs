@@ -9,7 +9,6 @@ namespace IdentityServer.Api.Context
         public IdentityServerDbContext(DbContextOptions<IdentityServerDbContext> options) :
             base(options)
         {
-            Database.EnsureCreated();
         }
 
         public DbSet<User> Users { get; set; }
@@ -19,8 +18,6 @@ namespace IdentityServer.Api.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
-            modelBuilder.Entity<User>().ToContainer("Users");
-            modelBuilder.SeedData();
         }
     }
 }

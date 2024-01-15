@@ -2,7 +2,9 @@
 @using Models.Shared.Requests.Shared
 @using Models.Shared.Responses.Message
 @using AnswerMe.Client.Core.Services
+@using Models.Shared.Requests.Message
 @using Models.Shared.Responses.Shared
+@using AnswerMe.Client.Core.Extensions
 @inject IPrivateMessageService PrivateMessageService
 @inject AuthStateProvider AuthStateProvider
 @inject IUserService UserService
@@ -11,34 +13,9 @@
 <div class="p-4 sm:ml-64 body-content element">
 
     <NavHeader/>
-    @if (_contact != null)
-    {
-        <h1>@_contact.Name</h1>
-    }
 
     <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 chat-area responsive-chat-area" style="border-bottom: none">
-        <div class="chat-content mb-60">
-
-            @foreach (var message in _messages)
-            {
-                <div class="chat @(message.UserSender.Id == _loggedInUserId ? "chat-end" : "chat-start")">
-                    <div class="chat-image avatar">
-                        <div class="w-10 rounded-full">
-                            <UserAvatar Class="w-10" Letter="@message.UserSender.Name" ImageUrl="@message.UserSender.ProfileImage"/>
-                        </div>
-                    </div>
-                    <div class="chat-header">
-                        @message.UserSender.Name
-                        <time class="text-xs opacity-50">12:45</time>
-                    </div>
-                    <div class="chat-bubble">@message.Text</div>
-                    <div class="chat-footer opacity-50">
-                        seen at @(_contactLastRoomVisit.HasValue ? _contactLastRoomVisit.Value.ToString("HH:mm") : "never")
-                    </div>
-                </div>
-            }
-
-        </div>
+        <Message RoomMessageType="Message.RoomType.Private" ContactLastVisit="DateTimeOffset.Now" LoggedInUserId="_loggedInUserId.Value" MessageList="_messages"/>
 
         <div class="send-box responsive-send-box ">
             <textarea style="height: 100px;width: 85%" class="textarea textarea-primary  mr-2 " placeholder="write you message ..."></textarea>
@@ -89,6 +66,7 @@
         }
 
         _contact = privateRoom.AsSuccess.Value.Contact;
+        
 
         var lastSeen = await PrivateRoomService
             .GetRoomLastSeenAsync(privateRoom.AsSuccess.Value.Contact.Id, privateRoom.AsSuccess.Value.Id);

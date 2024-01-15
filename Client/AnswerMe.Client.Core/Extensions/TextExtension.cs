@@ -8,7 +8,7 @@ public static class TextExtension
         {
             return content.Substring(0, 1).ToUpper();
         }
-        catch (Exception e)
+        catch (Exception)
         {
           return  "";
         }

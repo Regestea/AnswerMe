@@ -69,8 +69,8 @@ namespace AnswerMe.Test.Services
                     Text = "hello World" + Guid.NewGuid(),
                     MediaList = new List<Media>()
                     {
-                        new(){Id = Guid.NewGuid(),MessageId = Guid.NewGuid(),Type = MediaType.image,Path = "some/where"},
-                        new(){Id = Guid.NewGuid(),MessageId = Guid.NewGuid(),Type = MediaType.image,Path = "some/where"}
+                        new(){id = Guid.NewGuid(),MessageId = Guid.NewGuid(),Type = MediaType.image,Path = "some/where"},
+                        new(){id = Guid.NewGuid(),MessageId = Guid.NewGuid(),Type = MediaType.image,Path = "some/where"}
                     }
                 });
             }

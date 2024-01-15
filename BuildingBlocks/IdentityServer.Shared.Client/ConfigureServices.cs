@@ -8,6 +8,7 @@ using IdentityServer.Shared.Client.Service;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 
+
 namespace IdentityServer.Shared.Client
 {
     public static class ConfigureServices

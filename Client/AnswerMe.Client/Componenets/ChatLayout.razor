@@ -1,0 +1,18 @@
+
+  <div id="@ElementIds.ChatScroll" class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 chat-area responsive-chat-area" style="border-bottom: none;height: 83%">
+
+     @ChatContent
+
+    </div>
+
+
+  @code {
+      
+      [Parameter]
+      public RenderFragment ChatContent { get; set; }
+      
+    internal static class ElementIds
+    {
+        public static Guid ChatScroll { get; } = Guid.NewGuid();
+    }
+}

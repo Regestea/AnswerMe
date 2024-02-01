@@ -8,7 +8,7 @@ namespace AnswerMe.Client.Core.Services.Interfaces;
 
 public interface IGroupService
 {
-    Task<ReadResponse<GroupResponse>> GetByIdAsync(Guid groupId);
+    Task<ReadResponse<PreviewGroupResponse>> GetByIdAsync(Guid groupId);
     Task<ReadResponse<PagedListResponse<GroupResponse>>> GetGroupsAsync(PaginationRequest paginationRequest);
     Task<ReadResponse<PagedListResponse<PreviewGroupUserResponse>>> UserListAsync(Guid groupId, PaginationRequest paginationRequest);
     Task<CreateResponse<IdResponse>> SetUserAsAdminAsync(Guid groupId, Guid userId);

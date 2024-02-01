@@ -1,6 +1,14 @@
-﻿@inject NavigationManager NavigationManager
+﻿@using System.Globalization
+@using Models.Shared.Requests.Shared
+@using Models.Shared.Responses.Group
+@using Models.Shared.Responses.PrivateRoom
+@using AnswerMe.Client.Core.Extensions
+@inject NavigationManager NavigationManager
 @inject ILocalStorageService LocalStorage
 @inject IJSRuntime JsRuntime
+@inject IPrivateRoomService PrivateRoomService
+@inject IGroupService GroupService
+@inject IUserService UserService
 
 <div class="flex">
     <div class="dropdown dropdown-right" style="z-index: 2">
@@ -40,57 +48,72 @@
         <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Private Chat" style="color: wheat" checked>
         <div role="tabpanel" class="tab-content ">
             <ul class="space-y-2 font-medium" style="background-color: #111827">
-                @for (var i = 0; i < 20; i++)
+                @foreach (var pv in _privateRoomResponseList)
                 {
-                    <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:20px ">
-                        <div class="avatar online ">
-                            <div class="w-16 h-16 rounded-full">
-                                <UserAvatar ImageUrl="https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg" Letter="H"/>
-                            </div>
-                        </div>
-                        <div class="w-full  flex flex-col-reverse">
-                            <div style="display: grid;margin-top: 15px">
-                                <p style="margin-left: 15px;font-size: 12px">hello how are you ?</p>
-                                <div style=" grid-column-end: 12">
-                                    <span class="badge">19 day ago</span>
+                    <a @onclick="() => NavigateTo(pv.RoomNotify.RoomId)">
+                        <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:20px ">
+                            <div id="@pv.Contact.Id-Status" class="avatar offline ">
+                                <div class="w-16 h-16 rounded-full">
+                                    <UserAvatar Class="w-16" ImageUrl="@pv.Contact.ProfileImage" Letter="@pv.Contact.Name.FirstLetter()"/>
                                 </div>
                             </div>
-                            <div style="display: grid">
-                                <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">amir hossein</h1>
-                                <div style=" grid-column-end: 12">
-                                    <span class="badge badge-primary">+99</span>
-                                </div>
-                            </div>
+                            <div class="w-full  flex flex-col-reverse">
+                                <div style="display: grid;margin-top: 15px">
+                                    <p style="margin-left: 15px;font-size: 12px">@pv.RoomNotify.MessageGlance</p>
 
-                        </div>
-                    </li>
+                                </div>
+                                <div style="display: grid">
+                                    <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">@pv.Contact.Name</h1>
+
+                                    <div style=" grid-column-end: 12">
+                                        @if (pv.RoomNotify.TotalUnRead > 0)
+                                        {
+                                            <span id="@pv.RoomNotify.RoomId-UnReadMessageCount" class="badge badge-primary">
+
+                                                @pv.RoomNotify.TotalUnRead
+
+                                            </span>
+                                        }
+                                    </div>
+
+
+                                </div>
+
+                            </div>
+                        </li>
+                    </a>
                 }
             </ul>
         </div>
 
-        <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Group Chat" style="color: wheat" />
+        <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Group Chat" style="color: wheat"/>
         <div role="tabpanel" class="tab-content ">
             <ul class="space-y-2 font-medium" style="background-color: #111827">
-                @for (var i = 0; i < 20; i++)
+                @foreach (var gr in _groupResponseList)
                 {
                     <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:20px ">
-                        <div class="avatar online ">
+                        <div class="avatar">
                             <div class="w-16 h-16 rounded-full">
-                                <UserAvatar ImageUrl="https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg" Letter="H"/>
+                                <UserAvatar ImageUrl="@gr.Group.RoomImage" Letter="@gr.Group.Name.FirstLetter()"/>
                             </div>
                         </div>
                         <div class="w-full  flex flex-col-reverse">
                             <div style="display: grid;margin-top: 15px">
-                                <p style="margin-left: 15px;font-size: 12px">hello how are you ?</p>
-                                <div style=" grid-column-end: 12">
-                                    <span class="badge">19 day ago</span>
-                                </div>
+                                <p style="margin-left: 15px;font-size: 12px">@gr.RoomNotify.MessageGlance</p>
+
                             </div>
                             <div style="display: grid">
-                                <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">Ali group</h1>
+                                <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">@gr.Group.Name Group</h1>
+
                                 <div style=" grid-column-end: 12">
-                                    <span class="badge badge-success">+99</span>
+                                    <span id="@gr.RoomNotify.RoomId-UnReadMessageCount" class="badge badge-primary">
+                                        @if (gr.RoomNotify.TotalUnRead > 0)
+                                        {
+                                            @gr.RoomNotify.TotalUnRead
+                                        }
+                                    </span>
                                 </div>
+
                             </div>
 
                         </div>
@@ -103,19 +126,101 @@
 </div>
 
 
-
-
-
 @code {
 
     [Parameter] public string? ChatsMenuClass { get; set; }
 
     [Parameter] public string? AccountMenuClass { get; set; }
 
-
     [Parameter] public EventCallback<string> ChatsMenuClassChanged { get; set; }
 
     [Parameter] public EventCallback<string> AccountMenuClassChanged { get; set; }
+
+    private PaginationRequest _privatePaginationRequest = new() { CurrentPage = 1, PageSize = 30 };
+    private PaginationRequest _groupPaginationRequest = new() { CurrentPage = 1, PageSize = 30 };
+
+    private static List<PrivateRoomResponse> _privateRoomResponseList = new();
+    private static List<GroupResponse> _groupResponseList = new();
+
+    internal static class ElementIds
+    {
+        public static Guid HeaderAvatar { get; } = Guid.NewGuid();
+        public static Guid HeaderText { get; } = Guid.NewGuid();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var privateRoomsResponse = await PrivateRoomService.GetPrivateRoomsAsync(_privatePaginationRequest);
+        var groupResponse = await GroupService.GetGroupsAsync(_groupPaginationRequest);
+
+        if (privateRoomsResponse.IsSuccess)
+        {
+            _privateRoomResponseList = privateRoomsResponse.AsSuccess.Value.Items;
+        }
+
+        if (groupResponse.IsSuccess)
+        {
+            _groupResponseList = groupResponse.AsSuccess.Value.Items;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        foreach (var pv in _privateRoomResponseList)
+        {
+            var contactId = pv.Contact.Id;
+            var response = await UserService.IsOnlineAsync(contactId);
+            if (response is { IsSuccess: true, AsSuccess.Value.Result: true })
+            {
+                await JsRuntime.ReplaceClass(contactId + "-Status", "offline", "online");
+            }
+        }
+    }
+
+
+    public static void SetPvUnReadCount(Guid roomId, int count)
+    {
+        var pv = _privateRoomResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == roomId);
+        if (pv != null) pv.RoomNotify.TotalUnRead = count;
+    }
+
+    public static void SetPvLastMessage(Guid roomId, string message)
+    {
+        var pv = _privateRoomResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == roomId);
+        if (pv != null)
+        {
+            pv.RoomNotify.TotalUnRead += 1;
+            pv.RoomNotify.MessageGlance = message;
+
+            Console.WriteLine(pv.RoomNotify.MessageGlance);
+        }
+    }
+
+    public static void SetGrUnReadCount(Guid roomId, int count)
+    {
+        var gr = _groupResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == roomId);
+        if (gr != null) gr.RoomNotify.TotalUnRead = count;
+    }
+
+    public static void SetGrLastMessage(Guid roomId, string message)
+    {
+       var gr = _groupResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == roomId);
+        if (gr != null)
+        {
+            gr.RoomNotify.TotalUnRead += 1;
+            gr.RoomNotify.MessageGlance = message;
+
+            Console.WriteLine(gr);
+        }
+    }
+
+
+    async Task NavigateTo(Guid id)
+    {
+        NavigationManager.NavigateTo($"pv/{id}");
+        await JsRuntime.InvokeVoidAsync("ResizeComponent");
+        StateHasChanged();
+    }
 
     async Task Logout()
     {

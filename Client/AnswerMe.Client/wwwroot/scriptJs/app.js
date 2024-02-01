@@ -1,17 +1,51 @@
 ﻿
-var GLOBAL = {};
-GLOBAL.DotNetReference = null;
-
-function setDotnetReference(pDotNetReference) {
-    GLOBAL.DotNetReference = pDotNetReference;
-}
-
 window.addEventListener('hashchange', () => {
     console.log('Hash changed! New URL:', window.location.href);
 });
 window.addEventListener('popstate', (event) => {
     console.log('URL changed! New URL:', window.location.href);
 });
+
+function AddClass(id,className){
+    let element=document.getElementById(id);
+    if (element != null){
+        element.classList.add(className)
+    }
+}
+
+function RemoveClass(id,className){
+    let element=document.getElementById(id);
+    if (element != null){
+        element.classList.remove(className);
+    }
+}
+
+function ReplaceClass(id,oldClassName,newClassName){
+    let element=document.getElementById(id);
+    if (element != null){
+        element.classList.replace(oldClassName,newClassName);
+    }
+}
+
+function SetInnerText(id,text){
+    let element=document.getElementById(id);
+    if (element != null){
+        element.innerText=text;
+    }
+}
+
+function CallCSharpFunction(assemblyName, functionName, ...args) {
+    DotNet.invokeMethodAsync(assemblyName, functionName, ...args);
+}
+
+function CallHello(stringArgs){
+    DotNet.invokeMethodAsync('AnswerMe.Client', 'CallHello', stringArgs);
+}
+
+function ScrollToEnd(id){
+    var element = document.getElementById(id);
+    element.scrollTo(0, element.scrollHeight);
+}
 
 window.addEventListener('resize', ResizeComponent);
 

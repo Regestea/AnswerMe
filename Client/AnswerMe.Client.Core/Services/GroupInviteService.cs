@@ -24,7 +24,7 @@ public class GroupInviteService : IGroupInviteService
     }
 
 
-    public async Task<ReadResponse<GroupResponse>> GetGroupInvitePreviewAsync(string inviteToken)
+    public async Task<ReadResponse<PreviewGroupResponse>> GetGroupInvitePreviewAsync(string inviteToken)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
@@ -35,9 +35,9 @@ public class GroupInviteService : IGroupInviteService
             return new NotFound();
         }
 
-        var group = await JsonConverter.ToObject<GroupResponse>(response.Content);
+        var group = await JsonConverter.ToObject<PreviewGroupResponse>(response.Content);
 
-        return new Success<GroupResponse>(group);
+        return new Success<PreviewGroupResponse>(group);
     }
 
     public async Task<CreateResponse<TokenResponse>> CreateAsync(Guid groupId, CreateInviteTokenRequest request)

@@ -1,0 +1,110 @@
+@using Models.Shared.Responses.Message
+@using AnswerMe.Client.Core.Extensions
+@using AnswerMe.Client.Core.Enums
+@using Models.Shared.Requests.Shared
+@using Models.Shared.Responses.Shared
+@inject IPrivateMessageService PrivateMessageService
+@inject AuthStateProvider AuthStateProvider
+@inject IUserService UserService
+@inject IPrivateRoomService PrivateRoomService
+@inject IJSRuntime JsRuntime
+
+<div class="chat-content mb-60">
+
+    @foreach (var message in _messageList)
+    {
+        <div id="@message.id-message" class="chat  @(message.UserSender.Id == _loggedInUserId ? "chat-end" : "chat-start")">
+
+                <div class="chat-image avatar">
+                    <div class="w-10 rounded-full">
+                        <UserAvatar Class="w-10" Letter="@message.UserSender.Name.FirstLetter()" ImageUrl="@message.UserSender.ProfileImage"/>
+                    </div>
+                </div>
+         
+
+            <div class="chat-header">
+               
+                    @message.UserSender.Name
+              
+            </div>
+            <div class="chat-bubble @(message.UserSender.Id == _loggedInUserId ? "primary-liner-gradient" : "dark-liner-gradient")">
+                @message.Text
+
+                <div class="chat-footer " style="display: grid;margin-top: 2px">
+                    
+                        <span class="opacity-80" style="display: flex;justify-self: start">
+                            <time class="text-xs ">@message.CreatedDate!.Value.LocalDateTime.ToString("HH:mm")</time>
+                        </span>
+                  
+                </div>
+            </div>
+
+        </div>
+    }
+
+</div>
+@code {
+    [Parameter] public Guid RoomId { get; set; }
+    private List<MessageResponse> _messageList = new();
+    
+    private PreviewUserResponse? _contact; 
+
+    private PaginationRequest _paginationRequest = new() { PageSize = 10, CurrentPage = 1 };
+
+    private Guid? _loggedInUserId;
+
+    private bool _firstLoad = true;
+    
+    
+        protected override async Task OnInitializedAsync()
+    {
+        var user = await AuthStateProvider.ExtractUserDataFromLocalTokenAsync();
+        _loggedInUserId = user.id;
+        var privateRoom = await PrivateRoomService.GetPrivateRoomByIdAsync(RoomId);
+
+        if (!privateRoom.IsSuccess)
+        {
+            //redirect to 404 page
+        }
+        
+        
+
+        var result = await PrivateMessageService.GetPrivateMessagesAsync(RoomId, _firstLoad, _paginationRequest);
+        if (result.IsSuccess)
+        {
+            _messageList = result.AsSuccess.Value.Items;
+            _firstLoad = false;
+            _paginationRequest.CurrentPage = result.AsSuccess.Value.Page;
+        }
+
+        if (result.IsNotFound)
+        {
+            
+        }
+
+        if (result.IsAccessDenied)
+        {
+            
+        }
+    }
+
+    
+    public async Task AddNewMessage(MessageResponse messageResponse)
+    {
+        var messageClass = "";
+        if (messageResponse.UserSender.Id==_loggedInUserId)
+        {
+            messageClass = "backInRight";
+        }
+        else
+        {
+            messageClass = "backInLeft";
+        }
+        _messageList.Add(messageResponse);
+        StateHasChanged();
+        await JsRuntime.AddClass(messageResponse.id + "-message", messageClass);
+        await JsRuntime.InvokeVoidAsync("ScrollToEnd", ChatLayout.ElementIds.ChatScroll.ToString());
+    }
+    
+    
+}

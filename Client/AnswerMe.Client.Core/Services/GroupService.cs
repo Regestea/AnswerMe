@@ -24,7 +24,7 @@ public class GroupService : IGroupService
         _httpClient = httpClientFactory.CreateClient(nameof(Enums.HttpClients.AnswerMe));
     }
 
-    public async Task<ReadResponse<GroupResponse>> GetByIdAsync(Guid groupId)
+    public async Task<ReadResponse<PreviewGroupResponse>> GetByIdAsync(Guid groupId)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
@@ -32,9 +32,9 @@ public class GroupService : IGroupService
 
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            var group = await JsonConverter.ToObject<GroupResponse>(response.Content);
+            var group = await JsonConverter.ToObject<PreviewGroupResponse>(response.Content);
 
-            return new Success<GroupResponse>(group);
+            return new Success<PreviewGroupResponse>(group);
         }
 
         if (response.StatusCode == HttpStatusCode.Forbidden)
@@ -50,7 +50,7 @@ public class GroupService : IGroupService
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
-        var response = await _httpClient.SendRequestAsync($"Group/List", HttpMethod.Get);
+        var response = await _httpClient.SendRequestAsync($"Group/List?".AddPagination(paginationRequest), HttpMethod.Get);
 
         var groups = await JsonConverter.ToObject<PagedListResponse<GroupResponse>>(response.Content);
 

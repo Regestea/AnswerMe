@@ -7,7 +7,7 @@ namespace AnswerMe.Client.Core.Services.Interfaces;
 
 public interface IGroupInviteService
 {
-    Task<ReadResponse<GroupResponse>> GetGroupInvitePreviewAsync(string inviteToken);
+    Task<ReadResponse<PreviewGroupResponse>> GetGroupInvitePreviewAsync(string inviteToken);
     Task<CreateResponse<TokenResponse>> CreateAsync(Guid groupId, CreateInviteTokenRequest request);
     Task<CreateResponse<IdResponse>> JoinGroupAsync(string inviteToken);
 }

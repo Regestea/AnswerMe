@@ -1,14 +1,42 @@
+@using AnswerMe.Client.Core.Enums
+@using AnswerMe.Client.Core.Extensions
+@using Models.Shared.Responses.Group
+@using Models.Shared.Responses.PrivateRoom
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
-<nav class=" top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-    <button @onclick="GoBack">back</button>
+@inject IPrivateRoomService PrivateRoomService
+@inject IGroupService GroupService
+
+<nav class="flex top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+    <button @onclick="GoBack">
+        <svg style="width: 50px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" id="Back">
+            <path d="M22,15H12.41l2.3-2.29a1,1,0,0,0-1.42-1.42l-4,4a1,1,0,0,0-.21.33,1,1,0,0,0,0,.76,1,1,0,0,0,.21.33l4,4a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42L12.41,17H22a1,1,0,0,0,0-2Z" fill="#a6adbb" class="color000000 svgShape"></path>
+        </svg>
+    </button>
     <div class="px-3 py-3 lg:px-5 lg:pl-3">
         <div class="flex items-center justify-between">
-            <div class="flex items-center justify-start rtl:justify-end">
-                <a href="https://flowbite.com" class="flex ms-2 md:me-24">
-                    <img src="https://flowbite.com/docs/images/logo.svg" class="h-8 me-3" alt="FlowBite Logo"/>
-                    <span class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">Flowbite</span>
-                </a>
+            <div class="flex items-center justify-start ">
+                <button style="display: flex;align-items: center">
+                    @if (CurrentRoomType == RoomType.Private)
+                    {
+                        if (_privateRoomResponse != null)
+                        {
+                            <UserAvatar ImageUrl="@_privateRoomResponse!.Contact.ProfileImage" Class="w-12" Letter="@_privateRoomResponse.Contact.Name.FirstLetter()"/>
+                            <div style="margin-left: 5px">@_privateRoomResponse.Contact.Name</div>
+                        }
+                    }
+                    @if (CurrentRoomType == RoomType.Group)
+                    {
+                        if (_previewGroupResponse != null)
+                        {
+                            <UserAvatar ImageUrl="@_previewGroupResponse.RoomImage" Class="w-12" Letter="@_previewGroupResponse.Name.FirstLetter()"/>
+                            <div style="margin-left: 5px">@_previewGroupResponse.Name</div>
+                        }
+                    }
+
+
+                </button>
+
             </div>
             <div class="flex items-center">
                 <div class="flex items-center ms-3">
@@ -44,9 +72,39 @@
 
 @code {
 
+    [Parameter] public RoomType CurrentRoomType { get; set; }
+    [Parameter] public Guid RoomId { get; set; }
+    private PreviewGroupResponse? _previewGroupResponse ;
+    private PrivateRoomResponse? _privateRoomResponse ;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CurrentRoomType == RoomType.Group)
+        {
+            var response = await GroupService.GetByIdAsync(RoomId);
+            if (response.IsSuccess)
+            {
+                _previewGroupResponse = response.AsSuccess.Value;
+            }
+        }
+
+        if (CurrentRoomType == RoomType.Private)
+        {
+            var response = await PrivateRoomService.GetPrivateRoomByIdAsync(RoomId);
+            if (response.IsSuccess)
+            {
+                _privateRoomResponse = response.AsSuccess.Value;
+            }
+        }
+
+        StateHasChanged();
+    }
+
     private async void GoBack()
     {
         NavigationManager.NavigateTo("/");
         await JSRuntime.InvokeVoidAsync("ResizeComponent");
     }
+
 }

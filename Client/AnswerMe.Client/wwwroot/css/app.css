@@ -17,24 +17,46 @@
     background-image: url("/image/LoginBackground.jpg");
 }
 
-@keyframes bounceInDown {
-    0%, 100% {
-        
-    }
-
+@keyframes backInRight {
     0% {
-        
-        top: 100px;
+        opacity: 0;
+        transform: translateX(2000px) scale(0.7);
     }
-    
-
+    80% {
+        transform: translateX(-20px) scale(1.1);
+    }
     100% {
-        top: 0px;
+        opacity: 1;
+        transform: translateX(0) scale(1);
     }
 }
 
-.animate__bounceInDown {
-    animation: bounceInDown 0.3s;
+.backInRight {
+    animation-name: backInRight;
+    animation-duration: 1s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+}
+
+@keyframes backInLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(-2000px) scale(0.7);
+    }
+    80% {
+        transform: translateX(20px) scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+.backInLeft {
+    animation-name: backInLeft;
+    animation-duration: 1s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
 }
 
 
@@ -172,6 +194,11 @@
 
 .responsive-chat-area {
 
+    @media (min-width: 275px) {
+        /* Styles for screens with a width of 275 pixels and larger */
+        width: 97%;
+    }
+    
     /* Medium screen size (sm) */
     @media (min-width: 640px) {
         /* Styles for screens with a width of 640 pixels and larger */

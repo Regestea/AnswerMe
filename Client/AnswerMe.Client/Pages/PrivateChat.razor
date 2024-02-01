@@ -1,0 +1,110 @@
+@page "/PV/{RoomId:guid}"
+@using AnswerMe.Client.Core.Enums
+@using Models.Shared.Responses.Message
+@using Models.Shared.Responses.PrivateRoom
+@inject AuthStateProvider AuthStateProvider
+@inject IPrivateRoomService PrivateRoomService
+@inject IUserService UserService
+@inject IJSRuntime JsRuntime
+@using AnswerMe.Client.Componenets.BackgroundHubs
+
+
+<RoomBackgroundHub UserJoinedRoom="UserJoinedRoom" UserLeftRoom="UserLeftRoom" NewMessage="AddNewMessage" @key="RoomId" RoomId="RoomId" RoomType="RoomType.Private" />
+<div class="p-4 sm:ml-64 body-content element">
+
+    <NavHeader @key="RoomId" RoomId="RoomId" CurrentRoomType="RoomType.Private"/>
+
+    <ChatLayout>
+        <ChatContent>
+             @if (_isContactInRoom || _contactLastRoomVisit != DateTimeOffset.MinValue)
+                            {
+                                <PrivateMessage  @ref="_privateMessageRef" @key="RoomId" RoomId="RoomId"  ContactLastRoomVisit="_contactLastRoomVisit" IsContactInRoom="_isContactInRoom" LoggedInUserId="_loggedInUserId" />
+                    
+                            }
+                            
+                            
+                            <SendMessage CurrentRoomType="RoomType.Private" RoomId="RoomId"/>
+        </ChatContent>
+    </ChatLayout>
+  
+</div>
+
+@code {
+    
+    [Parameter] public Guid RoomId { get; set; }
+    private PrivateMessage _privateMessageRef;
+    private PrivateRoomResponse? _privateRoomResponse;
+    private bool _isContactInRoom=false;
+    private Guid _loggedInUserId;
+    private DateTimeOffset? _contactLastRoomVisit;
+    
+    
+   
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await AuthStateProvider.ExtractUserDataFromLocalTokenAsync();
+        _loggedInUserId = user.id;
+        var privateRoom = await PrivateRoomService.GetPrivateRoomByIdAsync(RoomId);
+
+        if (!privateRoom.IsSuccess)
+        {
+            //redirect to 404 page
+        }
+
+        NavMenu.SetPvUnReadCount(RoomId, 0);
+        
+        
+        _privateRoomResponse = privateRoom.AsSuccess.Value;
+
+        var isContactInRoom =await PrivateRoomService.GetUserIsOnlineInRoom(RoomId, _privateRoomResponse.Contact.Id);
+
+        _isContactInRoom = isContactInRoom.AsSuccess.Value.Result;
+
+        if (!_isContactInRoom)
+        {
+            await SetLastVisit();
+        }
+    }
+
+    private async Task SetLastVisit()
+    {
+        var lastSeen = await PrivateRoomService
+            .GetRoomLastSeenAsync(_privateRoomResponse!.Contact.Id, _privateRoomResponse.RoomNotify.RoomId);
+        
+
+        if (lastSeen.IsSuccess)
+        {
+            _contactLastRoomVisit = lastSeen.AsSuccess.Value.LastSeenUtc.LocalDateTime;
+        }
+
+        if (lastSeen.IsNotFound)
+        {
+            _contactLastRoomVisit = null;
+        }
+    }
+
+    public async Task AddNewMessage(MessageResponse messageResponse)
+    {
+        await _privateMessageRef.AddNewMessage(messageResponse);
+    }
+    
+    public void UserJoinedRoom(Guid userId)
+    {
+        if (_loggedInUserId != userId)
+        {
+            Console.WriteLine("user joined room");
+            _isContactInRoom = true;
+        }
+    }
+    
+    public async Task UserLeftRoom(Guid userId)
+    {
+        if (_loggedInUserId != userId)
+        {
+            await SetLastVisit();
+            _isContactInRoom = false;
+        }
+    }
+
+}

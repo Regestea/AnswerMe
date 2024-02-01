@@ -29,7 +29,7 @@ public class PrivateMessageService:IPrivateMessageService
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
-        var response = await _httpClient.SendRequestAsync($"PrivateMessage/{roomId}?".AddPagination(request).AddQuery("jumpToUnRead",jumpToUnRead.ToString()), HttpMethod.Get);
+        var response = await _httpClient.SendRequestAsync($"PrivateMessage/{roomId}/List?".AddPagination(request).AddQuery("jumpToUnRead",jumpToUnRead.ToString()), HttpMethod.Get);
 
         if (response.StatusCode==HttpStatusCode.NotFound)
         {
@@ -44,6 +44,27 @@ public class PrivateMessageService:IPrivateMessageService
         var messages = await JsonConverter.ToObject<PagedListResponse<MessageResponse>>(response.Content);
 
         return new Success<PagedListResponse<MessageResponse>>(messages);
+    }
+    
+    public async Task<ReadResponse<MessageResponse>> GetByIdAsync(Guid messageId)
+    {
+        await _httpClient.AddAuthHeader(_localStorageService);
+
+        var response = await _httpClient.SendRequestAsync($"PrivateMessage/{messageId}", HttpMethod.Get);
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            var message = await JsonConverter.ToObject<MessageResponse>(response.Content);
+
+            return new Success<MessageResponse>(message);
+        }
+
+        if (response.StatusCode == HttpStatusCode.Forbidden)
+        {
+            return new AccessDenied();
+        }
+
+        return new NotFound();
     }
 
     public async Task<CreateResponse<IdResponse>> SendMessageAsync(Guid roomId, SendMessageRequest request)

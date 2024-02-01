@@ -29,7 +29,7 @@ namespace AnswerMe.Client.Core
             services.AddCascadingAuthenticationState();
             services.AddScoped<IOnlineHubService, OnlineHubService>();
             services.AddScoped<HubClient>();
-            
+
 
             services.AddHttpClient(nameof(HttpClients.AnswerMe),
                 client => { client.BaseAddress = new Uri(appSettings.AnswerMe ?? throw new InvalidOperationException()); });

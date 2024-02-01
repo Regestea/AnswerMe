@@ -28,11 +28,22 @@ public class PrivateRoomService:IPrivateRoomService
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
-        var response = await _httpClient.SendRequestAsync($"PrivateRoom".AddPagination(request), HttpMethod.Get);
+        var response = await _httpClient.SendRequestAsync($"PrivateRoom?".AddPagination(request), HttpMethod.Get);
         
         var privateRooms = await JsonConverter.ToObject<PagedListResponse<PrivateRoomResponse>>(response.Content);
 
         return new Success<PagedListResponse<PrivateRoomResponse>>(privateRooms);
+    }
+
+    public async Task<ReadResponse<BooleanResponse>> GetUserIsOnlineInRoom(Guid roomId, Guid userId)
+    {
+        await _httpClient.AddAuthHeader(_localStorageService);
+
+        var response = await _httpClient.SendRequestAsync($"PrivateRoom/{roomId}/User/{userId}/IsOnline", HttpMethod.Get);
+        
+        var isOnlineInRoom = await JsonConverter.ToObject<BooleanResponse>(response.Content);
+
+        return new Success<BooleanResponse>(isOnlineInRoom);
     }
 
     public async Task<CreateResponse<IdResponse>> CreateAsync(Guid contactId)

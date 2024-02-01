@@ -188,7 +188,7 @@ namespace AnswerMe.Api.Controllers
         /// <response code="204">Success: User kicked</response>
         /// <response code="403">AccessDenied: You don't have permission to access to this content</response>
         /// <response code="404">NotFound: Group or user not found</response>
-        [ProducesResponseType(typeof(GroupResponse), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpDelete("{groupId:guid}/User/{userId:guid}/Kick")]

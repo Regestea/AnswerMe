@@ -35,7 +35,7 @@ namespace AnswerMe.Api.Controllers
         /// <response code="200">OK: The list of private messages was successfully retrieved.</response>
         /// <response code="404">Not Found: The room or user could not be found.</response>
         /// <response code="403">Forbidden: You can't see this room.</response>
-        [HttpGet("{roomId:guid}")]
+        [HttpGet("{roomId:guid}/List")]
         [ProducesResponseType(typeof(PagedListResponse<MessageResponse>), StatusCodes.Status200OK )]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -58,6 +58,45 @@ namespace AnswerMe.Api.Controllers
 
             return Ok(result.AsSuccess.Value);
         }
+        
+        
+        
+        /// <summary>
+        /// Get details of a specific message.
+        /// </summary>
+        /// <param name="messageId">The ID of the message to retrieve.</param>
+        /// <returns>
+        /// Returns the details of the specified message if successful.
+        /// Returns NotFound if the message with the given ID is not found.
+        /// Returns Forbidden if access to the message is denied.
+        /// </returns>
+        /// <response code="200">Returns the details of the specified message.</response>
+        /// <response code="404">If the message with the given ID is not found, returns a not found status.</response>
+        /// <response code="403">If access to the message is denied, returns a forbidden status.</response>
+        [HttpGet("{messageId:guid}")]
+        [ProducesResponseType(typeof(MessageResponse),StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetAsync([FromRoute] Guid messageId)
+        {
+            var requestToken = _jwtTokenRepository.GetJwtToken();
+            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+           
+            var result = await _privateMessageService.GetAsync(loggedInUser.id, messageId);
+
+            if (result.IsNotFound)
+            {
+                return NotFound();
+            }
+
+            if (result.IsAccessDenied)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            return Ok(result.AsSuccess.Value);
+        }
+        
 
         /// <summary>
         /// Send a private message to a room.

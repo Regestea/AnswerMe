@@ -18,17 +18,14 @@ namespace AnswerMe.Infrastructure.Hubs
         private readonly IJwtTokenRepository _jwtTokenRepository;
         private ICacheRepository _cacheRepository;
         private AnswerMeDbContext _context;
-        private IHubContext<PrivateRoomHub> _privateRoomHub;
         private IAuthenticationService _authenticationService;
 
         public OnlineHub(IJwtTokenRepository jwtTokenRepository, ICacheRepository cacheRepository,
-            AnswerMeDbContext context, IHubContext<PrivateRoomHub> privateRoomHub,
-            IAuthenticationService authenticationService)
+            AnswerMeDbContext context, IAuthenticationService authenticationService)
         {
             _jwtTokenRepository = jwtTokenRepository;
             _cacheRepository = cacheRepository;
             _context = context;
-            _privateRoomHub = privateRoomHub;
             _authenticationService = authenticationService;
         }
 
@@ -45,13 +42,12 @@ namespace AnswerMe.Infrastructure.Hubs
         {
             var jwtToken = _jwtTokenRepository.GetJwtToken();
             var isAuthenticated = await _authenticationService.IsAuthenticatedAsync(jwtToken);
-            
+
             if (isAuthenticated)
             {
-                           
                 var userDto = _jwtTokenRepository.ExtractUserDataFromToken(jwtToken);
 
-                await _cacheRepository.SetAsync(userDto.id.ToString(), new UserOnlineDto()
+                await _cacheRepository.SetAsync("Online-" + userDto.id, new UserOnlineDto()
                 {
                     UserId = userDto.id,
                     ConnectionId = Context.ConnectionId
@@ -65,26 +61,27 @@ namespace AnswerMe.Infrastructure.Hubs
 
 
                 var userContactIds = await _context.PrivateChats
-                    .Where(chat => (chat.User1Id == userDto.id || chat.User2Id == userDto.id) && (chat.User1Id != chat.User2Id))
+                    .Where(chat =>
+                        (chat.User1Id == userDto.id || chat.User2Id == userDto.id) && (chat.User1Id != chat.User2Id))
                     .Select(chat => chat.User1Id == userDto.id ? chat.User2Id : chat.User1Id)
-                    .Distinct()
                     .ToListAsync();
-
+                
                 var onlineContactConnectionIdList = new List<string>();
 
                 foreach (var contactId in userContactIds)
                 {
-                    var inRoomOnlineUser = await _cacheRepository.GetAsync<RoomConnectionDto>(contactId.ToString());
-                    if (inRoomOnlineUser != null)
+                    var onlineContact = await _cacheRepository.GetAsync<UserOnlineDto>(contactId.ToString());
+                    if (onlineContact != null)
                     {
-                        onlineContactConnectionIdList.Add(inRoomOnlineUser.ConnectionId);
+                        onlineContactConnectionIdList.Add(onlineContact.ConnectionId);
                     }
                 }
-            
+
                 if (onlineContactConnectionIdList.Any())
                 {
-                    await _privateRoomHub.Clients.Clients(onlineContactConnectionIdList).SendAsync("UserWentOnline", userDto.id);
+                    await Clients.Clients(onlineContactConnectionIdList).SendAsync("UserWentOnline", userDto.id);
                 }
+
 
                 await base.OnConnectedAsync();
             }
@@ -93,7 +90,6 @@ namespace AnswerMe.Infrastructure.Hubs
             {
                 Context.Abort();
             }
-            
         }
 
         /// <summary>
@@ -120,10 +116,32 @@ namespace AnswerMe.Infrastructure.Hubs
 
             if (userOnlineDto != null)
             {
-                await _cacheRepository.RemoveAsync(userOnlineDto.UserId.ToString());
+                await _cacheRepository.RemoveAsync("Online-"+userOnlineDto.UserId);
                 await _context.OnlineStatusUsers.AddAsync(new OnlineStatusUser()
                     { UserId = userOnlineDto.UserId, LastOnlineDateTime = DateTimeOffset.UtcNow });
                 await _context.SaveChangesAsync();
+                
+                var userContactIds = await _context.PrivateChats
+                    .Where(chat =>
+                        (chat.User1Id == userOnlineDto.UserId || chat.User2Id == userOnlineDto.UserId) && (chat.User1Id != chat.User2Id))
+                    .Select(chat => chat.User1Id == userOnlineDto.UserId ? chat.User2Id : chat.User1Id)
+                    .ToListAsync();
+                
+                var onlineContactConnectionIdList = new List<string>();
+
+                foreach (var contactId in userContactIds)
+                {
+                    var onlineContact = await _cacheRepository.GetAsync<UserOnlineDto>(contactId.ToString());
+                    if (onlineContact != null)
+                    {
+                        onlineContactConnectionIdList.Add(onlineContact.ConnectionId);
+                    }
+                }
+
+                if (onlineContactConnectionIdList.Any())
+                {
+                    await Clients.Clients(onlineContactConnectionIdList).SendAsync("UserWentOffline", userOnlineDto.UserId);
+                }
             }
 
             await base.OnDisconnectedAsync(exception);

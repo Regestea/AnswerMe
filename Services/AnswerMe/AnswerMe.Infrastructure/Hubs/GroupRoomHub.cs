@@ -66,7 +66,7 @@ namespace AnswerMe.Infrastructure.Hubs
                     var userDto = _jwtTokenRepository.ExtractUserDataFromToken(jwtToken);
 
 
-                        var isUserInGroup = await _context.UserGroups.IsAnyAsync(x => x.GroupId == groupId && x.UserId == userDto.id);
+                        var isUserInGroup = await _context.UserGroups.AnyAsync(x => x.GroupId == groupId && x.UserId == userDto.id);
                     if (!isUserInGroup)
                     {
                         Context.Abort();

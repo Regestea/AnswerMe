@@ -29,7 +29,7 @@ namespace AnswerMe.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<ReadResponse<GroupResponse>> GetGroupPreviewAsync(string inviteToken)
+        public async Task<ReadResponse<PreviewGroupResponse>> GetGroupPreviewAsync(string inviteToken)
         {
             var groupInvitation = await _context.GroupInvitations.SingleOrDefaultAsync(x => x.Token == inviteToken);
 
@@ -40,7 +40,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var groupResponse = await _context.GroupChats
                 .Where(x => x.id == groupInvitation.GroupId)
-                .Select(x => new GroupResponse()
+                .Select(x => new PreviewGroupResponse()
                 {
                     Id = x.id,
                     CreatedDate = x.CreatedDate,
@@ -49,19 +49,19 @@ namespace AnswerMe.Infrastructure.Repositories
                     RoomImage = FileStorageHelper.GetUrl(x.RoomImage)
                 }).SingleAsync();
 
-            return new Success<GroupResponse>(groupResponse);
+            return new Success<PreviewGroupResponse>(groupResponse);
         }
 
         public async Task<CreateResponse<TokenResponse>> CreateAsync(Guid loggedInUserId, Guid groupId, CreateInviteTokenRequest request)
         {
-            var existGroup = await _context.GroupChats.IsAnyAsync(x => x.id == groupId);
+            var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
             if (!existGroup)
             {
                 return new NotFound();
             }
 
-            var isGroupAdmin = await _context.GroupAdmins.IsAnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
+            var isGroupAdmin = await _context.GroupAdmins.AnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
 
             if (!isGroupAdmin)
             {

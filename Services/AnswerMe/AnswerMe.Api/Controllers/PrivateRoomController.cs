@@ -70,6 +70,29 @@ namespace AnswerMe.Api.Controllers
             return NotFound();
         }
 
+        
+        /// <summary>
+        /// Check if a user is online in a specific private room.
+        /// </summary>
+        /// <param name="userId">The ID of the user to check for online status.</param>
+        /// <param name="roomId">The ID of the private room to check.</param>
+        /// <returns>
+        /// Returns a boolean response indicating whether the specified user is online in the given room.
+        /// </returns>
+        /// <response code="200">Returns true if the user is online in the room, false otherwise.</response>
+        [HttpGet("{roomId:guid}/User/{userId:guid}/IsOnline")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BooleanResponse))]
+        public async Task<IActionResult> IsOnlineInRoom(Guid userId, Guid roomId)
+        {
+            var requestToken = _jwtTokenRepository.GetJwtToken();
+            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+            
+            var result = await _privateRoomRepository.IsOnlineInRoom(loggedInUser.id, userId, roomId);
+            
+            return Ok(result.AsSuccess.Value);
+        }
+        
+
         /// <summary>
         /// Get a private room by ID.
         /// </summary>

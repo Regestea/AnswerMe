@@ -16,6 +16,7 @@ using OneOf.Types;
 using Models.Shared.OneOfTypes;
 using Models.Shared.Requests.Group;
 using AnswerMe.Application.Common.Interfaces;
+using AnswerMe.Application.DTOs.Room;
 using Google.Protobuf;
 using Models.Shared.Responses.Message;
 
@@ -25,16 +26,18 @@ namespace AnswerMe.Infrastructure.Repositories
     {
         private readonly AnswerMeDbContext _context;
         private readonly FileStorageService _fileStorageService;
+        private ICacheRepository _cacheRepository;
 
-        public GroupRepository(AnswerMeDbContext context, FileStorageService fileStorageService)
+        public GroupRepository(AnswerMeDbContext context, FileStorageService fileStorageService, ICacheRepository cacheRepository)
         {
             _context = context;
             _fileStorageService = fileStorageService;
+            _cacheRepository = cacheRepository;
         }
 
-        public async Task<ReadResponse<GroupResponse>> GetAsync(Guid loggedInUserId, Guid groupId)
+        public async Task<ReadResponse<PreviewGroupResponse>> GetAsync(Guid loggedInUserId, Guid groupId)
         {
-            var existGroup = await _context.GroupChats.IsAnyAsync(x => x.id == groupId);
+            var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
             if (!existGroup)
             {
@@ -42,7 +45,7 @@ namespace AnswerMe.Infrastructure.Repositories
             }
 
             var isUserInGroup =
-                await _context.UserGroups.IsAnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
+                await _context.UserGroups.AnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
 
             if (!isUserInGroup)
             {
@@ -51,7 +54,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var groupResponse = await _context
                 .GroupChats.Where(x => x.id == groupId)
-                .Select(x => new GroupResponse()
+                .Select(x => new PreviewGroupResponse()
                 {
                     Id = x.id,
                     Name = x.Name,
@@ -65,7 +68,7 @@ namespace AnswerMe.Infrastructure.Repositories
                 return new NotFound();
             }
 
-            return new Success<GroupResponse>(groupResponse);
+            return new Success<PreviewGroupResponse>(groupResponse);
         }
 
         public async Task<ReadResponse<PagedListResponse<GroupResponse>>> GetListAsync(Guid loggedInUserId,
@@ -78,19 +81,56 @@ namespace AnswerMe.Infrastructure.Repositories
                 .ToListAsync();
 
             var groupQuery = _context.GroupChats.Where(x => groupIdList.Contains(x.id))
+                .OrderByDescending(x=>x.CreatedDate)
                 .Select(x => new GroupResponse
                 {
-                    Id = x.id,
-                    Name = x.Name,
-                    CreatedDate = x.CreatedDate,
-                    ModifiedDate = x.ModifiedDate,
-                    RoomImage = FileStorageHelper.GetUrl(x.RoomImage)
+                    Group = new PreviewGroupResponse()
+                    {
+                        Id = x.id,
+                        Name = x.Name,
+                        CreatedDate = x.CreatedDate,
+                        ModifiedDate = x.ModifiedDate,
+                        RoomImage = FileStorageHelper.GetUrl(x.RoomImage)
+                    },
+                    RoomNotify = new RoomNotifyResponse()
+                    {
+                        RoomId = x.id,
+                        MessageGlance = "",
+                        TotalUnRead = 0,
+                    }
                 });
 
             var pagedResult = await PagedListResponse<GroupResponse>.CreateAsync(
                 groupQuery,
                 paginationRequest
             );
+            
+            foreach (var groupResponse in pagedResult.Items)
+            {
+              
+                var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>(loggedInUserId.ToString());
+                
+                if (isInRoom == null)
+                {
+                    var lastVisit = await _context.RoomLastSeen
+                        .Where(x => x.RoomId == groupResponse.RoomNotify.RoomId && x.UserId == loggedInUserId)
+                        .FirstOrDefaultAsync();
+                    if (lastVisit != null)
+                    {
+                        groupResponse.RoomNotify.TotalUnRead = await _context.Messages
+                            .Where(x => x.RoomChatId == groupResponse.RoomNotify.RoomId && x.CreatedDate > lastVisit.LastSeenUtc)
+                            .CountAsync();
+                    }
+                }
+
+                groupResponse.RoomNotify.MessageGlance = await _context.Messages
+                    .Where(x => x.RoomChatId == groupResponse.RoomNotify.RoomId)
+                    .OrderByDescending(x=>x.CreatedDate)
+                    .Select(x => x.Text)
+                    .FirstOrDefaultAsync() ?? string.Empty;
+                
+              
+            }
 
             return new Success<PagedListResponse<GroupResponse>>(pagedResult);
         }
@@ -98,7 +138,7 @@ namespace AnswerMe.Infrastructure.Repositories
         public async Task<ReadResponse<PagedListResponse<PreviewGroupUserResponse>>> UserListAsync(Guid loggedInUserId,
             Guid groupId, PaginationRequest paginationRequest)
         {
-            var existGroup = await _context.GroupChats.IsAnyAsync(x => x.id == groupId);
+            var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
             if (!existGroup)
             {
@@ -106,7 +146,7 @@ namespace AnswerMe.Infrastructure.Repositories
             }
 
             var isUserInGroup =
-                await _context.UserGroups.IsAnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
+                await _context.UserGroups.AnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
 
             if (!isUserInGroup)
             {
@@ -156,21 +196,21 @@ namespace AnswerMe.Infrastructure.Repositories
         public async Task<CreateResponse<IdResponse>> SetUserAsAdminAsync(Guid loggedInUserId, Guid groupId,
             Guid userId)
         {
-            var isAdmin = await _context.GroupAdmins.IsAnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
+            var isAdmin = await _context.GroupAdmins.AnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
 
             if (!isAdmin)
             {
                 return new AccessDenied();
             }
 
-            var existUser = await _context.Users.IsAnyAsync(x => x.id == userId);
+            var existUser = await _context.Users.AnyAsync(x => x.id == userId);
 
             if (!existUser)
             {
                 return new NotFound();
             }
 
-            var existGroup = await _context.GroupChats.IsAnyAsync(x => x.id == groupId);
+            var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
             if (!existGroup)
             {
@@ -186,21 +226,21 @@ namespace AnswerMe.Infrastructure.Repositories
 
         public async Task<DeleteResponse> RemoveUserFromAdminsAsync(Guid loggedInUserId, Guid groupId, Guid userId)
         {
-            var existUser = await _context.Users.IsAnyAsync(x => x.id == userId);
+            var existUser = await _context.Users.AnyAsync(x => x.id == userId);
 
             if (!existUser)
             {
                 return new NotFound();
             }
 
-            var existGroup = await _context.GroupChats.IsAnyAsync(x => x.id == groupId);
+            var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
             if (!existGroup)
             {
                 return new NotFound();
             }
 
-            var isAdmin = await _context.GroupAdmins.IsAnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
+            var isAdmin = await _context.GroupAdmins.AnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
 
             if (isAdmin)
             {
@@ -249,14 +289,14 @@ namespace AnswerMe.Infrastructure.Repositories
 
         public async Task<UpdateResponse> EditAsync(Guid loggedInUserId, Guid groupId, EditGroupRequest request)
         {
-            var existGroup = await _context.GroupChats.IsAnyAsync(x => x.id == groupId);
+            var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
             if (!existGroup)
             {
                 return new NotFound();
             }
 
-            var isAdmin = await _context.GroupAdmins.IsAnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
+            var isAdmin = await _context.GroupAdmins.AnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
 
             if (!isAdmin)
             {
@@ -294,21 +334,21 @@ namespace AnswerMe.Infrastructure.Repositories
 
         public async Task<CreateResponse<IdResponse>> JoinUserAsync(Guid loggedInUserId, Guid groupId, Guid joinUserId)
         {
-            var existUser = await _context.Users.IsAnyAsync(x => x.id == joinUserId);
+            var existUser = await _context.Users.AnyAsync(x => x.id == joinUserId);
 
             if (!existUser)
             {
                 return new NotFound();
             }
 
-            var existGroup = await _context.GroupChats.IsAnyAsync(x => x.id == groupId);
+            var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
             if (!existGroup)
             {
                 return new NotFound();
             }
 
-            var isAdmin = await _context.GroupAdmins.IsAnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
+            var isAdmin = await _context.GroupAdmins.AnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
 
             if (!isAdmin)
             {
@@ -328,7 +368,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
         public async Task<DeleteResponse> KickUserAsync(Guid loggedInUserId, Guid groupId, Guid kickUserId)
         {
-            var isAdmin = await _context.GroupAdmins.IsAnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
+            var isAdmin = await _context.GroupAdmins.AnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
 
             if (isAdmin)
             {

@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AnswerMe.Application.Common.Interfaces;
+﻿using AnswerMe.Application.Common.Interfaces;
 using AnswerMe.Application.Extensions;
 using AnswerMe.Domain.Entities;
 using AnswerMe.Infrastructure.Persistence;
-using AnswerMe.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Models.Shared.OneOfTypes;
 using Models.Shared.RepositoriesResponseTypes;
@@ -18,31 +12,33 @@ using Models.Shared.Responses.Message;
 using Models.Shared.Responses.Shared;
 using OneOf.Types;
 
-namespace AnswerMe.Infrastructure.Repositories
+namespace AnswerMe.Infrastructure.Services
 {
     public class GroupMessageService : IGroupMessageService
     {
         private readonly AnswerMeDbContext _context;
         private readonly FileStorageService _fileStorageService;
         private readonly IGroupHubService _groupHubService;
+        private readonly IOnlineHubService _onlineHubService;
 
-        public GroupMessageService(AnswerMeDbContext context, FileStorageService fileStorageService, IGroupHubService groupHubService)
+        public GroupMessageService(AnswerMeDbContext context, FileStorageService fileStorageService, IGroupHubService groupHubService, IOnlineHubService onlineHubService)
         {
             _context = context;
             _fileStorageService = fileStorageService;
             _groupHubService = groupHubService;
+            _onlineHubService = onlineHubService;
         }
         
         public async Task<CreateResponse<IdResponse>> SendAsync(Guid loggedInUserId, Guid groupId, SendMessageRequest request)
         {
-            var existGroup = await _context.GroupChats.IsAnyAsync(x => x.id == groupId);
+            var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
             if (!existGroup)
             {
                 return new NotFound();
             }
 
-            var isUserInGroup = await _context.UserGroups.IsAnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
+            var isUserInGroup = await _context.UserGroups.AnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
 
             if (!isUserInGroup)
             {
@@ -60,7 +56,7 @@ namespace AnswerMe.Infrastructure.Repositories
             };
             if (request.ReplyMessageId != null)
             {
-                var existMessage = await _context.Messages.IsAnyAsync(x => x.id == request.ReplyMessageId);
+                var existMessage = await _context.Messages.AnyAsync(x => x.id == request.ReplyMessageId);
                 if (existMessage)
                 {
                     message.ReplyMessageId = request.ReplyMessageId;
@@ -104,6 +100,7 @@ namespace AnswerMe.Infrastructure.Repositories
             var messageResponse = new MessageResponse()
             {
                 id = message.id,
+                RoomChatId = groupId,
                 CreatedDate = message.CreatedDate.Value,
                 ModifiedDate = message.ModifiedDate,
                 Text = message.Text,
@@ -126,6 +123,11 @@ namespace AnswerMe.Infrastructure.Repositories
             }
 
             await _groupHubService.SendMessageAsync(groupId, messageResponse);
+            
+            if (!string.IsNullOrWhiteSpace(message.Text))
+            {
+                await _onlineHubService.NotifyNewPvMessageAsync(groupId, message.Text);
+            }
             await _context.Messages.AddAsync(message);
 
             await _context.SaveChangesAsync();
@@ -135,14 +137,14 @@ namespace AnswerMe.Infrastructure.Repositories
 
         public async Task<ReadResponse<PagedListResponse<MessageResponse>>> GetListAsync(Guid loggedInUserId, Guid groupId, PaginationRequest paginationRequest)
         {
-            var existGroup = await _context.GroupChats.IsAnyAsync(x => x.id == groupId);
+            var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
             if (!existGroup)
             {
                 return new NotFound();
             }
 
-            var isUserInGroup = await _context.UserGroups.IsAnyAsync(x => x.GroupId == groupId && x.UserId == loggedInUserId);
+            var isUserInGroup = await _context.UserGroups.AnyAsync(x => x.GroupId == groupId && x.UserId == loggedInUserId);
 
             if (!isUserInGroup)
             {
@@ -157,6 +159,7 @@ namespace AnswerMe.Infrastructure.Repositories
                     {
                         id = message.id,
                         CreatedDate = message.CreatedDate,
+                        RoomChatId = groupId,
                         MediaList = message.MediaList!.Select(x => new MediaResponse
                         {
                             Id = x.id,
@@ -185,9 +188,59 @@ namespace AnswerMe.Infrastructure.Repositories
             return new Success<PagedListResponse<MessageResponse>>(pagedResult);
         }
 
+        public async Task<ReadResponse<MessageResponse>> GetAsync(Guid loggedInUserId, Guid messageId)
+        {
+             var existMessage = await _context.Messages.AnyAsync(x => x.id == messageId);
+            
+            if (!existMessage)
+            {
+                return new NotFound();
+            }
+            
+            var roomId = await _context.Messages.Where(x => x.id == messageId).Select(x=>x.RoomChatId).FirstOrDefaultAsync();
+            var isUserInRoom = await _context.UserGroups.AnyAsync(x=>x.GroupId == roomId && x.UserId == loggedInUserId);
+
+            if (!isUserInRoom)
+            {
+                return new AccessDenied();
+            }
+
+            var message =await _context.Messages
+                .Where(x => x.id == messageId)
+                .Include(x => x.MediaList)
+                .Select(message =>
+                    new MessageResponse
+                    {
+                        id = message.id,
+                        CreatedDate = message.CreatedDate,
+                        RoomChatId = roomId,
+                        MediaList = message.MediaList!.Select(x => new MediaResponse
+                        {
+                            Id = x.id,
+                            Type = (MediaTypeResponse)x.Type,
+                            BlurHash = x.BlurHash,
+                            Path = x.Path
+                        }).ToList(),
+
+                        Text = message.Text,
+                        GroupInviteToken = message.GroupInvitationToken,
+                        ModifiedDate = message.ModifiedDate,
+                        ReplyMessageId = message.ReplyMessageId,
+                        UserSender = _context.Users.Where(x => x.id == message.UserSenderId).Select(x =>
+                            new PreviewUserResponse()
+                            {
+                                Id = x.id,
+                                Name = x.FullName,
+                                ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
+                            }).Single()
+                    }).SingleOrDefaultAsync();
+
+            return new Success<MessageResponse>(message!);
+        }
+
         public async Task<UpdateResponse> UpdateAsync(Guid loggedInUserId, Guid messageId, EditMessageRequest request)
         {
-            var existMessage = await _context.Messages.IsAnyAsync(x => x.id == messageId);
+            var existMessage = await _context.Messages.AnyAsync(x => x.id == messageId);
 
             if (!existMessage)
             {
@@ -223,6 +276,7 @@ namespace AnswerMe.Infrastructure.Repositories
             var messageResponse = new MessageResponse()
             {
                 id = message.id,
+                RoomChatId = message.RoomChatId,
                 CreatedDate = message.CreatedDate,
                 ModifiedDate = message.ModifiedDate,
                 ReplyMessageId = message.ReplyMessageId,
@@ -254,7 +308,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
         public async Task<UpdateResponse> UpdateMediaAsync(Guid loggedInUserId, Guid messageId, Guid mediaId, EditMessageMediaRequest request)
         {
-            var existMessage = await _context.Messages.IsAnyAsync(x => x.id == messageId);
+            var existMessage = await _context.Messages.AnyAsync(x => x.id == messageId);
 
             if (!existMessage)
             {
@@ -352,6 +406,7 @@ namespace AnswerMe.Infrastructure.Repositories
             var messageResponse = new MessageResponse()
             {
                 id = message.id,
+                RoomChatId = message.RoomChatId,
                 CreatedDate = message.CreatedDate,
                 ModifiedDate = DateTimeOffset.UtcNow,
                 UserSender = userSender,
@@ -382,7 +437,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
         public async Task<DeleteResponse> DeleteAsync(Guid loggedInUserId, Guid messageId)
         {
-            var existMessage =await _context.Messages.IsAnyAsync(x => x.id == messageId);
+            var existMessage =await _context.Messages.AnyAsync(x => x.id == messageId);
 
             if (!existMessage)
             {
@@ -416,7 +471,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
         public async Task<DeleteResponse> DeleteMediaAsync(Guid loggedInUserId, Guid messageId, Guid mediaId)
         {
-            var existMessage = await _context.Messages.IsAnyAsync(x => x.id == messageId);
+            var existMessage = await _context.Messages.AnyAsync(x => x.id == messageId);
 
             if (!existMessage)
             {
@@ -454,6 +509,7 @@ namespace AnswerMe.Infrastructure.Repositories
                     var messageResponse = new MessageResponse()
                     {
                         id = message.id,
+                        RoomChatId = message.RoomChatId,
                         CreatedDate = message.CreatedDate,
                         ModifiedDate = DateTimeOffset.UtcNow,
                         UserSender = userSender,

@@ -13,7 +13,7 @@ public interface IPrivateHubService
     /// <param name="roomId">The unique identifier of the room.</param>
     /// <param name="messageResponse">The message to be sent, along with its properties.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task SendMessageAsync(Guid roomId, MessageResponse messageResponse);
+    Task SendMessageAsync(Guid loggedInUserId,Guid roomId, MessageResponse messageResponse);
 
     /// <summary>
     /// Updates a message in a specified room asynchronously.

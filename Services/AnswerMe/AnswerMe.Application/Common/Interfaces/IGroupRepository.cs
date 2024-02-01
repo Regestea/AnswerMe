@@ -19,7 +19,7 @@ public interface IGroupRepository
     /// <returns>A task representing the asynchronous operation with the result containing
     /// the group details wrapped in a ReadResponse object.</returns>
     /// <exception cref="System.Exception">Thrown when an error occurs while retrieving group information.</exception>
-    Task<ReadResponse<GroupResponse>> GetAsync(Guid loggedInUserId, Guid groupId);
+    Task<ReadResponse<PreviewGroupResponse>> GetAsync(Guid loggedInUserId, Guid groupId);
 
     /// <summary>
     /// Retrieves a paged list of groups asynchronously.

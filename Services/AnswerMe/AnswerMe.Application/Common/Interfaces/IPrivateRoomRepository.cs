@@ -17,6 +17,17 @@ public interface IPrivateRoomRepository
     /// <param name="roomId">The ID of the private room to retrieve.</param>
     /// <returns>A task representing the asynchronous operation. The task's result contains the response with the private room information.</returns>
     Task<ReadResponse<PrivateRoomResponse>> GetAsync(Guid loggedInUserId, Guid roomId);
+    
+    /// <summary>
+    /// Check if a user is online in a specific private room.
+    /// </summary>
+    /// <param name="loggedInUserId">The ID of the logged-in user making the request.</param>
+    /// <param name="userId">The ID of the user to check for online status.</param>
+    /// <param name="roomId">The ID of the private room to check.</param>
+    /// <returns>
+    /// Returns a boolean response indicating whether the specified user is online in the given room.
+    /// </returns>
+    Task<ReadResponse<BooleanResponse>> IsOnlineInRoom(Guid loggedInUserId, Guid userId, Guid roomId);
 
     /// <summary>
     /// Creates a relationship between two users asynchronously.

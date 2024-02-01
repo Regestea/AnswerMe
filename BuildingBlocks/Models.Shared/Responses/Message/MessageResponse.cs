@@ -12,6 +12,8 @@ namespace Models.Shared.Responses.Message
     {
         public Guid id { get; set; }
 
+        public required Guid RoomChatId { get; set; }
+        
         public DateTimeOffset? CreatedDate { get; set; }
         public DateTimeOffset? ModifiedDate { get; set; }
 

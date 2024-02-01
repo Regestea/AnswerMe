@@ -3,20 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Models.Shared.Responses.Message;
 
 namespace Models.Shared.Responses.Group
 {
     public class GroupResponse
     {
-        public Guid Id { get; set; }
+        public PreviewGroupResponse Group { get; set; }
 
-        public required string Name { get; set; }
-
-        public string? RoomImage { get; set; }
-
-        public DateTimeOffset? CreatedDate { get; set; }
-        public DateTimeOffset? ModifiedDate { get; set; }
-
-
+        public RoomNotifyResponse RoomNotify { get; set; }
     }
 }

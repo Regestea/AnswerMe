@@ -30,6 +30,9 @@ namespace Models.Shared.Responses.Shared
         var totalCount = await query.CountAsync();
         var items = await query.Skip((request.CurrentPage - 1) * request.PageSize).Take(request.PageSize).ToListAsync();
         var totalPages = (int)Math.Ceiling((decimal)totalCount / request.PageSize);
+        
+     
+       
 
         return new PagedListResponse<T>(request.CurrentPage, totalCount, totalPages, items);
     }

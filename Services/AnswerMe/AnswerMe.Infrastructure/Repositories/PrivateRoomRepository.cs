@@ -13,6 +13,7 @@ using Models.Shared.OneOfTypes;
 using Models.Shared.RepositoriesResponseTypes;
 using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Group;
+using Models.Shared.Responses.Message;
 using Models.Shared.Responses.PrivateRoom;
 using Models.Shared.Responses.Shared;
 using OneOf.Types;
@@ -22,16 +23,17 @@ namespace AnswerMe.Infrastructure.Repositories
     public class PrivateRoomRepository : IPrivateRoomRepository
     {
         private readonly AnswerMeDbContext _context;
+        private ICacheRepository _cacheRepository;
 
-        public PrivateRoomRepository(AnswerMeDbContext context)
+        public PrivateRoomRepository(AnswerMeDbContext context, ICacheRepository cacheRepository)
         {
             _context = context;
+            _cacheRepository = cacheRepository;
         }
-
 
         public async Task<ReadResponse<PrivateRoomResponse>> GetAsync(Guid loggedInUserId, Guid roomId)
         {
-            var existRoom = await _context.PrivateChats.IsAnyAsync(x => x.id == roomId);
+            var existRoom = await _context.PrivateChats.AnyAsync(x => x.id == roomId);
 
             if (!existRoom)
             {
@@ -47,7 +49,7 @@ namespace AnswerMe.Infrastructure.Repositories
                 return new AccessDenied();
             }
 
-            var contactId = privateRoom.User1Id == loggedInUserId ? privateRoom.User1Id : privateRoom.User2Id;
+            var contactId = privateRoom.User1Id != loggedInUserId ? privateRoom.User1Id : privateRoom.User2Id;
 
             var previewContact = await _context.Users
                 .Where(x => x.id == contactId)
@@ -58,18 +60,63 @@ namespace AnswerMe.Infrastructure.Repositories
                     ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage),
                 }).SingleAsync();
 
+
+            var roomNotify = new RoomNotifyResponse() { TotalUnRead = 0, RoomId = roomId };
+
+            var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>(loggedInUserId.ToString());
+
+            if (isInRoom != null)
+            {
+                var lastVisit = await _context.RoomLastSeen
+                    .Where(x => x.RoomId == roomId && x.UserId == loggedInUserId)
+                    .FirstOrDefaultAsync();
+                if (lastVisit != null)
+                {
+                    roomNotify.TotalUnRead = await _context.Messages
+                        .Where(x => x.RoomChatId == roomId && x.CreatedDate > lastVisit.LastSeenUtc)
+                        .CountAsync();
+                }
+            }
+
+            roomNotify.MessageGlance = await _context.Messages.Where(x => x.RoomChatId == roomId)
+                .Select(x => x.Text.Substring(0, 10))
+                .FirstOrDefaultAsync() ?? string.Empty;
+
             var privateRoomResponse = new PrivateRoomResponse()
             {
-                Id = privateRoom.id,
+                RoomNotify = roomNotify,
                 Contact = previewContact
             };
 
             return new Success<PrivateRoomResponse>(privateRoomResponse);
         }
 
+        public async Task<ReadResponse<BooleanResponse>> IsOnlineInRoom(Guid loggedInUserId, Guid userId, Guid roomId)
+        {
+            var isInRoom = await _context.PrivateChats
+                .AnyAsync(x => x.id == roomId && (x.User1Id == userId || x.User2Id == userId));
+
+            if (!isInRoom)
+            {
+                return new Success<BooleanResponse>(
+                    new BooleanResponse { FieldName = "IsOnlineInRoom", Result = false });
+            }
+    
+            var roomConnection = await _cacheRepository.GetAsync<RoomConnectionDto>(userId.ToString());
+    
+            if (roomConnection?.RoomId == roomId)
+            {
+                return new Success<BooleanResponse>(
+                    new BooleanResponse { FieldName = "IsOnlineInRoom", Result = true });
+            }
+    
+            return new Success<BooleanResponse>(
+                new BooleanResponse { FieldName = "IsOnlineInRoom", Result = false });
+        }
+
         public async Task<CreateResponse<IdResponse>> CreateAsync(Guid loggedInUserId, Guid contactId)
         {
-            var existContact =await _context.Users.IsAnyAsync(x => x.id == contactId);
+            var existContact = await _context.Users.AnyAsync(x => x.id == contactId);
 
             if (!existContact)
             {
@@ -77,8 +124,8 @@ namespace AnswerMe.Infrastructure.Repositories
             }
 
             var privateChat = await _context.PrivateChats.Where(x =>
-                (x.User1Id == loggedInUserId && x.User2Id == contactId) ||
-                x.User2Id == loggedInUserId && x.User1Id == contactId)
+                    (x.User1Id == loggedInUserId && x.User2Id == contactId) ||
+                    x.User2Id == loggedInUserId && x.User1Id == contactId)
                 .SingleOrDefaultAsync();
 
             if (privateChat != null)
@@ -93,10 +140,10 @@ namespace AnswerMe.Infrastructure.Repositories
                 User2Id = contactId,
                 CreatedDate = DateTimeOffset.UtcNow
             };
-            
+
             await _context.PrivateChats.AddAsync(privateChat);
             await _context.SaveChangesAsync();
-            
+
             return new Success<IdResponse>(new IdResponse()
             {
                 Id = privateChat.id,
@@ -104,10 +151,12 @@ namespace AnswerMe.Infrastructure.Repositories
             });
         }
 
-        public async Task<ReadResponse<PagedListResponse<PrivateRoomResponse>>> GetListAsync(Guid loggedInUserId, PaginationRequest paginationRequest)
+        public async Task<ReadResponse<PagedListResponse<PrivateRoomResponse>>> GetListAsync(Guid loggedInUserId,
+            PaginationRequest paginationRequest)
         {
             var privateRoomListQuery = _context.PrivateChats
                 .Where(x => x.User1Id == loggedInUserId || x.User2Id == loggedInUserId)
+                .OrderByDescending(x=>x.CreatedDate)
                 .Select(x => new PrivateRoomDto
                 {
                     Id = x.id,
@@ -115,7 +164,12 @@ namespace AnswerMe.Infrastructure.Repositories
                 })
                 .Select(d => new PrivateRoomResponse
                 {
-                    Id = d.Id,
+                    RoomNotify = new RoomNotifyResponse()
+                    {
+                        RoomId = d.Id,
+                        TotalUnRead = 0,
+                        MessageGlance = ""
+                    },
                     Contact = new PreviewUserResponse
                     {
                         Id = d.ContactId,
@@ -139,27 +193,52 @@ namespace AnswerMe.Infrastructure.Repositories
                         Name = x.FullName,
                         ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
                     }).SingleAsync();
+                var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>(loggedInUserId.ToString());
+                
+                if (isInRoom == null)
+                {
+                    var lastVisit = await _context.RoomLastSeen
+                        .Where(x => x.RoomId == privateRoomResponse.RoomNotify.RoomId && x.UserId == loggedInUserId)
+                        .FirstOrDefaultAsync();
+                    if (lastVisit != null)
+                    {
+                        privateRoomResponse.RoomNotify.TotalUnRead = await _context.Messages
+                            .Where(x => x.RoomChatId == privateRoomResponse.RoomNotify.RoomId && x.CreatedDate > lastVisit.LastSeenUtc)
+                            .CountAsync();
+                    }
+                }
+
+                privateRoomResponse.RoomNotify.MessageGlance = await _context.Messages
+                    .Where(x => x.RoomChatId == privateRoomResponse.RoomNotify.RoomId)
+                    .OrderByDescending(x=>x.CreatedDate)
+                    .Select(x => x.Text)
+                    .FirstOrDefaultAsync() ?? string.Empty;
+                
+              
             }
 
             return new Success<PagedListResponse<PrivateRoomResponse>>(pagedResult);
         }
 
-        public async Task<ReadResponse<RoomLastSeenResponse>> GetLastSeenAsync(Guid loggedInUserId, Guid roomId, Guid userId)
+        public async Task<ReadResponse<RoomLastSeenResponse>> GetLastSeenAsync(Guid loggedInUserId, Guid roomId,
+            Guid userId)
         {
-            var isUserInRoom = await _context.PrivateChats.IsAnyAsync(x =>
+            var isUserInRoom = await _context.PrivateChats.AnyAsync(x =>
                 (x.User1Id == loggedInUserId || x.User2Id == loggedInUserId) && x.id == roomId);
 
             if (!isUserInRoom)
             {
-                return new AccessDenied();
+                return new NotFound();
             }
 
-            var lastSeenResponse = await _context.RoomLastSeen.Select(x => new RoomLastSeenResponse()
+            var lastSeenResponse = await _context.RoomLastSeen
+                .Where(x=>x.RoomId == roomId&&x.UserId == userId)
+                .Select(x => new RoomLastSeenResponse()
             {
                 UserId = x.UserId,
                 RoomId = x.RoomId,
                 LastSeenUtc = x.LastSeenUtc
-            }).SingleOrDefaultAsync();
+            }).FirstOrDefaultAsync();
 
             if (lastSeenResponse == null)
             {

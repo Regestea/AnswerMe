@@ -40,7 +40,8 @@ namespace AnswerMe.Infrastructure.Hubs
         {
             try
             {
-                if (Context.GetHttpContext()!.Request.Headers.TryGetValue("RoomId", out var roomIdValues))
+                var rr = Context.GetHttpContext();
+                if (Context.GetHttpContext()!.Request.Query.TryGetValue("RoomId", out var roomIdValues))
                 {
                     var roomId = Guid.Parse(roomIdValues.ToString());
 
@@ -48,7 +49,7 @@ namespace AnswerMe.Infrastructure.Hubs
                         var userDto = _jwtTokenRepository.ExtractUserDataFromToken(jwtToken);
 
 
-                        var existRoom = await _context.PrivateChats.IsAnyAsync(x => x.id == roomId && (x.User1Id == userDto.id || x.User2Id == userDto.id));
+                        var existRoom = await _context.PrivateChats.AnyAsync(x => x.id == roomId && (x.User1Id == userDto.id || x.User2Id == userDto.id));
                     if (!existRoom)
                     {
                         Context.Abort();
@@ -60,9 +61,11 @@ namespace AnswerMe.Infrastructure.Hubs
                          new RoomConnectionDto() { ConnectionId = Context.ConnectionId, RoomId = roomId, UserId = userDto.id },
                          TimeSpan.FromDays(7));
 
-                    await _cacheRepository.SetAsync(userDto.id.ToString(),
+                    await _cacheRepository.SetAsync("PV-"+userDto.id.ToString(),
                         new RoomConnectionDto() { ConnectionId = Context.ConnectionId, RoomId = roomId, UserId = userDto.id },
                         TimeSpan.FromDays(7));
+                    
+                    await Clients.Group(roomId.ToString()).SendAsync("JoinedRoom", userDto.id);
 
                     await base.OnConnectedAsync();
                 }
@@ -97,10 +100,10 @@ namespace AnswerMe.Infrastructure.Hubs
                 await Groups.RemoveFromGroupAsync(roomConnectionDto.ConnectionId, roomConnectionDto.RoomId.ToString());
 
                 await _cacheRepository.RemoveAsync(Context.ConnectionId);
-                await _cacheRepository.RemoveAsync(roomConnectionDto.UserId.ToString());
+                await _cacheRepository.RemoveAsync("PV-"+roomConnectionDto.UserId);
 
                     var roomLastSeen = await _context.RoomLastSeen
-                     .SingleOrDefaultAsync(x =>
+                     .FirstOrDefaultAsync(x =>
                      x.UserId == roomConnectionDto.UserId && x.RoomId == roomConnectionDto.RoomId);
                 if (roomLastSeen == null)
                 {
@@ -119,6 +122,8 @@ namespace AnswerMe.Infrastructure.Hubs
                 }
 
                 await _context.SaveChangesAsync();
+                
+                await Clients.Group(roomConnectionDto.RoomId.ToString()).SendAsync("LeftRoom", roomConnectionDto.UserId);
             }
 
             await base.OnDisconnectedAsync(exception);

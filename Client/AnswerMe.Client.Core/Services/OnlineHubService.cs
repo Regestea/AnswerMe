@@ -12,20 +12,18 @@ namespace AnswerMe.Client.Core.Services;
 
 public class OnlineHubService
 {
-    private readonly HubConnection hubConnection;
+    private readonly HubConnection _hubConnection;
     private string _token = "";
 
     public OnlineHubService(IJSRuntime jsRuntime)
     {
-        hubConnection = new HubConnectionBuilder()
+        _hubConnection = new HubConnectionBuilder()
             .WithUrl("https://localhost:7156/Online-User", option =>
             {
                 option.AccessTokenProvider = () =>
                     Task.FromResult(_token)!;
             })
             .Build();
-
-        hubConnection.Closed += ConnectToHub().Wait();
     }
 
 
@@ -36,83 +34,70 @@ public class OnlineHubService
 
     
 
-    public async Task ConnectToHub()
+    public async Task ConnectToHub(Action handler)
     {
+
+        _hubConnection.Closed += async _ =>
+        {
+            await Task.Delay(5000);
+            await ConnectToHub(handler.Invoke);
+        };
+        
         try
         {
-            await hubConnection.StartAsync();
-    
-            await JsRuntime.ReplaceClass(NavMenu.ElementIds.HeaderAvatar.ToString(),"offline","online");
-    
-            await JsRuntime.SetInnerText(NavMenu.ElementIds.HeaderText.ToString(), "Answer Me");
+            await _hubConnection.StartAsync();
+            handler.Invoke();
         }
         catch (Exception e)
         {
-            await OnReconnect(() =>  _ = ConnectToHub());
+            await Task.Delay(5000);
+            await ConnectToHub(handler.Invoke);
         }
     }
-    
-    public async Task OnReconnect(Action handler)
-    {
-        await JsRuntime.ReplaceClass(NavMenu.ElementIds.HeaderAvatar.ToString(),"online","offline");
-    
-        await JsRuntime.SetInnerText(NavMenu.ElementIds.HeaderText.ToString(), "Connecting .....");
-        handler.Invoke();
-        await Task.Delay(5000);
-    }
 
-    private async Task OnClosed(Action handler)
+    public void OnClosed(Action handler)
     {
-        // Log the disconnection event
-        await JsRuntime.ReplaceClass(NavMenu.ElementIds.HeaderAvatar.ToString(),"online","offline");
-    
-        await JsRuntime.SetInnerText(NavMenu.ElementIds.HeaderText.ToString(), "Connecting .....");
-        
-        handler.Invoke();
-
-        await ConnectToHub();
-        await Task.Delay(5000);
+        _hubConnection.Closed += _ =>
+        {
+            handler.Invoke();
+            return Task.CompletedTask;
+        };
     }
 
 
-    public Task RegisterUserWentOnline(Action<Guid> handler)
+    public  void RegisterUserWentOnline(Action<Guid> handler)
     {
-        hubConnection.On<Guid>("UserWentOnline", async (userId) =>
+        _hubConnection.On<Guid>("UserWentOnline",  (userId) =>
         {
             Console.WriteLine("user went online " + userId);
             handler.Invoke(userId);
-            await JsRuntime.ReplaceClass(userId + "-Status", "offline", "online");
         });
     }
 
-    public Task RegisterUserWentOffline(Action<Guid> handler)
+    public void RegisterUserWentOffline(Action<Guid> handler)
     {
-        hubConnection.On<Guid>("UserWentOffline", async (userId) =>
+        _hubConnection.On<Guid>("UserWentOffline",  (userId) =>
         {
             Console.WriteLine("user went offline " + userId);
-
             handler.Invoke(userId);
-            await JsRuntime.ReplaceClass(userId + "-Status", "online", "offline");
         });
     }
 
-    public Task RegisterNotifyNewPvMessage(Action<Guid, string> handler)
+    public void RegisterNotifyNewPvMessage(Action<Guid, string> handler)
     {
-        hubConnection.On<Guid, string>("NotifyNewPvMessage", async (roomId, message) =>
+        _hubConnection.On<Guid, string>("NotifyNewPvMessage", async (roomId, message) =>
         {
             Console.WriteLine("NotifyNewPvMessage" + roomId + message);
             handler.Invoke(roomId, message);
-            NavMenu.SetPvLastMessage(roomId, message);
         });
     }
 
-    public Task RegisterNotifyNewGroupMessage(Action<Guid, string> handler)
+    public void RegisterNotifyNewGroupMessage(Action<Guid, string> handler)
     {
-        hubConnection.On<Guid, string>("NotifyNewGroupMessage", async (roomId, message) =>
+        _hubConnection.On<Guid, string>("NotifyNewGroupMessage", async (roomId, message) =>
         {
             Console.WriteLine("NotifyNewPvMessage" + roomId + message);
             handler.Invoke(roomId, message);
-            NavMenu.SetGrLastMessage(roomId, message);
         });
     }
 }

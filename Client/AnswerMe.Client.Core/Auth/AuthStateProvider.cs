@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using AnswerMe.Client.Core.DTOs.User;
+using AnswerMe.Client.Core.Services;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 
@@ -10,10 +11,12 @@ namespace AnswerMe.Client.Core.Auth
     public class AuthStateProvider : AuthenticationStateProvider
     {
         private readonly ILocalStorageService _localStorageService;
+        private readonly OnlineHubService _onlineService;
 
-        public AuthStateProvider(ILocalStorageService localStorageService)
+        public AuthStateProvider(ILocalStorageService localStorageService, OnlineHubService onlineService)
         {
             _localStorageService = localStorageService;
+            _onlineService = onlineService;
         }
 
 
@@ -37,6 +40,8 @@ namespace AnswerMe.Client.Core.Auth
            
             var user = new ClaimsPrincipal(identity);
             var state = new AuthenticationState(user);
+            
+            await _onlineService.SetToken(_localStorageService);
 
             NotifyAuthenticationStateChanged(Task.FromResult(state));
 
@@ -52,13 +57,7 @@ namespace AnswerMe.Client.Core.Auth
              var id = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.id))?.Value;
              var idName = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.IdName))?.Value;
              var phoneNumber = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.PhoneNumber))?.Value;
-
-            //var user = new UserDto()
-            //{
-            //    id = Guid.Parse("943a656d-dd7a-4408-a8d8-7042a5709ddf"),
-            //    IdName = "koby",
-            //    PhoneNumber = "15560465392"
-            //};
+             
             var user = new UserDto()
             {
                 id = Guid.Parse(id),

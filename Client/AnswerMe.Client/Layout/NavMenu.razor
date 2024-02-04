@@ -142,11 +142,7 @@
     private static List<PrivateRoomResponse> _privateRoomResponseList = new();
     private static List<GroupResponse> _groupResponseList = new();
 
-    internal static class ElementIds
-    {
-        public static Guid HeaderAvatar { get; } = Guid.NewGuid();
-        public static Guid HeaderText { get; } = Guid.NewGuid();
-    }
+   
 
     protected override async Task OnInitializedAsync()
     {

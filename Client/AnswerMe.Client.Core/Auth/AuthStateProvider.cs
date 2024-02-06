@@ -12,11 +12,13 @@ namespace AnswerMe.Client.Core.Auth
     {
         private readonly ILocalStorageService _localStorageService;
         private readonly OnlineHubService _onlineService;
+        private readonly PvHubService _pvHubService;
 
-        public AuthStateProvider(ILocalStorageService localStorageService, OnlineHubService onlineService)
+        public AuthStateProvider(ILocalStorageService localStorageService, OnlineHubService onlineService, PvHubService pvHubService)
         {
             _localStorageService = localStorageService;
             _onlineService = onlineService;
+            _pvHubService = pvHubService;
         }
 
 
@@ -42,6 +44,7 @@ namespace AnswerMe.Client.Core.Auth
             var state = new AuthenticationState(user);
             
             await _onlineService.SetToken(_localStorageService);
+            await _pvHubService.SetToken(_localStorageService);
 
             NotifyAuthenticationStateChanged(Task.FromResult(state));
 

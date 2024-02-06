@@ -15,7 +15,7 @@ public class OnlineHubService
     private readonly HubConnection _hubConnection;
     private string _token = "";
 
-    public OnlineHubService(IJSRuntime jsRuntime)
+    public OnlineHubService()
     {
         _hubConnection = new HubConnectionBuilder()
             .WithUrl("https://localhost:7156/Online-User", option =>

@@ -1,15 +1,17 @@
 @page "/PV/{RoomId:guid}"
 @using AnswerMe.Client.Core.Enums
+@using AnswerMe.Client.Core.Services
 @using Models.Shared.Responses.Message
 @using Models.Shared.Responses.PrivateRoom
 @inject AuthStateProvider AuthStateProvider
 @inject IPrivateRoomService PrivateRoomService
 @inject IUserService UserService
 @inject IJSRuntime JsRuntime
-@using AnswerMe.Client.Componenets.BackgroundHubs
+@inject PvHubService PvHubService
+@implements IAsyncDisposable
 
 
-<RoomBackgroundHub UserJoinedRoom="UserJoinedRoom" UserLeftRoom="UserLeftRoom" NewMessage="AddNewMessage" @key="RoomId" RoomId="RoomId" RoomType="RoomType.Private"/>
+@* <RoomBackgroundHub UserJoinedRoom="UserJoinedRoom" UserLeftRoom="UserLeftRoom" NewMessage="AddNewMessage" @key="RoomId" RoomId="RoomId" RoomType="RoomType.Private"/> *@
 <div class="p-4 sm:ml-64 body-content element">
 
     <NavHeader @key="RoomId" RoomId="RoomId" CurrentRoomType="RoomType.Private"/>
@@ -47,6 +49,10 @@
         {
             //redirect to 404 page
         }
+        
+        PvHubService.SetRoomId(RoomId);
+
+        await PvHubService.ConnectToHubAsync(() => { });
 
 
         _privateRoomResponse = privateRoom.AsSuccess.Value;
@@ -99,6 +105,11 @@
             await SetLastVisit();
             _isContactInRoom = false;
         }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await PvHubService.DisconnectAsync();
     }
 
 }

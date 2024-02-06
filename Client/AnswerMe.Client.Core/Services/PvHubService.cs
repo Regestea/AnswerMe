@@ -35,12 +35,11 @@ public class PvHubService
     {
         _hubConnection.Closed += async _ =>
         {
-            await Task.Delay(5000);
             if (!_isConnectionClosedIntentionally)
             {
+                await Task.Delay(5000);
                 await ConnectToHubAsync(handler.Invoke);
             }
-           
         };
         
         try
@@ -61,8 +60,6 @@ public class PvHubService
         await _hubConnection.StopAsync();
     }
     
-    
-
     public void OnClosed(Action handler)
     {
         _hubConnection.Closed += _ =>
@@ -80,7 +77,7 @@ public class PvHubService
             handler.Invoke(messageResponse);
         });
     }
-    
+
     public  void JoinedRoom(Action<Guid> handler)
     {
         _hubConnection.On<Guid>("JoinedRoom", (userId) =>
@@ -88,13 +85,13 @@ public class PvHubService
             handler.Invoke(userId);
         });
     }
-    
+
     public  void LeftRoom(Action<Guid> handler)
     {
         _hubConnection.On<Guid>("LeftRoom",(userId) =>
         {
-             handler.Invoke(userId);
+            handler.Invoke(userId);
         });
     }
-    
+
 }

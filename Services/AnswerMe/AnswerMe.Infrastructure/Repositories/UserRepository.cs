@@ -133,7 +133,7 @@ namespace AnswerMe.Infrastructure.Repositories
                     }
                 }
             }
-            user.ModifiedDate=DateTimeOffset.Now;
+            user.ModifiedDate=DateTimeOffset.UtcNow;
 
             _context.Users.Update(user);
 

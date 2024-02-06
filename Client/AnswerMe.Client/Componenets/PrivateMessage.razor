@@ -10,6 +10,8 @@
 
     @foreach (var message in _messageList)
     {
+       
+        
         <div id="@message.id-message" class="chat  @(message.UserSender.Id == LoggedInUserId ? "chat-end" : "chat-start")">
 
             <div class="chat-bubble @(message.UserSender.Id == LoggedInUserId ? "primary-liner-gradient" : "dark-liner-gradient")">

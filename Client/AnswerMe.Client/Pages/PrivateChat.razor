@@ -9,37 +9,33 @@
 @using AnswerMe.Client.Componenets.BackgroundHubs
 
 
-<RoomBackgroundHub UserJoinedRoom="UserJoinedRoom" UserLeftRoom="UserLeftRoom" NewMessage="AddNewMessage" @key="RoomId" RoomId="RoomId" RoomType="RoomType.Private" />
+<RoomBackgroundHub UserJoinedRoom="UserJoinedRoom" UserLeftRoom="UserLeftRoom" NewMessage="AddNewMessage" @key="RoomId" RoomId="RoomId" RoomType="RoomType.Private"/>
 <div class="p-4 sm:ml-64 body-content element">
 
     <NavHeader @key="RoomId" RoomId="RoomId" CurrentRoomType="RoomType.Private"/>
 
     <ChatLayout>
         <ChatContent>
-             @if (_isContactInRoom || _contactLastRoomVisit != DateTimeOffset.MinValue)
-                            {
-                                <PrivateMessage  @ref="_privateMessageRef" @key="RoomId" RoomId="RoomId"  ContactLastRoomVisit="_contactLastRoomVisit" IsContactInRoom="_isContactInRoom" LoggedInUserId="_loggedInUserId" />
-                    
-                            }
-                            
-                            
-                            <SendMessage CurrentRoomType="RoomType.Private" RoomId="RoomId"/>
+            @if (_isContactInRoom || _contactLastRoomVisit != DateTimeOffset.MinValue)
+            {
+                <PrivateMessage @ref="_privateMessageRef" @key="RoomId" RoomId="RoomId" ContactLastRoomVisit="_contactLastRoomVisit" IsContactInRoom="_isContactInRoom" LoggedInUserId="_loggedInUserId"/>
+            }
+
+            <SendMessage CurrentRoomType="RoomType.Private" RoomId="RoomId"/>
         </ChatContent>
     </ChatLayout>
-  
+
 </div>
 
 @code {
-    
+
     [Parameter] public Guid RoomId { get; set; }
     private PrivateMessage _privateMessageRef;
     private PrivateRoomResponse? _privateRoomResponse;
-    private bool _isContactInRoom=false;
+    private bool _isContactInRoom = false;
     private Guid _loggedInUserId;
     private DateTimeOffset? _contactLastRoomVisit;
-    
-    
-   
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -52,12 +48,10 @@
             //redirect to 404 page
         }
 
-        NavMenu.SetPvUnReadCount(RoomId, 0);
-        
-        
+
         _privateRoomResponse = privateRoom.AsSuccess.Value;
 
-        var isContactInRoom =await PrivateRoomService.GetUserIsOnlineInRoom(RoomId, _privateRoomResponse.Contact.Id);
+        var isContactInRoom = await PrivateRoomService.GetUserIsOnlineInRoom(RoomId, _privateRoomResponse.Contact.Id);
 
         _isContactInRoom = isContactInRoom.AsSuccess.Value.Result;
 
@@ -71,7 +65,7 @@
     {
         var lastSeen = await PrivateRoomService
             .GetRoomLastSeenAsync(_privateRoomResponse!.Contact.Id, _privateRoomResponse.RoomNotify.RoomId);
-        
+
 
         if (lastSeen.IsSuccess)
         {
@@ -88,7 +82,7 @@
     {
         await _privateMessageRef.AddNewMessage(messageResponse);
     }
-    
+
     public void UserJoinedRoom(Guid userId)
     {
         if (_loggedInUserId != userId)
@@ -97,7 +91,7 @@
             _isContactInRoom = true;
         }
     }
-    
+
     public async Task UserLeftRoom(Guid userId)
     {
         if (_loggedInUserId != userId)

@@ -66,7 +66,7 @@
                                 <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:40px ">
                                     <div class="avatar" style="display: grid">
                                         <div class="w-16 rounded-full  ring-offset-base-100 ring-offset-2" style="justify-self: center">
-                                            <UserAvatar Class="w-16" ImageUrl="@ImageUrl" Letter="@user.FullName?.FirstLetter()"/>
+                                            <UserAvatar Class="w-16" ImageUrl="@user.ProfileImage" Letter="@user.FullName?.FirstLetter()"/>
 
                                         </div>
                                     </div>
@@ -118,7 +118,7 @@
                                 @if (UploadProgress != null)
                                 {
                                     <progress value="@UploadProgress" class="progress progress-primary w-56 mt-12" v max="100" style="justify-self: center"></progress>
-                                    <button type="button" class="btn btn-outline btn-secondary mt-6">Cancel</button>
+                                    <button @onclick="CancelUpload" type="button" class="btn btn-outline btn-secondary mt-6">Cancel</button>
                                 }
                                 else
                                 {

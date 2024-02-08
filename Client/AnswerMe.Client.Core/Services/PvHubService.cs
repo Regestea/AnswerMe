@@ -12,7 +12,7 @@ public class PvHubService
     private string _token = "";
     private string _roomId = "";
     
-    public async Task SetToken(ILocalStorageService localStorage)
+    public async Task SetTokenAsync(ILocalStorageService localStorage)
     {
         _token = await localStorage.GetItemAsStringAsync("authToken");
     }
@@ -72,6 +72,7 @@ public class PvHubService
     
     public  void ReceivePrivateMessage(Action<MessageResponse> handler)
     {
+        Console.WriteLine("ReceivePrivateMessage");
         _hubConnection.On<MessageResponse>("ReceivePrivateMessage",(messageResponse) =>
         {
             handler.Invoke(messageResponse);

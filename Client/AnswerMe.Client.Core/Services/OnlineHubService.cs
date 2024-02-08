@@ -27,20 +27,20 @@ public class OnlineHubService
     }
 
 
-    public async Task SetToken(ILocalStorageService localStorage)
+    public async Task SetTokenAsync(ILocalStorageService localStorage)
     {
         _token = await localStorage.GetItemAsStringAsync("authToken");
     }
 
     
 
-    public async Task ConnectToHub(Action handler)
+    public async Task ConnectToHubAsync(Action handler)
     {
 
         _hubConnection.Closed += async _ =>
         {
             await Task.Delay(5000);
-            await ConnectToHub(handler.Invoke);
+            await ConnectToHubAsync(handler.Invoke);
         };
         
         try
@@ -51,7 +51,7 @@ public class OnlineHubService
         catch (Exception e)
         {
             await Task.Delay(5000);
-            await ConnectToHub(handler.Invoke);
+            await ConnectToHubAsync(handler.Invoke);
         }
     }
 

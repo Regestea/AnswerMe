@@ -33,7 +33,7 @@
     
     protected override async Task OnInitializedAsync()
     {
-        await OnlineService.ConnectToHub(SetOnline);
+        await OnlineService.ConnectToHubAsync(SetOnline);
         
         OnlineService.OnClosed(SetOffline);
 
@@ -41,14 +41,14 @@
 
     private async void SetOffline()
     {
-        await JsRuntime.ReplaceClass(ElementIds.HeaderAvatar,"online","offline");
-        await JsRuntime.SetInnerText(ElementIds.HeaderText, "Connecting .....");
+        await JsRuntime.ReplaceClassAsync(ElementIds.HeaderAvatar,"online","offline");
+        await JsRuntime.SetInnerTextAsync(ElementIds.HeaderText, "Connecting .....");
     }
 
     private async void SetOnline()
     {
-        await JsRuntime.ReplaceClass(ElementIds.HeaderAvatar,"offline","online"); 
-        await JsRuntime.SetInnerText(ElementIds.HeaderText, "Answer Me");
+        await JsRuntime.ReplaceClassAsync(ElementIds.HeaderAvatar,"offline","online"); 
+        await JsRuntime.SetInnerTextAsync(ElementIds.HeaderText, "Answer Me");
     }
     
     

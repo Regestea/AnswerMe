@@ -1,72 +1,97 @@
 @using AnswerMe.Client.Core.Enums
 @using AnswerMe.Client.Core.Extensions
+@using AnswerMe.Client.Core.Services
 @using Models.Shared.Responses.Group
 @using Models.Shared.Responses.PrivateRoom
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject IPrivateRoomService PrivateRoomService
 @inject IGroupService GroupService
+@inject PvHubService PvHubService
+@implements IAsyncDisposable
 
 <nav class="flex top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-    <button @onclick="GoBack">
-        <svg style="width: 50px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" id="Back">
-            <path d="M22,15H12.41l2.3-2.29a1,1,0,0,0-1.42-1.42l-4,4a1,1,0,0,0-.21.33,1,1,0,0,0,0,.76,1,1,0,0,0,.21.33l4,4a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42L12.41,17H22a1,1,0,0,0,0-2Z" fill="#a6adbb" class="color000000 svgShape"></path>
-        </svg>
-    </button>
-    <div class="px-3 py-3 lg:px-5 lg:pl-3">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center justify-start ">
-                <button style="display: flex;align-items: center">
-                    @if (CurrentRoomType == RoomType.Private)
-                    {
-                        if (_privateRoomResponse != null)
+    <div class="flex flex-1">
+        <button class="ml-3 mt-3 btn btn-ghost btn-circle  rounded-full" @onclick="GoBack">
+            <svg style="width: 50px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" id="Back">
+                <path d="M22,15H12.41l2.3-2.29a1,1,0,0,0-1.42-1.42l-4,4a1,1,0,0,0-.21.33,1,1,0,0,0,0,.76,1,1,0,0,0,.21.33l4,4a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42L12.41,17H22a1,1,0,0,0,0-2Z" fill="#a6adbb" class="color000000 svgShape"></path>
+            </svg>
+        </button>
+        <div class="px-3 py-3 lg:px-5 lg:pl-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center justify-start ">
+                    <button class="btn btn-ghost pr-3 pl-3" style="display: flex;align-items: center">
+                        @if (CurrentRoomType == RoomType.Private)
                         {
-                            <UserAvatar ImageUrl="@_privateRoomResponse!.Contact.ProfileImage" Class="w-12" Letter="@_privateRoomResponse.Contact.Name.FirstLetter()"/>
-                            <div style="margin-left: 5px">@_privateRoomResponse.Contact.Name</div>
+                            if (_privateRoomResponse != null)
+                            {
+                                <UserAvatar ImageUrl="@_privateRoomResponse!.Contact.ProfileImage" Class="w-12" Letter="@_privateRoomResponse.Contact.Name.FirstLetter()"/>
+                                <div style="margin-left: 5px">@_privateRoomResponse.Contact.Name</div>
+                            }
                         }
-                    }
-                    @if (CurrentRoomType == RoomType.Group)
-                    {
-                        if (_previewGroupResponse != null)
+                        @if (CurrentRoomType == RoomType.Group)
                         {
-                            <UserAvatar ImageUrl="@_previewGroupResponse.RoomImage" Class="w-12" Letter="@_previewGroupResponse.Name.FirstLetter()"/>
-                            <div style="margin-left: 5px">@_previewGroupResponse.Name</div>
+                            if (_previewGroupResponse != null)
+                            {
+                                <UserAvatar ImageUrl="@_previewGroupResponse.RoomImage" Class="w-12" Letter="@_previewGroupResponse.Name.FirstLetter()"/>
+                                <div style="margin-left: 5px">@_previewGroupResponse.Name</div>
+                            }
                         }
-                    }
 
 
-                </button>
+                    </button>
 
-            </div>
-            <div class="flex items-center">
-                <div class="flex items-center ms-3">
-                    <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600" id="dropdown-user">
-                        <div class="px-4 py-3" role="none">
-                            <p class="text-sm text-gray-900 dark:text-white" role="none">
-                                Neil Sims
-                            </p>
-                            <p class="text-sm font-medium text-gray-900 truncate dark:text-gray-300" role="none">
-                                neil.sims@flowbite.com
-                            </p>
-                        </div>
-                        <ul class="py-1" role="none">
-                            <li>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" role="menuitem">Dashboard</a>
-                            </li>
-                            <li>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" role="menuitem">Settings</a>
-                            </li>
-                            <li>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" role="menuitem">Earnings</a>
-                            </li>
-                            <li>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" role="menuitem">Sign out</a>
-                            </li>
-                        </ul>
-                    </div>
                 </div>
+
+
             </div>
         </div>
+    </div>
+
+
+    <div class="dropdown dropdown-end" s>
+        <div tabindex="0" role="button" class="m-3 mr-6">
+
+            <button class="btn  btn-circle">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="morecircle">
+                    <path fill="url(#paint0_linear_1_11713)" fill-rule="evenodd" d="M12 1.25C6.06294 1.25 1.25 6.06294 1.25 12C1.25 17.9371 6.06294 22.75 12 22.75C17.9371 22.75 22.75 17.9371 22.75 12C22.75 6.06294 17.9371 1.25 12 1.25ZM2.75 12C2.75 6.89137 6.89137 2.75 12 2.75C17.1086 2.75 21.25 6.89137 21.25 12C21.25 17.1086 17.1086 21.25 12 21.25C6.89137 21.25 2.75 17.1086 2.75 12Z" clip-rule="evenodd"></path><path fill="url(#paint1_linear_1_11713)" d="M9 12C9 12.5523 8.55228 13 8 13C7.44772 13 7 12.5523 7 12C7 11.4477 7.44772 11 8 11C8.55228 11 9 11.4477 9 12Z"></path><path fill="url(#paint2_linear_1_11713)" d="M13 12C13 12.5523 12.5523 13 12 13C11.4477 13 11 12.5523 11 12C11 11.4477 11.4477 11 12 11C12.5523 11 13 11.4477 13 12Z"></path><path fill="url(#paint3_linear_1_11713)" d="M17 12C17 12.5523 16.5523 13 16 13C15.4477 13 15 12.5523 15 12C15 11.4477 15.4477 11 16 11C16.5523 11 17 11.4477 17 12Z"></path>
+                    <defs>
+                        <linearGradient id="paint0_linear_1_11713" x1="12" x2="12" y1="1.25" y2="22.75" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#878a92" class="stopColor834d9b svgShape"></stop><stop offset="1" stop-color="#4e73d6" class="stopColord04ed6 svgShape"></stop>
+                        </linearGradient>
+                        <linearGradient id="paint1_linear_1_11713" x1="12" x2="12" y1="1.25" y2="22.75" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#878a92" class="stopColor834d9b svgShape"></stop><stop offset="1" stop-color="#4e73d6" class="stopColord04ed6 svgShape"></stop>
+                        </linearGradient>
+                        <linearGradient id="paint2_linear_1_11713" x1="12" x2="12" y1="1.25" y2="22.75" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#878a92" class="stopColor834d9b svgShape"></stop><stop offset="1" stop-color="#4e73d6" class="stopColord04ed6 svgShape"></stop>
+                        </linearGradient>
+                        <linearGradient id="paint3_linear_1_11713" x1="12" x2="12" y1="1.25" y2="22.75" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#878a92" class="stopColor834d9b svgShape"></stop><stop offset="1" stop-color="#4e73d6" class="stopColord04ed6 svgShape"></stop>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </button>
+
+        </div>
+        <ul class="menu menu-sm dropdown-content mt-2 mr-6 z-[1] p-2 shadow border-solid border-2 border-gray-700  bg-gray-900 rounded-box w-52">
+            <li>
+                <button class="btn bg-gray-900">
+                    <svg style="width: 30px;height: 30px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="addperson">
+                        <path fill="none" d="M0 0h24v24H0V0z"></path><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V8c0-.55-.45-1-1-1s-1 .45-1 1v2H2c-.55 0-1 .45-1 1s.45 1 1 1h2v2c0 .55.45 1 1 1s1-.45 1-1v-2h2c.55 0 1-.45 1-1s-.45-1-1-1H6zm9 4c-2.67 0-8 1.34-8 4v1c0 .55.45 1 1 1h14c.55 0 1-.45 1-1v-1c0-2.66-5.33-4-8-4z" fill="#595bd4" class="color000000 svgShape"></path>
+                    </svg>
+                      Add Member
+                </button>
+            </li>
+            <li>
+                <button class="btn bg-gray-900">
+                    <svg style="width: 30px;height: 30px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="Logout">
+                        <path d="M15 24H1c-.6 0-1-.4-1-1V1c0-.6.4-1 1-1h14c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1s-1-.4-1-1V2H2v20h12v-6c0-.6.4-1 1-1s1 .4 1 1v7c0 .6-.4 1-1 1z" fill="#f22874" class="color000000 svgShape"></path><path d="M23 13H8c-.6 0-1-.4-1-1s.4-1 1-1h15c.6 0 1 .4 1 1s-.4 1-1 1z" fill="#f22874" class="color000000 svgShape"></path><path d="M23 13c-.3 0-.5-.1-.7-.3l-4-4c-.4-.4-.4-1 0-1.4s1-.4 1.4 0l4 4c.4.4.4 1 0 1.4-.2.2-.4.3-.7.3z" fill="#f22874" class="color000000 svgShape"></path><path d="M19 17c-.3 0-.5-.1-.7-.3-.4-.4-.4-1 0-1.4l4-4c.4-.4 1-.4 1.4 0s.4 1 0 1.4l-4 4c-.2.2-.4.3-.7.3z" fill="#f22874" class="color000000 svgShape"></path>
+                    </svg> 
+                    Leave Group
+                </button>
+
+            </li>
+        </ul>
     </div>
 </nav>
 
@@ -74,8 +99,8 @@
 
     [Parameter] public RoomType CurrentRoomType { get; set; }
     [Parameter] public Guid RoomId { get; set; }
-    private PreviewGroupResponse? _previewGroupResponse ;
-    private PrivateRoomResponse? _privateRoomResponse ;
+    private PreviewGroupResponse? _previewGroupResponse;
+    private PrivateRoomResponse? _privateRoomResponse;
 
 
     protected override async Task OnInitializedAsync()
@@ -98,6 +123,12 @@
             }
         }
 
+        PvHubService.SetRoomId(RoomId);
+
+        await PvHubService.ConnectToHubAsync(() => { });
+        // PvHubService.OnClosed()
+
+
         StateHasChanged();
     }
 
@@ -105,6 +136,12 @@
     {
         NavigationManager.NavigateTo("/");
         await JSRuntime.InvokeVoidAsync("ResizeComponent");
+    }
+
+
+    public async ValueTask DisposeAsync()
+    {
+        await PvHubService.DisconnectAsync();
     }
 
 }

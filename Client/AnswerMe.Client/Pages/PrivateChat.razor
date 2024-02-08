@@ -8,7 +8,6 @@
 @inject IUserService UserService
 @inject IJSRuntime JsRuntime
 @inject PvHubService PvHubService
-@implements IAsyncDisposable
 
 
 @* <RoomBackgroundHub UserJoinedRoom="UserJoinedRoom" UserLeftRoom="UserLeftRoom" NewMessage="AddNewMessage" @key="RoomId" RoomId="RoomId" RoomType="RoomType.Private"/> *@
@@ -20,7 +19,7 @@
         <ChatContent>
             @if (_isContactInRoom || _contactLastRoomVisit != DateTimeOffset.MinValue)
             {
-                <PrivateMessage @ref="_privateMessageRef" @key="RoomId" RoomId="RoomId" ContactLastRoomVisit="_contactLastRoomVisit" IsContactInRoom="_isContactInRoom" LoggedInUserId="_loggedInUserId"/>
+                <PrivateMessage @key="RoomId" RoomId="RoomId" UserLastRoomVisit="_userLastRoomVisit" ContactLastRoomVisit="_contactLastRoomVisit" IsContactInRoom="_isContactInRoom" LoggedInUserId="_loggedInUserId"/>
             }
 
             <SendMessage CurrentRoomType="RoomType.Private" RoomId="RoomId"/>
@@ -32,11 +31,11 @@
 @code {
 
     [Parameter] public Guid RoomId { get; set; }
-    private PrivateMessage _privateMessageRef;
     private PrivateRoomResponse? _privateRoomResponse;
     private bool _isContactInRoom = false;
     private Guid _loggedInUserId;
     private DateTimeOffset? _contactLastRoomVisit;
+    private DateTimeOffset? _userLastRoomVisit;
 
 
     protected override async Task OnInitializedAsync()
@@ -49,67 +48,60 @@
         {
             //redirect to 404 page
         }
-        
-        PvHubService.SetRoomId(RoomId);
 
-        await PvHubService.ConnectToHubAsync(() => { });
+       
+
+        PvHubService.JoinedRoom(UserJoinedRoom);
+        PvHubService.LeftRoom(UserLeftRoom);
+ 
 
 
         _privateRoomResponse = privateRoom.AsSuccess.Value;
+        
+        _userLastRoomVisit= await GetLastVisit(_loggedInUserId);
 
         var isContactInRoom = await PrivateRoomService.GetUserIsOnlineInRoom(RoomId, _privateRoomResponse.Contact.Id);
 
         _isContactInRoom = isContactInRoom.AsSuccess.Value.Result;
 
+        Console.WriteLine("is contact online in room"+ _isContactInRoom);
+
         if (!_isContactInRoom)
         {
-            await SetLastVisit();
+            _contactLastRoomVisit= await GetLastVisit(_privateRoomResponse!.Contact.Id);
         }
     }
 
-    private async Task SetLastVisit()
+    private async Task<DateTime?> GetLastVisit(Guid userId)
     {
         var lastSeen = await PrivateRoomService
-            .GetRoomLastSeenAsync(_privateRoomResponse!.Contact.Id, _privateRoomResponse.RoomNotify.RoomId);
+            .GetRoomLastSeenAsync(userId, _privateRoomResponse!.RoomNotify.RoomId);
 
 
         if (lastSeen.IsSuccess)
         {
-            _contactLastRoomVisit = lastSeen.AsSuccess.Value.LastSeenUtc.LocalDateTime;
+            return lastSeen.AsSuccess.Value.LastSeenUtc.LocalDateTime;
         }
 
-        if (lastSeen.IsNotFound)
-        {
-            _contactLastRoomVisit = null;
-        }
+        return null;
     }
 
-    public async Task AddNewMessage(MessageResponse messageResponse)
+
+    private void UserJoinedRoom(Guid userId)
     {
-        await _privateMessageRef.AddNewMessage(messageResponse);
+        if (_loggedInUserId == userId) return;
+        Console.WriteLine("user joined room");
+        _isContactInRoom = true;
+        StateHasChanged();
     }
 
-    public void UserJoinedRoom(Guid userId)
+    private void UserLeftRoom(Guid userId)
     {
-        if (_loggedInUserId != userId)
-        {
-            Console.WriteLine("user joined room");
-            _isContactInRoom = true;
-        }
+        if (_loggedInUserId == userId) return;
+        _isContactInRoom = false;
+        _contactLastRoomVisit=DateTimeOffset.UtcNow;
+        StateHasChanged();
     }
 
-    public async Task UserLeftRoom(Guid userId)
-    {
-        if (_loggedInUserId != userId)
-        {
-            await SetLastVisit();
-            _isContactInRoom = false;
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await PvHubService.DisconnectAsync();
-    }
 
 }

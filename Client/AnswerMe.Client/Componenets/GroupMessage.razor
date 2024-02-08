@@ -60,6 +60,8 @@
     {
         var user = await AuthStateProvider.ExtractUserDataFromLocalTokenAsync();
         _loggedInUserId = user.id;
+        
+        
         var privateRoom = await PrivateRoomService.GetPrivateRoomByIdAsync(RoomId);
 
         if (!privateRoom.IsSuccess)
@@ -102,7 +104,7 @@
         }
         _messageList.Add(messageResponse);
         StateHasChanged();
-        await JsRuntime.AddClass(messageResponse.id + "-message", messageClass);
+        await JsRuntime.AddClassAsync(messageResponse.id + "-message", messageClass);
         await JsRuntime.InvokeVoidAsync("ScrollToEnd", ChatLayout.ElementIds.ChatScroll.ToString());
     }
     

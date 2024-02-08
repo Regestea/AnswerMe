@@ -1,6 +1,10 @@
 ﻿@if (!string.IsNullOrWhiteSpace(ImageUrl))
 {
-    <img class="@Class" src="@ImageUrl"  />
+    <div class="avatar placeholder">
+        <div class="bg-neutral text-neutral-content rounded-full @Class" style="background-color: @SetColor()">
+            <img class="@Class" src="@ImageUrl"  />
+        </div>
+    </div>
 }
 else
 {

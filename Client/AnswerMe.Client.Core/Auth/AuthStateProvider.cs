@@ -43,8 +43,10 @@ namespace AnswerMe.Client.Core.Auth
             var user = new ClaimsPrincipal(identity);
             var state = new AuthenticationState(user);
             
-            await _onlineService.SetToken(_localStorageService);
-            await _pvHubService.SetToken(_localStorageService);
+            
+            //TODO: task when all
+            await _onlineService.SetTokenAsync(_localStorageService);
+            await _pvHubService.SetTokenAsync(_localStorageService);
 
             NotifyAuthenticationStateChanged(Task.FromResult(state));
 

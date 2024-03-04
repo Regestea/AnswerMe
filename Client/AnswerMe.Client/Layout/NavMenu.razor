@@ -4,6 +4,8 @@
 @using Models.Shared.Responses.PrivateRoom
 @using AnswerMe.Client.Core.Extensions
 @using AnswerMe.Client.Core.Services
+@using Models.Shared.Responses.Message
+@using Models.Shared.Responses.Shared
 @inject NavigationManager NavigationManager
 @inject ILocalStorageService LocalStorage
 @inject IJSRuntime JsRuntime
@@ -93,33 +95,36 @@
             <ul class="space-y-2 font-medium" style="background-color: #111827">
                 @foreach (var gr in _groupResponseList)
                 {
-                    <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:20px ">
-                        <div class="avatar">
-                            <div class="w-16 h-16 rounded-full">
-                                <UserAvatar ImageUrl="@gr.Group.RoomImage" Letter="@gr.Group.Name.FirstLetter()"/>
+                    <a @onclick="() => ViewGrRoom(gr.RoomNotify.RoomId)">
+                        <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:20px ">
+                            <div class="avatar">
+                                <div class="w-16 h-16 rounded-full">
+                                    <UserAvatar ImageUrl="@gr.Group.RoomImage" Letter="@gr.Group.Name.FirstLetter()"/>
+                                </div>
                             </div>
-                        </div>
-                        <div class="w-full  flex flex-col-reverse">
-                            <div style="display: grid;margin-top: 15px">
-                                <p style="margin-left: 15px;font-size: 12px">@gr.RoomNotify.MessageGlance</p>
+                            <div class="w-full  flex flex-col-reverse">
+                                <div style="display: grid;margin-top: 15px">
+                                    <p style="margin-left: 15px;font-size: 12px">@gr.RoomNotify.MessageGlance</p>
 
-                            </div>
-                            <div style="display: grid">
-                                <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">@gr.Group.Name Group</h1>
+                                </div>
+                                <div style="display: grid">
+                                    <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">@gr.Group.Name Group</h1>
 
-                                <div style=" grid-column-end: 12">
-                                    <span id="@gr.RoomNotify.RoomId-UnReadMessageCount" class="badge badge-primary">
+                                    <div style=" grid-column-end: 12">
+
                                         @if (gr.RoomNotify.TotalUnRead > 0)
                                         {
-                                            @gr.RoomNotify.TotalUnRead
+                                            <span id="@gr.RoomNotify.RoomId-UnReadMessageCount" class="badge badge-primary">
+                                                @gr.RoomNotify.TotalUnRead
+                                            </span>
                                         }
-                                    </span>
+                                    </div>
+
                                 </div>
 
                             </div>
-
-                        </div>
-                    </li>
+                        </li>
+                    </a>
                 }
             </ul>
         </div>
@@ -141,12 +146,11 @@
     private PaginationRequest _privatePaginationRequest = new() { CurrentPage = 1, PageSize = 30 };
     private PaginationRequest _groupPaginationRequest = new() { CurrentPage = 1, PageSize = 30 };
 
-    private  List<PrivateRoomResponse> _privateRoomResponseList = new();
-    private  List<GroupResponse> _groupResponseList = new();
+    private List<PrivateRoomResponse> _privateRoomResponseList = new();
+    private List<GroupResponse> _groupResponseList = new();
 
     string? _roomId;
 
-   
 
     protected override async Task OnInitializedAsync()
     {
@@ -162,11 +166,17 @@
         {
             _groupResponseList = groupResponse.AsSuccess.Value.Items;
         }
-        
-        OnlineService.RegisterUserWentOnline(SetContactOnline);
-        OnlineService.RegisterUserWentOffline(SetContactOffline);
-        OnlineService.RegisterNotifyNewPvMessage(SetPvLastMessage);
-        OnlineService.RegisterNotifyNewGroupMessage(SetGrLastMessage);
+
+        OnlineService.UserWentOnline(SetContactOnline);
+        OnlineService.UserWentOffline(SetContactOffline);
+
+        OnlineService.NotifyNewPvMessage(SetPvLastMessage);
+        OnlineService.NotifyEditPvMessage(EditPvMessage);
+        OnlineService.NotifyRemovePvMessage(RemovePvMessage);
+
+        OnlineService.NotifyNewGrMessage(SetGrLastMessage);
+        OnlineService.NotifyEditGrMessage(EditGrMessage);
+        OnlineService.NotifyRemoveGrMessage(RemoveGrMessage);
     }
 
     private void SetUrlIdIfExist()
@@ -199,22 +209,51 @@
             StateHasChanged();
         }
     }
-    
-    private void SetPvLastMessage(Guid roomId, string message)
+
+    private void SetPvLastMessage(RoomNotifyResponse response)
     {
-        var pv = _privateRoomResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == roomId);
+        Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        var pv = _privateRoomResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == response.RoomId);
         SetUrlIdIfExist();
         if (pv != null)
         {
-            if (roomId.ToString() != _roomId)
+            if (response.RoomId.ToString() != _roomId)
             {
                 pv.RoomNotify.TotalUnRead += 1;
             }
-            
-            pv.RoomNotify.MessageGlance = message;
+
+            pv.RoomNotify.MessageGlance = response.MessageGlance;
             StateHasChanged();
         }
     }
+
+    private void EditPvMessage(RoomNotifyResponse response)
+    {
+        var pv = _privateRoomResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == response.RoomId);
+
+        if (pv != null)
+        {
+            pv.RoomNotify.MessageGlance = response.MessageGlance;
+            StateHasChanged();
+        }
+    }
+
+    private void RemovePvMessage(RoomNotifyResponse response)
+    {
+        var pv = _privateRoomResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == response.RoomId);
+        SetUrlIdIfExist();
+        if (pv != null)
+        {
+            if (response.RoomId.ToString() != _roomId && pv.RoomNotify.TotalUnRead >= 1)
+            {
+                pv.RoomNotify.TotalUnRead -= 1;
+            }
+
+            pv.RoomNotify.MessageGlance = response.MessageGlance;
+            StateHasChanged();
+        }
+    }
+
 
     private void SetGrUnReadCount(Guid roomId, int count)
     {
@@ -231,21 +270,49 @@
     }
 
 
-    private void SetGrLastMessage(Guid roomId, string message)
+    private void SetGrLastMessage(RoomNotifyResponse response)
     {
-       var gr = _groupResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == roomId);
-       SetUrlIdIfExist();
+        var gr = _groupResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == response.RoomId);
+        SetUrlIdIfExist();
         if (gr != null)
         {
-            if (roomId.ToString() != _roomId)
+            if (response.RoomId.ToString() != _roomId)
             {
                 gr.RoomNotify.TotalUnRead += 1;
             }
-           
-            gr.RoomNotify.MessageGlance = message;
+
+            gr.RoomNotify.MessageGlance = response.MessageGlance;
             StateHasChanged();
         }
     }
+
+    private void EditGrMessage(RoomNotifyResponse response)
+    {
+        var gr = _groupResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == response.RoomId);
+
+        if (gr != null)
+        {
+            gr.RoomNotify.MessageGlance = response.MessageGlance;
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveGrMessage(RoomNotifyResponse response)
+    {
+        var gr = _groupResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == response.RoomId);
+        SetUrlIdIfExist();
+        if (gr != null)
+        {
+            if (response.RoomId.ToString() != _roomId && gr.RoomNotify.TotalUnRead >= 1)
+            {
+                gr.RoomNotify.TotalUnRead -= 1;
+            }
+
+            gr.RoomNotify.MessageGlance = response.MessageGlance;
+            StateHasChanged();
+        }
+    }
+
 
     async Task ViewPvRoom(Guid id)
     {
@@ -261,16 +328,14 @@
 
     async Task NavigateToPv(Guid id)
     {
-        
-        NavigationManager.NavigateTo($"pv/{id}");
+        NavigationManager.NavigateTo($"PV/{id}");
         await JsRuntime.InvokeVoidAsync("ResizeComponent");
         StateHasChanged();
     }
-    
+
     async Task NavigateToGr(Guid id)
     {
-        
-        NavigationManager.NavigateTo($"Group/{id}");
+        NavigationManager.NavigateTo($"GR/{id}");
         await JsRuntime.InvokeVoidAsync("ResizeComponent");
         StateHasChanged();
     }

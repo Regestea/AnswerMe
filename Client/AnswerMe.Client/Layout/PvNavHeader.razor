@@ -1,0 +1,107 @@
+@using AnswerMe.Client.Core.Extensions
+@using AnswerMe.Client.Core.Services
+@using Models.Shared.Responses.PrivateRoom
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject IPrivateRoomService PrivateRoomService
+@inject PvHubService PvHubService
+@implements IAsyncDisposable
+
+<nav class="flex top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+    <div class="flex flex-1">
+        <button class="ml-3 mt-3 btn btn-ghost btn-circle  rounded-full" @onclick="GoBack">
+            <svg style="width: 50px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" id="Back">
+                <path d="M22,15H12.41l2.3-2.29a1,1,0,0,0-1.42-1.42l-4,4a1,1,0,0,0-.21.33,1,1,0,0,0,0,.76,1,1,0,0,0,.21.33l4,4a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42L12.41,17H22a1,1,0,0,0,0-2Z" fill="#a6adbb" class="color000000 svgShape"></path>
+            </svg>
+        </button>
+        <div class="px-3 py-3 lg:px-5 lg:pl-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center justify-start ">
+                    <div class=" btn-ghost pr-3 pl-3 cursor-pointer" style="display: flex;align-items: center;border-radius: 10px">
+                        @if (_privateRoomResponse != null)
+                        {
+                            <UserAvatar ImageUrl="@_privateRoomResponse!.Contact.ProfileImage" Class="w-12" Letter="@_privateRoomResponse.Contact.Name.FirstLetter()"/>
+                            <div style="margin-left: 10px">
+                                <div style="margin-right: 5px">@_privateRoomResponse.Contact.Name</div>
+                                @if (_isConnected)
+                                {
+                                    @if (IsContactInRoom)
+                                    {
+                                        <p class="text-primary" style="text-transform: lowercase;margin-top: 2px;font-size: 13px;">online</p>
+                                    }
+                                    else
+                                    {
+                                        if (ContactLastRoomVisit != DateTimeOffset.MinValue)
+                                        {
+                                            <p class="text-primary" style="text-transform: lowercase;margin-top: 2px;font-size: 13px;">last seen: @ContactLastRoomVisit.ToLocalTime().Hour:@ContactLastRoomVisit.ToLocalTime().Minute</p>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-primary" style="text-transform: lowercase;margin-top: 2px;font-size: 13px;">last seen recently</p>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="text-primary" style="text-transform: lowercase;margin-top: 2px;font-size: 13px;">Connecting ....</p>
+                                }
+                            
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+@code {
+
+    [Parameter] public Guid RoomId { get; set; }
+    [Parameter] public bool IsContactInRoom { get; set; }
+    [Parameter] public DateTimeOffset ContactLastRoomVisit { get; set; }
+    private bool _isConnected;
+    private PrivateRoomResponse? _privateRoomResponse;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await PrivateRoomService.GetPrivateRoomByIdAsync(RoomId);
+        if (response.IsSuccess)
+        {
+            _privateRoomResponse = response.AsSuccess.Value;
+        }
+
+
+        PvHubService.SetRoomId(RoomId);
+
+        await PvHubService.ConnectToHubAsync(() =>
+        {
+            _isConnected = true;
+            StateHasChanged();
+        });
+
+        PvHubService.OnClosed(() =>
+        {
+            _isConnected = false; 
+            StateHasChanged();
+        });
+
+
+        StateHasChanged();
+    }
+
+    private async void GoBack()
+    {
+        NavigationManager.NavigateTo("/");
+        await JSRuntime.InvokeVoidAsync("ResizeComponent");
+    }
+
+
+    public async ValueTask DisposeAsync()
+    {
+        await PvHubService.DisconnectAsync();
+        _privateRoomResponse = null;
+    }
+
+}

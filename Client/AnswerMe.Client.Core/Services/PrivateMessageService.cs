@@ -13,39 +13,43 @@ using OneOf.Types;
 
 namespace AnswerMe.Client.Core.Services;
 
-public class PrivateMessageService:IPrivateMessageService
+public class PrivateMessageService : IPrivateMessageService
 {
     private readonly HttpClient _httpClient;
     private readonly ILocalStorageService _localStorageService;
-    
+
     public PrivateMessageService(IHttpClientFactory httpClientFactory, ILocalStorageService localStorageService)
     {
         _localStorageService = localStorageService;
         _httpClient = httpClientFactory.CreateClient(nameof(Enums.HttpClients.AnswerMe));
     }
-    
-    
-    public async Task<ReadResponse<PagedListResponse<MessageResponse>>> GetPrivateMessagesAsync(Guid roomId,bool jumpToUnRead, PaginationRequest request)
+
+
+    public async Task<ReadResponse<PagedListResponse<MessageResponse>>> GetPrivateMessagesAsync(Guid roomId,
+        bool jumpToUnRead, PaginationRequest request)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
-        var response = await _httpClient.SendRequestAsync($"PrivateMessage/{roomId}/List?".AddPagination(request).AddQuery("jumpToUnRead",jumpToUnRead.ToString()), HttpMethod.Get);
+        var response = await _httpClient.SendRequestAsync(
+            $"PrivateMessage/{roomId}/List?"
+                .AddPagination(request)
+                .AddQuery("jumpToUnRead", jumpToUnRead.ToString()), HttpMethod.Get);
 
-        if (response.StatusCode==HttpStatusCode.NotFound)
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return new NotFound();
         }
 
-        if (response.StatusCode==HttpStatusCode.Forbidden)
+        if (response.StatusCode == HttpStatusCode.Forbidden)
         {
             return new AccessDenied();
         }
-        
+
         var messages = await JsonConverter.ToObject<PagedListResponse<MessageResponse>>(response.Content);
 
         return new Success<PagedListResponse<MessageResponse>>(messages);
     }
-    
+
     public async Task<ReadResponse<MessageResponse>> GetByIdAsync(Guid messageId)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
@@ -72,10 +76,11 @@ public class PrivateMessageService:IPrivateMessageService
         await _httpClient.AddAuthHeader(_localStorageService);
 
         var requestStringContent = await JsonConverter.ToStringContent(request);
-        
-        var response = await _httpClient.SendRequestAsync($"PrivateMessage/{roomId}", HttpMethod.Post,requestStringContent);
 
-        if (response.StatusCode==HttpStatusCode.OK)
+        var response =
+            await _httpClient.SendRequestAsync($"PrivateMessage/{roomId}", HttpMethod.Post, requestStringContent);
+
+        if (response.StatusCode == HttpStatusCode.OK)
         {
             var messageId = await JsonConverter.ToObject<IdResponse>(response.Content);
 
@@ -90,10 +95,11 @@ public class PrivateMessageService:IPrivateMessageService
         await _httpClient.AddAuthHeader(_localStorageService);
 
         var requestStringContent = await JsonConverter.ToStringContent(request);
-        
-        var response = await _httpClient.SendRequestAsync($"PrivateMessage/{messageId}", HttpMethod.Patch,requestStringContent);
 
-        if (response.StatusCode==HttpStatusCode.OK)
+        var response =
+            await _httpClient.SendRequestAsync($"PrivateMessage/{messageId}", HttpMethod.Patch, requestStringContent);
+
+        if (response.StatusCode == HttpStatusCode.OK)
         {
             return new Success();
         }
@@ -104,10 +110,10 @@ public class PrivateMessageService:IPrivateMessageService
     public async Task<DeleteResponse> DeleteMessageAsync(Guid messageId)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
-        
+
         var response = await _httpClient.SendRequestAsync($"PrivateMessage/{messageId}", HttpMethod.Delete);
 
-        if (response.StatusCode==HttpStatusCode.NoContent)
+        if (response.StatusCode == HttpStatusCode.NoContent)
         {
             return new Success();
         }
@@ -115,25 +121,27 @@ public class PrivateMessageService:IPrivateMessageService
         return new NotFound();
     }
 
-    public async Task<UpdateResponse> EditMessageMediaAsync(Guid messageId, Guid mediaId, EditMessageMediaRequest request)
+    public async Task<UpdateResponse> EditMessageMediaAsync(Guid messageId, Guid mediaId,
+        EditMessageMediaRequest request)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
         var requestStringContent = await JsonConverter.ToStringContent(request);
-        
-        var response = await _httpClient.SendRequestAsync($"PrivateMessage/{messageId}/Media/{mediaId}", HttpMethod.Patch,requestStringContent);
 
-        if (response.StatusCode==HttpStatusCode.NoContent)
+        var response = await _httpClient.SendRequestAsync($"PrivateMessage/{messageId}/Media/{mediaId}",
+            HttpMethod.Patch, requestStringContent);
+
+        if (response.StatusCode == HttpStatusCode.NoContent)
         {
             return new Success();
         }
 
-        if (response.StatusCode==HttpStatusCode.BadRequest)
+        if (response.StatusCode == HttpStatusCode.BadRequest)
         {
             return await JsonConverter.ToValidationFailedList(response.Content);
         }
 
-        if (response.StatusCode==HttpStatusCode.Forbidden)
+        if (response.StatusCode == HttpStatusCode.Forbidden)
         {
             return new AccessDenied();
         }
@@ -144,10 +152,11 @@ public class PrivateMessageService:IPrivateMessageService
     public async Task<DeleteResponse> DeleteMessageMediaAsync(Guid messageId, Guid mediaId)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
-        
-        var response = await _httpClient.SendRequestAsync($"PrivateMessage/{messageId}/Media/{mediaId}", HttpMethod.Delete);
 
-        if (response.StatusCode==HttpStatusCode.NoContent)
+        var response =
+            await _httpClient.SendRequestAsync($"PrivateMessage/{messageId}/Media/{mediaId}", HttpMethod.Delete);
+
+        if (response.StatusCode == HttpStatusCode.NoContent)
         {
             return new Success();
         }

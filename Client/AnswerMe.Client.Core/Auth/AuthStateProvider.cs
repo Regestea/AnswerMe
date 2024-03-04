@@ -13,12 +13,14 @@ namespace AnswerMe.Client.Core.Auth
         private readonly ILocalStorageService _localStorageService;
         private readonly OnlineHubService _onlineService;
         private readonly PvHubService _pvHubService;
+        private readonly GrHubService _grHubService;
 
-        public AuthStateProvider(ILocalStorageService localStorageService, OnlineHubService onlineService, PvHubService pvHubService)
+        public AuthStateProvider(ILocalStorageService localStorageService, OnlineHubService onlineService, PvHubService pvHubService, GrHubService grHubService)
         {
             _localStorageService = localStorageService;
             _onlineService = onlineService;
             _pvHubService = pvHubService;
+            _grHubService = grHubService;
         }
 
 
@@ -47,6 +49,7 @@ namespace AnswerMe.Client.Core.Auth
             //TODO: task when all
             await _onlineService.SetTokenAsync(_localStorageService);
             await _pvHubService.SetTokenAsync(_localStorageService);
+            await _grHubService.SetTokenAsync(_localStorageService);
 
             NotifyAuthenticationStateChanged(Task.FromResult(state));
 

@@ -29,6 +29,7 @@ namespace AnswerMe.Client.Core
             services.AddCascadingAuthenticationState();
             services.AddSingleton<OnlineHubService>();
             services.AddSingleton<PvHubService>();
+            services.AddSingleton<GrHubService>();
 
 
             services.AddHttpClient(nameof(HttpClients.AnswerMe),

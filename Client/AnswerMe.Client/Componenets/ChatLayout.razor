@@ -1,18 +1,70 @@
-
-  <div id="@ElementIds.ChatScroll" class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 chat-area responsive-chat-area" style="border-bottom: none;height: 83%">
-
-     @ChatContent
-
-    </div>
+@inject IJSRuntime JsRuntime
+@implements IAsyncDisposable
 
 
-  @code {
-      
-      [Parameter]
-      public RenderFragment ChatContent { get; set; }
-      
+<div  id="@ElementIds.ChatScroll" class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 chat-area responsive-chat-area" style="border-bottom: none;height: 83%">
+
+    @ChatContent
+
+</div>
+
+
+
+@code {
+
+    [Parameter] public required RenderFragment ChatContent { get; set; }
+    [Parameter] public  EventCallback CallLoadNewMessages { get; set; }
+    [Parameter] public  EventCallback CallLoadOldMessages { get; set; }
+
     internal static class ElementIds
     {
         public static Guid ChatScroll { get; } = Guid.NewGuid();
     }
+
+    private class ScrollStatus
+    {
+        public double ScrollTop { get; set; }
+        public double ScrollLeft { get; set; }
+        public double ScrollHeight { get; set; }
+        public double ClientHeight { get; set; }
+    }
+
+    [JSInvokable("LoadNewMessages")]
+    public  async Task LoadNewMessages()
+    {
+        Console.WriteLine("load New  Messages");
+        await CallLoadNewMessages.InvokeAsync();
+    }
+
+    [JSInvokableAttribute("LoadOldMessages")]
+    public  async Task LoadOldMessages()
+    {
+        Console.WriteLine("load Old  Messages");
+        await CallLoadOldMessages.InvokeAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var lDotNetReference = DotNetObjectReference.Create(this);
+        await JsRuntime.InvokeVoidAsync("GLOBAL.SetDotnetReference", lDotNetReference);
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JsRuntime.InvokeVoidAsync("SetScrollListenerLockStatus", false);
+            await JsRuntime.InvokeVoidAsync("RegisterChatScrollListener", ElementIds.ChatScroll);
+            
+            await base.OnAfterRenderAsync(firstRender);
+        }
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("SetScrollListenerLockStatus", true);
+        await JsRuntime.InvokeVoidAsync("UnRegisterChatScrollListener", ChatLayout.ElementIds.ChatScroll);
+    }
+
 }

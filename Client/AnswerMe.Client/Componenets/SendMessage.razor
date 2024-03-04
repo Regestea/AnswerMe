@@ -30,7 +30,15 @@
 
     private async Task Send()
     {
-        await PrivateMessageService.SendMessageAsync(RoomId, _sendMessageRequest);
+        if (CurrentRoomType == RoomType.Group)
+        {
+            await GroupMessageService.SendMessageAsync(RoomId, _sendMessageRequest);
+        }
+
+        if (CurrentRoomType==RoomType.Private)
+        {
+            await PrivateMessageService.SendMessageAsync(RoomId, _sendMessageRequest);
+        }
         
         _sendMessageRequest= new();
         StateHasChanged();

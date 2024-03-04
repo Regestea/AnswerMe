@@ -7,6 +7,7 @@ using Models.Shared.RepositoriesResponseTypes;
 using Models.Shared.Requests.Group;
 using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Group;
+using Models.Shared.Responses.PrivateRoom;
 using Models.Shared.Responses.Shared;
 using Models.Shared.Responses.User;
 using OneOf.Types;
@@ -157,6 +158,43 @@ public class GroupService : IGroupService
         }
 
         return new NotFound();
+    }
+
+    public async Task<ReadResponse<MemberCountResponse>> MembersCountAsync(Guid groupId)
+    {
+        await _httpClient.AddAuthHeader(_localStorageService);
+
+        var response = await _httpClient.SendRequestAsync($"Group/{groupId}/User/Count", HttpMethod.Get);
+        
+        if (response.StatusCode== HttpStatusCode.Forbidden)
+        {
+            return new AccessDenied();
+        }
+        
+        var memberCountResponse = await JsonConverter.ToObject<MemberCountResponse>(response.Content);
+
+        return new Success<MemberCountResponse>(memberCountResponse);
+    }
+
+    public async Task<ReadResponse<RoomLastSeenResponse>> GetGroupLastSeenAsync(Guid userId, Guid groupId)
+    {
+        await _httpClient.AddAuthHeader(_localStorageService);
+
+        var response = await _httpClient.SendRequestAsync($"Group/{groupId}/User/{userId}/LastSeen", HttpMethod.Get);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new NotFound();
+        }
+
+        if (response.StatusCode== HttpStatusCode.Forbidden)
+        {
+            return new AccessDenied();
+        }
+        
+        var lastSeen = await JsonConverter.ToObject<RoomLastSeenResponse>(response.Content);
+
+        return new Success<RoomLastSeenResponse>(lastSeen);
     }
 
     public async Task<CreateResponse<IdResponse>> JoinUserAsync(Guid groupId, Guid joinUserId)

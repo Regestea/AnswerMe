@@ -1,14 +1,13 @@
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.JSInterop;
 using Models.Shared.Responses.Message;
 using Models.Shared.Responses.Shared;
 
 namespace AnswerMe.Client.Core.Services;
 
-public class PvHubService
+public class GrHubService
 {
-    private HubConnection _hubConnection;
+     private HubConnection _hubConnection;
     private bool _isConnectionClosedIntentionally = false;
     private string _token = "";
     private string _roomId = "";
@@ -23,7 +22,7 @@ public class PvHubService
         _isConnectionClosedIntentionally = false;
         _roomId=roomId.ToString();
          _hubConnection = new HubConnectionBuilder()
-             .WithUrl($"https://localhost:7156/Private-Chat/?RoomId={_roomId}", option =>
+             .WithUrl($"https://localhost:7156/Group-Chat/?RoomId={_roomId}", option =>
              {
                  option.AccessTokenProvider = () =>
                      Task.FromResult(_token)!;
@@ -71,45 +70,27 @@ public class PvHubService
         };
     }
     
-    public  void NewPvMessage(Action<MessageResponse> handler)
+    public  void NewGrMessage(Action<MessageResponse> handler)
     {
-        _hubConnection.On<MessageResponse>("NewPVMessage",(messageResponse) =>
+        _hubConnection.On<MessageResponse>("NewGRMessage",(messageResponse) =>
         {
             handler.Invoke(messageResponse);
         });
     }
     
-    public  void EditPvMessage(Action<MessageResponse> handler)
+    public  void EditGrMessage(Action<MessageResponse> handler)
     {
-        _hubConnection.On<MessageResponse>("EditPVMessage",(messageResponse) =>
+        _hubConnection.On<MessageResponse>("EditGRMessage",(messageResponse) =>
         {
             handler.Invoke(messageResponse);
         });
     }
     
-    public  void RemovePvMessage(Action<IdResponse> handler)
+    public  void RemoveGrMessage(Action<IdResponse> handler)
     {
-        _hubConnection.On<IdResponse>("RemovePVMessage",(messageIdResponse) =>
+        _hubConnection.On<IdResponse>("RemoveGRMessage",(messageIdResponse) =>
         {
             handler.Invoke(messageIdResponse);
-        });
-    }
-    
-    
-
-    public  void JoinedRoom(Action<Guid> handler)
-    {
-        _hubConnection.On<Guid>("JoinedRoom", (userId) =>
-        { 
-            handler.Invoke(userId);
-        });
-    }
-
-    public  void LeftRoom(Action<Guid> handler)
-    {
-        _hubConnection.On<Guid>("LeftRoom",(userId) =>
-        {
-            handler.Invoke(userId);
         });
     }
 

@@ -83,11 +83,11 @@ public class PrivateRoomService:IPrivateRoomService
         return new Success<PrivateRoomResponse>(privateRoom);
     }
 
-    public async Task<ReadResponse<RoomLastSeenResponse>> GetRoomLastSeenAsync(Guid contactId, Guid roomId)
+    public async Task<ReadResponse<RoomLastSeenResponse>> GetRoomLastSeenAsync(Guid userId, Guid roomId)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
-        var response = await _httpClient.SendRequestAsync($"PrivateRoom/{roomId}/User/{contactId}/LastSeen", HttpMethod.Get);
+        var response = await _httpClient.SendRequestAsync($"PrivateRoom/{roomId}/User/{userId}/LastSeen", HttpMethod.Get);
 
         if (response.StatusCode == HttpStatusCode.NotFound)
         {

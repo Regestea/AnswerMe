@@ -26,4 +26,9 @@ public static class JsRuntime
     {
         await jsRuntime.InvokeVoidAsync("SetInnerText", elementId, text);
     }
+    
+    public static async Task ScrollToViewAsync(this IJSRuntime jsRuntime, string elementId)
+    {
+        await jsRuntime.InvokeVoidAsync("ScrollToView", elementId);
+    }
 }

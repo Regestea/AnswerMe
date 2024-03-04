@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http.Connections.Client;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
 using Models.Shared.RepositoriesResponseTypes;
+using Models.Shared.Responses.Message;
 using Models.Shared.Responses.Shared;
 
 namespace AnswerMe.Client.Core.Services;
@@ -65,39 +66,73 @@ public class OnlineHubService
     }
 
 
-    public  void RegisterUserWentOnline(Action<Guid> handler)
+    public  void UserWentOnline(Action<Guid> handler)
     {
         _hubConnection.On<Guid>("UserWentOnline",  (userId) =>
         {
-            Console.WriteLine("user went online " + userId);
+            Console.WriteLine("Online"+userId);
             handler.Invoke(userId);
         });
     }
 
-    public void RegisterUserWentOffline(Action<Guid> handler)
+    public void UserWentOffline(Action<Guid> handler)
     {
         _hubConnection.On<Guid>("UserWentOffline",  (userId) =>
         {
-            Console.WriteLine("user went offline " + userId);
+            Console.WriteLine("Offline"+userId);
             handler.Invoke(userId);
         });
     }
 
-    public void RegisterNotifyNewPvMessage(Action<Guid, string> handler)
+    public void NotifyNewPvMessage(Action<RoomNotifyResponse> handler)
     {
-        _hubConnection.On<Guid, string>("NotifyNewPvMessage", async (roomId, message) =>
+        _hubConnection.On<RoomNotifyResponse>("NotifyNewPVMessage", async (roomNotifyResponse) =>
         {
-            Console.WriteLine("NotifyNewPvMessage" + roomId + message);
-            handler.Invoke(roomId, message);
+            handler.Invoke(roomNotifyResponse);
         });
     }
-
-    public void RegisterNotifyNewGroupMessage(Action<Guid, string> handler)
+    
+    public void NotifyEditPvMessage(Action<RoomNotifyResponse> handler)
     {
-        _hubConnection.On<Guid, string>("NotifyNewGroupMessage", async (roomId, message) =>
+        _hubConnection.On<RoomNotifyResponse>("NotifyEditPVMessage", async (roomNotifyResponse) =>
         {
-            Console.WriteLine("NotifyNewPvMessage" + roomId + message);
-            handler.Invoke(roomId, message);
+            handler.Invoke(roomNotifyResponse);
+        });
+    }
+    
+    public void NotifyRemovePvMessage(Action<RoomNotifyResponse> handler)
+    {
+        _hubConnection.On<RoomNotifyResponse>("NotifyRemovePVMessage", async (roomNotifyResponse) =>
+        {
+            handler.Invoke(roomNotifyResponse);
+        });
+    }
+    
+    
+    
+    
+
+    public void NotifyNewGrMessage(Action<RoomNotifyResponse> handler)
+    {
+        _hubConnection.On<RoomNotifyResponse>("NotifyNewGRMessage", async (roomNotifyResponse) =>
+        {
+            handler.Invoke(roomNotifyResponse);
+        });
+    }
+    
+    public void NotifyEditGrMessage(Action<RoomNotifyResponse> handler)
+    {
+        _hubConnection.On<RoomNotifyResponse>("NotifyEditGRMessage", async (roomNotifyResponse) =>
+        {
+            handler.Invoke(roomNotifyResponse);
+        });
+    }
+    
+    public void NotifyRemoveGrMessage(Action<RoomNotifyResponse> handler)
+    {
+        _hubConnection.On<RoomNotifyResponse>("NotifyRemoveGRMessage", async (roomNotifyResponse) =>
+        {
+            handler.Invoke(roomNotifyResponse);
         });
     }
 }

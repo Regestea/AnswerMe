@@ -9,19 +9,14 @@
 @inject IJSRuntime JsRuntime
 @inject PvHubService PvHubService
 
-
-@* <RoomBackgroundHub UserJoinedRoom="UserJoinedRoom" UserLeftRoom="UserLeftRoom" NewMessage="AddNewMessage" @key="RoomId" RoomId="RoomId" RoomType="RoomType.Private"/> *@
+ 
 <div class="p-4 sm:ml-64 body-content element">
 
-    <NavHeader @key="RoomId" RoomId="RoomId" CurrentRoomType="RoomType.Private"/>
-
-    <ChatLayout>
+    <PvNavHeader @key="RoomId" RoomId="RoomId" IsContactInRoom="_isContactInRoom" ContactLastRoomVisit="_contactLastRoomVisit"/>
+    
+    <ChatLayout CallLoadNewMessages="LoadNewMessages" CallLoadOldMessages="LoadOldMessages">
         <ChatContent>
-            @if (_isContactInRoom || _contactLastRoomVisit != DateTimeOffset.MinValue)
-            {
-                <PrivateMessage @key="RoomId" RoomId="RoomId" UserLastRoomVisit="_userLastRoomVisit" ContactLastRoomVisit="_contactLastRoomVisit" IsContactInRoom="_isContactInRoom" LoggedInUserId="_loggedInUserId"/>
-            }
-
+            <PrivateMessage @ref="_privateMessageRef" @key="RoomId"  RoomId="RoomId" UserLastRoomVisit="_userLastRoomVisit" ContactLastRoomVisit="_contactLastRoomVisit" IsContactInRoom="_isContactInRoom" LoggedInUserId="_loggedInUserId"/>
             <SendMessage CurrentRoomType="RoomType.Private" RoomId="RoomId"/>
         </ChatContent>
     </ChatLayout>
@@ -31,12 +26,25 @@
 @code {
 
     [Parameter] public Guid RoomId { get; set; }
+    private PrivateMessage _privateMessageRef;
     private PrivateRoomResponse? _privateRoomResponse;
     private bool _isContactInRoom = false;
     private Guid _loggedInUserId;
-    private DateTimeOffset? _contactLastRoomVisit;
+    private DateTimeOffset _contactLastRoomVisit;
     private DateTimeOffset? _userLastRoomVisit;
 
+
+    public async Task LoadNewMessages()
+    {
+        Console.WriteLine("load new one");
+        await _privateMessageRef.LoadNewMessages();
+    }
+
+    public async Task LoadOldMessages()
+    {
+        Console.WriteLine("load old one");
+        await _privateMessageRef.LoadOldMessages();
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -49,30 +57,28 @@
             //redirect to 404 page
         }
 
-       
 
         PvHubService.JoinedRoom(UserJoinedRoom);
         PvHubService.LeftRoom(UserLeftRoom);
- 
 
 
         _privateRoomResponse = privateRoom.AsSuccess.Value;
-        
-        _userLastRoomVisit= await GetLastVisit(_loggedInUserId);
+
+        _userLastRoomVisit = await GetLastVisit(_loggedInUserId);
 
         var isContactInRoom = await PrivateRoomService.GetUserIsOnlineInRoom(RoomId, _privateRoomResponse.Contact.Id);
 
         _isContactInRoom = isContactInRoom.AsSuccess.Value.Result;
 
-        Console.WriteLine("is contact online in room"+ _isContactInRoom);
+        Console.WriteLine("is contact online in room" + _isContactInRoom);
 
         if (!_isContactInRoom)
         {
-            _contactLastRoomVisit= await GetLastVisit(_privateRoomResponse!.Contact.Id);
+            _contactLastRoomVisit = await GetLastVisit(_privateRoomResponse!.Contact.Id);
         }
     }
 
-    private async Task<DateTime?> GetLastVisit(Guid userId)
+    private async Task<DateTimeOffset> GetLastVisit(Guid userId)
     {
         var lastSeen = await PrivateRoomService
             .GetRoomLastSeenAsync(userId, _privateRoomResponse!.RoomNotify.RoomId);
@@ -80,10 +86,10 @@
 
         if (lastSeen.IsSuccess)
         {
-            return lastSeen.AsSuccess.Value.LastSeenUtc.LocalDateTime;
+            return lastSeen.AsSuccess.Value.LastSeenUtc;
         }
 
-        return null;
+        return DateTimeOffset.MinValue;
     }
 
 
@@ -99,7 +105,7 @@
     {
         if (_loggedInUserId == userId) return;
         _isContactInRoom = false;
-        _contactLastRoomVisit=DateTimeOffset.UtcNow;
+        _contactLastRoomVisit = DateTimeOffset.UtcNow;
         StateHasChanged();
     }
 

@@ -68,7 +68,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var roomNotify = new RoomNotifyResponse() { TotalUnRead = 0, RoomId = roomId };
 
-            var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>(loggedInUserId.ToString());
+            var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>("PV-"+loggedInUserId.ToString());
 
             if (isInRoom != null)
             {
@@ -107,7 +107,7 @@ namespace AnswerMe.Infrastructure.Repositories
                     new BooleanResponse { FieldName = "IsOnlineInRoom", Result = false });
             }
     
-            var roomConnection = await _cacheRepository.GetAsync<RoomConnectionDto>(userId.ToString());
+            var roomConnection = await _cacheRepository.GetAsync<RoomConnectionDto>("PV-"+userId.ToString());
     
             if (roomConnection?.RoomId == roomId)
             {
@@ -203,7 +203,7 @@ namespace AnswerMe.Infrastructure.Repositories
                         IsOnline = isOnline
                     }).SingleAsync();
                 
-                var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>(loggedInUserId.ToString());
+                var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>("PV-"+loggedInUserId.ToString());
                 
                 if (isInRoom == null)
                 {

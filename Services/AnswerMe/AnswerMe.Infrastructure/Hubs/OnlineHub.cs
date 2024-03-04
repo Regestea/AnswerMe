@@ -112,11 +112,12 @@ namespace AnswerMe.Infrastructure.Hubs
         {
             var userOnlineDto = await _cacheRepository.GetAsync<UserOnlineDto>(Context.ConnectionId);
 
-            await _cacheRepository.RemoveAsync(Context.ConnectionId);
-
             if (userOnlineDto != null)
             {
-                await _cacheRepository.RemoveAsync("Online-" + userOnlineDto.UserId);
+                await _cacheRepository.RemoveAsync(Context.ConnectionId);
+                
+                await _cacheRepository.RemoveAsync("Online-"+userOnlineDto.UserId);
+                
                 await _context.OnlineStatusUsers.AddAsync(new OnlineStatusUser()
                     { UserId = userOnlineDto.UserId, LastOnlineDateTime = DateTimeOffset.UtcNow });
                 await _context.SaveChangesAsync();

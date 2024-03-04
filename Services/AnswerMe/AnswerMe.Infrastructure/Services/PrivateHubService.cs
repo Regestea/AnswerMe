@@ -6,6 +6,7 @@ using AnswerMe.Infrastructure.Persistence;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Models.Shared.Responses.Message;
+using Models.Shared.Responses.Shared;
 
 namespace AnswerMe.Infrastructure.Services
 {
@@ -27,65 +28,118 @@ namespace AnswerMe.Infrastructure.Services
 
         public async Task SendMessageAsync(Guid loggedInUserId, Guid roomId, MessageResponse messageResponse)
         {
-            await _privateHubContext.Clients.Group(roomId.ToString())
-                .SendAsync("ReceivePrivateMessage", messageResponse);
+            await _privateHubContext.Clients
+                .Group(roomId.ToString())
+                .SendAsync("NewPVMessage", messageResponse);
 
-            var userContactIds = await _context.PrivateChats
+            var onlineUserConnectionIdList = await OnlineUserConnectionIdListAsync(roomId);
+
+            if (onlineUserConnectionIdList.Any())
+            {
+                var roomNotify = await GetRoomNotifyAsync(loggedInUserId, roomId, messageResponse.Text);
+                
+                await _onlineHubContext.Clients
+                    .Clients(onlineUserConnectionIdList)
+                    .SendAsync("NotifyNewPVMessage", roomNotify);
+            }
+        }
+
+        public async Task UpdateMessageAsync(Guid loggedInUserId, Guid roomId, MessageResponse messageResponse)
+        {
+            await _privateHubContext.Clients
+                .Group(roomId.ToString())
+                .SendAsync("EditPVMessage", messageResponse);
+            
+            var onlineUserConnectionIdList = await OnlineUserConnectionIdListAsync(roomId);
+
+            if (onlineUserConnectionIdList.Any())
+            {
+                var roomNotify = await GetRoomNotifyAsync(loggedInUserId, roomId, messageResponse.Text);
+                
+                await _onlineHubContext.Clients
+                    .Clients(onlineUserConnectionIdList)
+                    .SendAsync("NotifyEditPVMessage", roomNotify);
+            }
+        }
+
+        public async Task RemoveMessageAsync(Guid loggedInUserId, Guid roomId, Guid messageId)
+        {
+            await _privateHubContext.Clients
+                .Group(roomId.ToString())
+                .SendAsync("RemovePVMessage", new IdResponse()
+                {
+                    FieldName = nameof(messageId),
+                    Id = messageId
+                });
+            
+            var lastMessageText = await _context.Messages
+                .Where(x => x.RoomChatId == roomId)
+                .OrderByDescending(x => x.CreatedDate)
+                .Select(x => x.Text)
+                .SingleOrDefaultAsync();
+            
+            var onlineMemberConnectionIdList = await OnlineUserConnectionIdListAsync(roomId);
+            if (onlineMemberConnectionIdList.Any())
+            {
+                var roomNotify = await GetRoomNotifyAsync(loggedInUserId, roomId, lastMessageText);
+                
+                await _onlineHubContext.Clients
+                    .Clients(onlineMemberConnectionIdList)
+                    .SendAsync("NotifyRemovePVMessage", roomNotify);
+            }
+        }
+
+        private async Task<RoomNotifyResponse> GetRoomNotifyAsync(Guid loggedInUserId, Guid roomId, string? messageText)
+        {
+            var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>("PV-" + loggedInUserId);
+            var roomNotify = new RoomNotifyResponse() { RoomId = roomId, MessageGlance = "", TotalUnRead = 0 };
+
+            if (!string.IsNullOrWhiteSpace(messageText))
+            {
+                roomNotify.MessageGlance = messageText[..Math.Min(10, messageText.Length)];
+            }
+
+            if (isInRoom == null)
+            {
+                var lastSeen = await _context.RoomLastSeen
+                    .Where(x => x.RoomId == roomId && x.UserId == loggedInUserId)
+                    .FirstOrDefaultAsync();
+
+                if (lastSeen != null)
+                {
+                    var unReadCount = await _context.Messages
+                        .Where(x => x.RoomChatId == roomId && x.CreatedDate > lastSeen.LastSeenUtc)
+                        .CountAsync();
+
+                    roomNotify.TotalUnRead = unReadCount;
+                }
+            }
+
+            return roomNotify;
+        }
+
+        private async Task<List<string>> OnlineUserConnectionIdListAsync(Guid roomId)
+        {
+            var userIds = await _context.PrivateChats
                 .Where(x => x.id == roomId)
-                .Select(chat => chat.User1Id == messageResponse.UserSender.Id ? chat.User2Id : chat.User1Id)
-                .ToListAsync();
+                .Select(chat => new List<Guid> { chat.User1Id, chat.User2Id })
+                .SingleOrDefaultAsync();
 
             var onlineContactConnectionIdList = new List<string>();
 
-            foreach (var contactId in userContactIds)
+            if (userIds != null)
             {
-                var onlineContact = await _cacheRepository.GetAsync<UserOnlineDto>(contactId.ToString());
-                if (onlineContact != null)
+                foreach (var userId in userIds)
                 {
-                    onlineContactConnectionIdList.Add(onlineContact.ConnectionId);
-                }
-            }
-
-            if (onlineContactConnectionIdList.Any())
-            {
-                var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>("PV-"+loggedInUserId);
-                var roomNotify = new RoomNotifyResponse() { RoomId = roomId, MessageGlance = "", TotalUnRead = 0 };
-
-                if (!string.IsNullOrWhiteSpace(messageResponse.Text))
-                {
-                    roomNotify.MessageGlance = messageResponse.Text[..Math.Min(10, messageResponse.Text.Length)];
-                }
-
-                if (isInRoom == null)
-                {
-                    var lastSeen =await _context.RoomLastSeen
-                        .Where(x => x.RoomId == roomId && x.UserId == loggedInUserId)
-                        .FirstOrDefaultAsync();
-
-                    if (lastSeen != null)
+                    var onlineContact = await _cacheRepository.GetAsync<UserOnlineDto>("Online-"+userId.ToString());
+                    if (onlineContact != null)
                     {
-                        var unReadCount =await _context.Messages
-                            .Where(x => x.RoomChatId == roomId && x.CreatedDate > lastSeen.LastSeenUtc)
-                            .CountAsync();
-
-                        roomNotify.TotalUnRead = unReadCount;
+                        onlineContactConnectionIdList.Add(onlineContact.ConnectionId);
                     }
                 }
-
-
-                await _onlineHubContext.Clients.Clients(onlineContactConnectionIdList)
-                    .SendAsync("RoomNotify", roomNotify);
             }
-        }
-
-        public async Task UpdateMessageAsync(Guid roomId, MessageResponse messageResponse)
-        {
-            await _privateHubContext.Clients.Group(roomId.ToString()).SendAsync("UpdatePrivateMessage", messageResponse);
-        }
-
-        public async Task RemoveMessageAsync(Guid roomId, Guid messageId)
-        {
-            await _privateHubContext.Clients.Group(roomId.ToString()).SendAsync("RemovePrivateMessage", messageId);
+            
+            return onlineContactConnectionIdList;
         }
     }
 }

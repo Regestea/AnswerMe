@@ -123,11 +123,7 @@ namespace AnswerMe.Infrastructure.Services
             }
 
             await _privateHubService.SendMessageAsync(loggedInUserId, room.id, messageResponse);
-            if (!string.IsNullOrWhiteSpace(message.Text))
-            {
-                await _onlineHubService.NotifyNewPvMessageAsync(roomId, message.Text);
-            }
-           
+            
             await _context.Messages.AddAsync(message);
 
             await _context.SaveChangesAsync();
@@ -159,7 +155,9 @@ namespace AnswerMe.Infrastructure.Services
             {
                 var unReadMessagesCount =
                     await _context.Messages.CountAsync(x => x.RoomChatId == roomId && x.CreatedDate > lastRoomVisit);
-                var page = unReadMessagesCount > 0 ? (int)Math.Ceiling((decimal)unReadMessagesCount / paginationRequest.PageSize) : 1;
+                var page = unReadMessagesCount > 0
+                    ? (int)Math.Ceiling((decimal)unReadMessagesCount / paginationRequest.PageSize)
+                    : 1;
                 paginationRequest.CurrentPage = page;
             }
 
@@ -206,14 +204,15 @@ namespace AnswerMe.Infrastructure.Services
         public async Task<ReadResponse<MessageResponse>> GetAsync(Guid loggedInUserId, Guid messageId)
         {
             var existMessage = await _context.Messages.AnyAsync(x => x.id == messageId);
-            
+
             if (!existMessage)
             {
                 return new NotFound();
             }
-            
-            var roomId = await _context.Messages.Where(x => x.id == messageId).Select(x=>x.RoomChatId).FirstOrDefaultAsync();
-            
+
+            var roomId = await _context.Messages.Where(x => x.id == messageId).Select(x => x.RoomChatId)
+                .FirstOrDefaultAsync();
+
             var isUserInRoom = await _context.PrivateChats.AnyAsync(x =>
                 x.id == roomId && (x.User1Id == loggedInUserId || x.User2Id == loggedInUserId));
             if (!isUserInRoom)
@@ -221,7 +220,7 @@ namespace AnswerMe.Infrastructure.Services
                 return new AccessDenied();
             }
 
-            var message =await _context.Messages
+            var message = await _context.Messages
                 .Where(x => x.id == messageId)
                 .Include(x => x.MediaList)
                 .Select(message =>
@@ -310,7 +309,7 @@ namespace AnswerMe.Infrastructure.Services
             }
 
 
-            await _privateHubService.UpdateMessageAsync(message.RoomChatId, messageResponse);
+            await _privateHubService.UpdateMessageAsync(loggedInUserId, message.RoomChatId, messageResponse);
 
             return new Success();
         }
@@ -438,7 +437,7 @@ namespace AnswerMe.Infrastructure.Services
             }
 
 
-            await _privateHubService.UpdateMessageAsync(message.RoomChatId, messageResponse);
+            await _privateHubService.UpdateMessageAsync(loggedInUserId, message.RoomChatId, messageResponse);
 
             return new Success();
         }
@@ -463,7 +462,7 @@ namespace AnswerMe.Infrastructure.Services
                 _context.Messages.Remove(message);
                 await _context.SaveChangesAsync();
 
-                await _privateHubService.RemoveMessageAsync(message.RoomChatId, message.id);
+                await _privateHubService.RemoveMessageAsync(loggedInUserId, message.RoomChatId, message.id);
 
                 return new Success();
             }
@@ -534,7 +533,7 @@ namespace AnswerMe.Infrastructure.Services
                         }
                     }
 
-                    await _privateHubService.UpdateMessageAsync(message.RoomChatId, messageResponse);
+                    await _privateHubService.UpdateMessageAsync(loggedInUserId, message.RoomChatId, messageResponse);
 
                     return new Success();
                 }

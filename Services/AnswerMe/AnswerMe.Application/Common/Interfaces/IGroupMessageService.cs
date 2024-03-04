@@ -28,16 +28,16 @@ public interface IGroupMessageService
     /// <param name="loggedInUserId">The unique identifier of the logged-in user.</param>
     /// <param name="groupId">The unique identifier of the group.</param>
     /// <param name="request">The pagination request parameters.</param>
+    /// <param name="jumpToUnRead">should jump to unread messages or not</param>
     /// <returns>
     /// A task that represents the asynchronous operation
     /// .
     /// The task result contains the response of the
     /// read operation, including the list of messages
-    /// .
     /// The response also includes pagination details
     /// for the returned list.
     /// </returns>
-    Task<ReadResponse<PagedListResponse<MessageResponse>>> GetListAsync(Guid loggedInUserId, Guid groupId, PaginationRequest request);
+    Task<ReadResponse<PagedListResponse<MessageResponse>>> GetListAsync(Guid loggedInUserId, Guid groupId,bool jumpToUnRead, PaginationRequest request);
     
     /// <summary>
     /// Get details of a specific message.

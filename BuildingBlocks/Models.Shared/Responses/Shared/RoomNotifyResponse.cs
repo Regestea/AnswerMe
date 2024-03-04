@@ -1,4 +1,4 @@
-namespace Models.Shared.Responses.Message;
+namespace Models.Shared.Responses.Shared;
 
 public class RoomNotifyResponse
 {

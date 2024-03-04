@@ -1,110 +1,188 @@
 @using Models.Shared.Responses.Message
 @using AnswerMe.Client.Core.Extensions
 @using AnswerMe.Client.Core.Enums
+@using AnswerMe.Client.Core.Services
 @using Models.Shared.Requests.Shared
 @using Models.Shared.Responses.Shared
-@inject IPrivateMessageService PrivateMessageService
+@inject IGroupMessageService GroupMessageService
 @inject AuthStateProvider AuthStateProvider
 @inject IUserService UserService
-@inject IPrivateRoomService PrivateRoomService
+@inject IGroupService GroupService
 @inject IJSRuntime JsRuntime
+@inject GrHubService GrHubService
 
 <div class="chat-content mb-60">
 
     @foreach (var message in _messageList)
     {
-        <div id="@message.id-message" class="chat  @(message.UserSender.Id == _loggedInUserId ? "chat-end" : "chat-start")">
+        if (UserLastRoomVisit != null  && message.CreatedDate > UserLastRoomVisit && _isNewMessageBannerPlaced == false)
+        {
+            _isNewMessageBannerPlaced = true;
 
+            <div class="divider divider-info text-info">New Messages</div>
+        }
+        
+        
+        <div id="@message.id-message" class="chat  @(message.UserSender.Id == LoggedInUserId ? "chat-end" : "chat-start")">
+            @if (message.UserSender.Id != LoggedInUserId)
+            {
                 <div class="chat-image avatar">
                     <div class="w-10 rounded-full">
                         <UserAvatar Class="w-10" Letter="@message.UserSender.Name.FirstLetter()" ImageUrl="@message.UserSender.ProfileImage"/>
                     </div>
                 </div>
-         
+            }
+            
+           
+            <div class="chat-bubble @(message.UserSender.Id == LoggedInUserId ? "primary-liner-gradient" : "dark-liner-gradient")">
+                @if (message.UserSender.Id != LoggedInUserId)
+                {
+                    <div class="chat-header text-neutral-content/90 ">
 
-            <div class="chat-header">
-               
-                    @message.UserSender.Name
+                        @message.UserSender.Name
+
+                    </div>
+                }
               
-            </div>
-            <div class="chat-bubble @(message.UserSender.Id == _loggedInUserId ? "primary-liner-gradient" : "dark-liner-gradient")">
+
                 @message.Text
 
                 <div class="chat-footer " style="display: grid;margin-top: 2px">
-                    
-                        <span class="opacity-80" style="display: flex;justify-self: start">
-                            <time class="text-xs ">@message.CreatedDate!.Value.LocalDateTime.ToString("HH:mm")</time>
-                        </span>
-                  
+
+                    <span class="opacity-80" style="display: flex;justify-self: start">
+                        <time class="text-xs ">@message.CreatedDate!.Value.LocalDateTime.ToString("HH:mm")</time>
+                    </span>
+
                 </div>
             </div>
-
         </div>
     }
 
 </div>
+
 @code {
     [Parameter] public Guid RoomId { get; set; }
+    [Parameter] public DateTimeOffset? UserLastRoomVisit { get; set; }
+    [Parameter] public Guid LoggedInUserId { get; set; }
     private List<MessageResponse> _messageList = new();
-    
-    private PreviewUserResponse? _contact; 
 
-    private PaginationRequest _paginationRequest = new() { PageSize = 10, CurrentPage = 1 };
+    private string _lastLook = "";
 
-    private Guid? _loggedInUserId;
+
+    private PaginationRequest _oldMessagePaginationRequest = new() { PageSize = 10, CurrentPage = 1 };
+    private PaginationRequest _newMessagePaginationRequest = new() { PageSize = 10, CurrentPage = 1 };
+
+
+   
 
     private bool _firstLoad = true;
-    
-    
-        protected override async Task OnInitializedAsync()
-    {
-        var user = await AuthStateProvider.ExtractUserDataFromLocalTokenAsync();
-        _loggedInUserId = user.id;
-        var privateRoom = await PrivateRoomService.GetPrivateRoomByIdAsync(RoomId);
+    private bool _isNewMessageBannerPlaced = false;
 
-        if (!privateRoom.IsSuccess)
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        var group = await GroupService.GetByIdAsync(RoomId);
+
+        if (!group.IsSuccess)
         {
             //redirect to 404 page
         }
         
-        
-
-        var result = await PrivateMessageService.GetPrivateMessagesAsync(RoomId, _firstLoad, _paginationRequest);
+        var result = await GroupMessageService.GetGroupMessagesAsync(RoomId, _firstLoad, _newMessagePaginationRequest);
         if (result.IsSuccess)
         {
             _messageList = result.AsSuccess.Value.Items;
-            _firstLoad = false;
-            _paginationRequest.CurrentPage = result.AsSuccess.Value.Page;
+            _newMessagePaginationRequest.CurrentPage = result.AsSuccess.Value.Page;
+            _oldMessagePaginationRequest.CurrentPage = result.AsSuccess.Value.Page;
         }
 
         if (result.IsNotFound)
         {
-            
         }
 
         if (result.IsAccessDenied)
         {
-            
         }
+        
+        GrHubService.NewGrMessage(AddNewMessage);
     }
-
     
-    public async Task AddNewMessage(MessageResponse messageResponse)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var messageClass = "";
-        if (messageResponse.UserSender.Id==_loggedInUserId)
+        if (_firstLoad && _isNewMessageBannerPlaced == false && _messageList.Any())
         {
-            messageClass = "backInRight";
+            await JsRuntime.InvokeVoidAsync("ScrollToView", _messageList.Last().id + "-message");
+            _firstLoad = false;
         }
         else
         {
-            messageClass = "backInLeft";
+            if (_isNewMessageBannerPlaced )
+            {
+                await JsRuntime.ScrollToViewAsync(_messageList[5].id + "-message");
+            }
         }
-        _messageList.Add(messageResponse);
-        StateHasChanged();
-        await JsRuntime.AddClass(messageResponse.id + "-message", messageClass);
-        await JsRuntime.InvokeVoidAsync("ScrollToEnd", ChatLayout.ElementIds.ChatScroll.ToString());
+       
     }
     
     
+    public async Task LoadNewMessages()
+    {
+        if (_newMessagePaginationRequest.CurrentPage > 1)
+        {
+            _newMessagePaginationRequest.CurrentPage--;
+            Console.WriteLine(_newMessagePaginationRequest.CurrentPage);
+            var result = await GroupMessageService.GetGroupMessagesAsync(RoomId, false, _newMessagePaginationRequest);
+
+            if (result.IsSuccess && result.AsSuccess.Value.Items.Any())
+            {
+                _messageList.AddRange(result.AsSuccess.Value.Items);
+                StateHasChanged();
+            }
+        }
+    }
+
+    public async Task LoadOldMessages()
+    {
+        var _lastLook = _messageList.First().id + "-message";
+
+        _oldMessagePaginationRequest.CurrentPage++;
+        Console.WriteLine(_oldMessagePaginationRequest.CurrentPage);
+        Console.WriteLine("AAAAAAA Old");
+        var result = await GroupMessageService.GetGroupMessagesAsync(RoomId, false, _oldMessagePaginationRequest);
+
+        if (result.IsSuccess && result.AsSuccess.Value.Items.Any())
+        {
+            _messageList.InsertRange(0, result.AsSuccess.Value.Items);
+            StateHasChanged();
+        }
+
+        await JsRuntime.ScrollToViewAsync(_lastLook);
+    }
+    
+    
+
+
+    private void AddNewMessage(MessageResponse messageResponse)
+    {
+        _isNewMessageBannerPlaced = true;
+        if (_newMessagePaginationRequest.CurrentPage == 1)
+        {
+            var messageClass = "";
+            if (messageResponse.UserSender.Id == LoggedInUserId)
+            {
+                messageClass = "backInRight";
+            }
+            else
+            {
+                messageClass = "backInLeft";
+            }
+
+            _messageList.Add(messageResponse);
+            StateHasChanged();
+            _ = JsRuntime.AddClassAsync(messageResponse.id + "-message", messageClass);
+            JsRuntime.InvokeVoidAsync("ScrollToEnd", ChatLayout.ElementIds.ChatScroll.ToString());
+        }
+    }
 }

@@ -1,0 +1,65 @@
+@page "/GR/{RoomId:guid}"
+@using AnswerMe.Client.Core.Enums
+@using AnswerMe.Client.Core.Services
+@inject AuthStateProvider AuthStateProvider
+@inject IGroupService GroupService
+
+
+<div class="p-4 sm:ml-64 body-content element">
+
+    <GrNavHeader @key="RoomId" RoomId="RoomId"/>
+
+    <ChatLayout CallLoadNewMessages="LoadNewMessages" CallLoadOldMessages="LoadOldMessages">
+        <ChatContent>
+            <GroupMessage @ref="_groupMessageRef" @key="RoomId" RoomId="RoomId" UserLastRoomVisit="_userLastRoomVisit" LoggedInUserId="_loggedInUserId" />
+            
+            <SendMessage CurrentRoomType="RoomType.Group" RoomId="RoomId"/>
+        </ChatContent>
+    </ChatLayout>
+
+</div>
+
+@code {
+    [Parameter] public Guid RoomId { get; set; }
+    private Guid _loggedInUserId;
+    private DateTimeOffset? _userLastRoomVisit;
+    private GroupMessage _groupMessageRef;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await AuthStateProvider.ExtractUserDataFromLocalTokenAsync();
+        _loggedInUserId = user.id;
+        
+        _userLastRoomVisit = await GetLastVisit(_loggedInUserId);
+        
+        
+    }
+    
+    public async Task LoadNewMessages()
+    {
+        Console.WriteLine("load new one");
+        await _groupMessageRef.LoadNewMessages();
+    }
+
+    public async Task LoadOldMessages()
+    {
+        Console.WriteLine("load old one");
+        await _groupMessageRef.LoadOldMessages();
+    }
+    
+    private async Task<DateTime?> GetLastVisit(Guid userId)
+    {
+        var lastSeen = await GroupService
+            .GetGroupLastSeenAsync(userId, RoomId);
+
+
+        if (lastSeen.IsSuccess)
+        {
+            return lastSeen.AsSuccess.Value.LastSeenUtc.LocalDateTime;
+        }
+
+        return null;
+    }
+
+}

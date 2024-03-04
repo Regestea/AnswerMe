@@ -1,23 +1,55 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using System.Net.Http.Headers
 @using AnswerMe.Client.Core.DTOs.Base
+@using AnswerMe.Client.Core.Extensions
 @using AnswerMe.Client.Core.Services
 @using Microsoft.AspNetCore.Http.Connections
-@inject IOnlineHubService OnlineHubService
 @inject IUserService UserService
-@inject ILocalStorageService localStorageService
 @inject AppSettings AppSettings
+@inject OnlineHubService OnlineService
+@inject ILocalStorageService LocalStorageService
+@inject IJSRuntime JsRuntime
 
 <div class="flex" style="position: absolute;width: 100%;justify-content: center;margin-top: 10px">
-    <div id="@NavMenu.ElementIds.HeaderAvatar" class="avatar offline" style="align-self: center">
+    <div id="@ElementIds.HeaderAvatar" class="avatar offline" style="align-self: center">
         <div class="w-16 h-16 rounded-full">
             <img src="image/Logo.jpeg"/>
         </div>
     </div>
 
     <h1 class="" style="align-self: center;margin-left: 5px;font-weight: bold;padding: 10px">
-        <span id="@NavMenu.ElementIds.HeaderText"  style="position: relative">Answer Me</span>
+        <span id="@ElementIds.HeaderText"  style="position: relative">Answer Me</span>
 
     </h1>
 </div>
 
+@code
+{
+    private static class ElementIds
+    {
+        public static string HeaderAvatar { get; } = Guid.NewGuid().ToString();
+        public static string HeaderText { get; } = Guid.NewGuid().ToString();
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await OnlineService.ConnectToHubAsync(SetOnline);
+        
+        OnlineService.OnClosed(SetOffline);
+
+    }
+
+    private async void SetOffline()
+    {
+        await JsRuntime.ReplaceClassAsync(ElementIds.HeaderAvatar,"online","offline");
+        await JsRuntime.SetInnerTextAsync(ElementIds.HeaderText, "Connecting .....");
+    }
+
+    private async void SetOnline()
+    {
+        await JsRuntime.ReplaceClassAsync(ElementIds.HeaderAvatar,"offline","online"); 
+        await JsRuntime.SetInnerTextAsync(ElementIds.HeaderText, "Answer Me");
+    }
+    
+    
+}

@@ -1,4 +1,10 @@
-﻿
+﻿var GLOBAL = {};
+GLOBAL.DotNetReference = null;
+GLOBAL.SetDotnetReference = function (pDotNetReference) {
+    GLOBAL.DotNetReference = pDotNetReference;
+};
+
+
 window.addEventListener('hashchange', () => {
     console.log('Hash changed! New URL:', window.location.href);
 });
@@ -6,40 +12,55 @@ window.addEventListener('popstate', (event) => {
     console.log('URL changed! New URL:', window.location.href);
 });
 
-function AddClass(id,className){
-    let element=document.getElementById(id);
-    if (element != null){
+function ScrollToView(id) {
+    let element = document.getElementById(id);
+    if (element != null) {
+        element.scrollIntoView(
+            // {behavior: 'smooth'}
+        );
+    }
+}
+
+function AddClass(id, className) {
+    let element = document.getElementById(id);
+    if (element != null) {
         element.classList.add(className)
     }
 }
 
-function RemoveClass(id,className){
-    let element=document.getElementById(id);
-    if (element != null){
+function GetScrollStatus(elementId) {
+    let element = document.getElementById(elementId);
+
+    if (element != null) {
+        return {
+            ScrollTop: element.scrollTop,
+            ScrollLeft: element.scrollLeft,
+            ScrollHeight: element.scrollHeight,
+            ClientHeight: element.clientHeight
+        };
+    }
+    return null;
+}
+
+function RemoveClass(id, className) {
+    let element = document.getElementById(id);
+    if (element != null) {
         element.classList.remove(className);
     }
 }
 
-function ReplaceClass(id,oldClassName,newClassName){
-    let element=document.getElementById(id);
-    if (element != null){
-        element.classList.replace(oldClassName,newClassName);
+function ReplaceClass(id, oldClassName, newClassName) {
+    let element = document.getElementById(id);
+    if (element != null) {
+        element.classList.replace(oldClassName, newClassName);
     }
 }
 
-function SetInnerText(id,text){
-    let element=document.getElementById(id);
-    if (element != null){
-        element.innerText=text;
+function SetInnerText(id, text) {
+    let element = document.getElementById(id);
+    if (element != null) {
+        element.innerText = text;
     }
-}
-
-function CallCSharpFunction(assemblyName, functionName, ...args) {
-    DotNet.invokeMethodAsync(assemblyName, functionName, ...args);
-}
-
-function CallHello(stringArgs){
-    DotNet.invokeMethodAsync('AnswerMe.Client', 'CallHello', stringArgs);
 }
 
 function ScrollToEnd(id){
@@ -47,9 +68,72 @@ function ScrollToEnd(id){
     element.scrollTo(0, element.scrollHeight);
 }
 
+function SetScrollListenerLockStatus(scrollLock) {
+    ScrollLock = scrollLock;
+}
+
+// this dosen't work because we doesn't scroll window , we scroll a div element so we need a function to register event listener for the div then on component dispose unRegister it
+var ScrollLock = true;
+
+function RegisterChatScrollListener(elementId) {
+
+    let element = document.getElementById(elementId);
+    if (element != null) {
+        element.addEventListener('scroll', function () {
+            ChatScroll(elementId)
+        });
+    }
+    
+};
+
+function UnRegisterChatScrollListener(elementId) {
+    let element = document.getElementById(elementId);
+    if (element != null) {
+        element.removeEventListener('scroll', function () {
+            ChatScroll(elementId)
+        });
+    }
+}
+
+var IsLoadMessageLocked = false;
+
+function ChatScroll(elementId) {
+
+    let scrollStatus;
+    if (!ScrollLock) {
+        scrollStatus= GetScrollStatus(elementId);
+    }
+
+    if (scrollStatus != null) {
+
+        let totalScroll = scrollStatus.ScrollHeight - scrollStatus.ClientHeight;
+        let remainingOneThird = totalScroll / 10;
+        let lastOneThird = scrollStatus.ScrollTop > (totalScroll - remainingOneThird);
+        let firstOneThird = scrollStatus.ScrollTop < remainingOneThird;
+
+        if (IsLoadMessageLocked === false) {
+            if (firstOneThird) {
+                GLOBAL.DotNetReference.invokeMethodAsync('LoadOldMessages');
+                IsLoadMessageLocked = true;
+            }
+
+            if (lastOneThird) {
+                GLOBAL.DotNetReference.invokeMethodAsync('LoadNewMessages');
+                IsLoadMessageLocked = true;
+            }
+        }
+
+        if (firstOneThird === false && lastOneThird === false) {
+            IsLoadMessageLocked = false;
+        }
+
+    }
+}
+
+
 window.addEventListener('resize', ResizeComponent);
 
-function ViewAccountMenu(){
+function ViewAccountMenu() {
     let accountMenu = document.getElementById("AccountMenu");
     accountMenu.classList.remove('-translate-x-full');
     accountMenu.classList.add('-translate-x-0');
@@ -66,42 +150,41 @@ function ResizeComponent() {
             let mainBody = document.getElementById("ChatBody");
             let sidebar = document.getElementById("SidebarMenu");
             let accountMenu = document.getElementById("AccountMenu");
-            
-            if (mainBody !=null && sidebar !=null ){
+
+            if (mainBody != null && sidebar != null) {
                 sidebar.classList.add('w-full');
                 sidebar.classList.remove('-translate-x-full');
                 sidebar.classList.add('-translate-x-0');
 
                 accountMenu.classList.add('w-full');
                 accountMenu.classList.add('-translate-x-0');
-                
+
                 mainBody.classList.add('-translate-x-full');
                 mainBody.classList.add('hidden');
             }
-        }
-        else {
+        } else {
             let sidebar = document.getElementById("SidebarMenu");
             let accountMenu = document.getElementById("AccountMenu");
             let mainBody = document.getElementById("ChatBody");
-            
+
             mainBody.classList.remove('-translate-x-full');
             mainBody.classList.remove('hidden');
             sidebar.classList.add('-translate-x-full');
             accountMenu.classList.add('-translate-x-full');
         }
-        
+
     } else {
         let mainBody = document.getElementById("ChatBody");
         let sidebar = document.getElementById("SidebarMenu");
         let accountMenu = document.getElementById("AccountMenu");
-        
-        if (mainBody !=null && sidebar !=null){
+
+        if (mainBody != null && sidebar != null) {
             sidebar.classList.remove('-translate-x-0');
             sidebar.classList.remove('w-full');
 
             accountMenu.classList.remove('-translate-x-0');
             accountMenu.classList.remove('w-full');
-            
+
             mainBody.classList.remove('-translate-x-full');
             mainBody.classList.remove('hidden');
         }
@@ -129,33 +212,33 @@ function getScreenSizeCategory() {
 }
 
 
-function ValidationMessageBox(validationErrors){
-    const modalBox=document.getElementById("modal-box");
+function ValidationMessageBox(validationErrors) {
+    const modalBox = document.getElementById("modal-box");
     const modal = document.getElementById("Modal-Message");
-    modalBox.innerHTML="";
+    modalBox.innerHTML = "";
 
     validationErrors.forEach(function (error) {
 
-        let newDiv=document.createElement("div");
-        newDiv.innerText=error.field;
-        newDiv.className="mt-6 stat-value text-secondary";
-       
-        let newText=document.createElement("p");
-        newText.innerText=error.error;
-        newText.className="mt-6 ml-4";
+        let newDiv = document.createElement("div");
+        newDiv.innerText = error.field;
+        newDiv.className = "mt-6 stat-value text-secondary";
 
-        modalBox.insertBefore(newText,modalBox.firstChild);
-        modalBox.insertBefore(newDiv,modalBox.firstChild);
+        let newText = document.createElement("p");
+        newText.innerText = error.error;
+        newText.className = "mt-6 ml-4";
+
+        modalBox.insertBefore(newText, modalBox.firstChild);
+        modalBox.insertBefore(newDiv, modalBox.firstChild);
     });
     modal.showModal();
 }
 
 
 function MessageShow(messageType, messageHeader, messageText) {
-    const modalBox=document.getElementById("modal-box");
+    const modalBox = document.getElementById("modal-box");
     const modal = document.getElementById("Modal-Message");
-    modalBox.innerHTML="";
-    let modalHeaderClass="";
+    modalBox.innerHTML = "";
+    let modalHeaderClass = "";
 
     switch (messageType) {
         case "info":
@@ -173,21 +256,17 @@ function MessageShow(messageType, messageHeader, messageText) {
     }
 
 
-    let newDiv=document.createElement("div");
-    newDiv.innerText=messageHeader;
-    newDiv.className=modalHeaderClass;
+    let newDiv = document.createElement("div");
+    newDiv.innerText = messageHeader;
+    newDiv.className = modalHeaderClass;
 
-    let newText=document.createElement("p");
-    newText.innerText=messageText;
-    newText.className="mt-4 ml-4";
+    let newText = document.createElement("p");
+    newText.innerText = messageText;
+    newText.className = "mt-4 ml-4";
 
-    modalBox.insertBefore(newText,modalBox.firstChild);
-    modalBox.insertBefore(newDiv,modalBox.firstChild);
-    
+    modalBox.insertBefore(newText, modalBox.firstChild);
+    modalBox.insertBefore(newDiv, modalBox.firstChild);
+
 
     modal.showModal();
 }
-
-
-
-

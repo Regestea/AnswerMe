@@ -27,8 +27,9 @@ namespace AnswerMe.Client.Core
             services.AddScoped<AuthStateProvider>();
             services.AddBlazoredLocalStorage();
             services.AddCascadingAuthenticationState();
-            services.AddScoped<IOnlineHubService, OnlineHubService>();
-            services.AddScoped<HubClient>();
+            services.AddSingleton<OnlineHubService>();
+            services.AddSingleton<PvHubService>();
+            services.AddSingleton<GrHubService>();
 
 
             services.AddHttpClient(nameof(HttpClients.AnswerMe),

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AnswerMe.Application.Common.Interfaces;
 using AnswerMe.Application.DTOs.Room;
+using AnswerMe.Application.DTOs.User;
 using AnswerMe.Application.Extensions;
 using AnswerMe.Domain.Entities;
 using AnswerMe.Infrastructure.Persistence;
@@ -51,6 +52,8 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var contactId = privateRoom.User1Id != loggedInUserId ? privateRoom.User1Id : privateRoom.User2Id;
 
+            var isOnline = await _cacheRepository.GetAsync<UserOnlineDto>("Online-" + contactId) != null;
+
             var previewContact = await _context.Users
                 .Where(x => x.id == contactId)
                 .Select(x => new PreviewUserResponse()
@@ -58,7 +61,9 @@ namespace AnswerMe.Infrastructure.Repositories
                     Id = x.id,
                     Name = x.FullName,
                     ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage),
-                }).SingleAsync();
+                    IsOnline = isOnline
+                })
+                .FirstOrDefaultAsync();
 
 
             var roomNotify = new RoomNotifyResponse() { TotalUnRead = 0, RoomId = roomId };
@@ -177,22 +182,27 @@ namespace AnswerMe.Infrastructure.Repositories
                         ProfileImage = ""
                     }
                 });
-
+            
             var pagedResult = await PagedListResponse<PrivateRoomResponse>.CreateAsync(
                 privateRoomListQuery,
                 paginationRequest
             );
 
+            
             foreach (var privateRoomResponse in pagedResult.Items)
             {
+                var isOnline= await _cacheRepository.GetAsync<UserOnlineDto>("Online-"+privateRoomResponse.Contact.Id) != null;
+                
                 privateRoomResponse.Contact = await _context.Users
                     .Where(x => x.id == privateRoomResponse.Contact.Id)
                     .Select(x => new PreviewUserResponse()
                     {
                         Id = x.id,
                         Name = x.FullName,
-                        ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
+                        ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage),
+                        IsOnline = isOnline
                     }).SingleAsync();
+                
                 var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>(loggedInUserId.ToString());
                 
                 if (isInRoom == null)

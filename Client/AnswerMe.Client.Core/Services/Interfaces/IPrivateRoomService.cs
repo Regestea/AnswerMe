@@ -11,5 +11,5 @@ public interface IPrivateRoomService
     Task<ReadResponse<BooleanResponse>> GetUserIsOnlineInRoom(Guid roomId, Guid userId);
     Task<CreateResponse<IdResponse>> CreateAsync(Guid contactId);
     Task<ReadResponse<PrivateRoomResponse>> GetPrivateRoomByIdAsync(Guid id);
-    Task<ReadResponse<RoomLastSeenResponse>> GetRoomLastSeenAsync(Guid contactId,Guid roomId);
+    Task<ReadResponse<RoomLastSeenResponse>> GetRoomLastSeenAsync(Guid userId,Guid roomId);
 }

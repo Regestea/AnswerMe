@@ -11,7 +11,7 @@
 @inject IObjectHelperService ObjectHelperService
 @inject IGroupService GroupService
 
-<div onclick="my_modal_4.showModal()" class="btn avatar" style="position: absolute;bottom: 0;right: 40px; background: none">
+<div onclick="NewMessage.showModal()" class="btn avatar" style="position: absolute;bottom: 0;right: 40px; background: none">
     <div class="w-20 rounded-full" style="border-radius: 100px 20px 20px 20px;">
         <svg style="background: linear-gradient(144deg, rgba(116, 128, 255, 1) 0%, rgba(100, 25, 230, 1) 100%);padding: 15px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" id="Pen">
             <path d="m46.242 10.245-4.467 4.467-8.616-8.352 4.599-4.599a5.999 5.999 0 1 1 8.484 8.484zm-7.083 7.08L11.694 44.79 0 48.048l3.207-11.739L30.57 8.946l8.589 8.379z" fill="#f5deb3" class="color000000 svgShape"></path>
@@ -19,7 +19,7 @@
     </div>
 </div>
 
-<dialog id="my_modal_4" class="modal">
+<dialog id="NewMessage" class="modal">
     <div class="modal-box w-11/12 max-w-2xl">
         <div class="modal-action" style="margin: 10px">
             <form method="dialog">
@@ -66,7 +66,7 @@
                                 <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:40px ">
                                     <div class="avatar" style="display: grid">
                                         <div class="w-16 rounded-full  ring-offset-base-100 ring-offset-2" style="justify-self: center">
-                                            <UserAvatar Class="w-16" ImageUrl="@ImageUrl" Letter="@user.FullName?.FirstLetter()"/>
+                                            <UserAvatar Class="w-16" ImageUrl="@user.ProfileImage" Letter="@user.FullName?.FirstLetter()"/>
 
                                         </div>
                                     </div>
@@ -118,7 +118,7 @@
                                 @if (UploadProgress != null)
                                 {
                                     <progress value="@UploadProgress" class="progress progress-primary w-56 mt-12" v max="100" style="justify-self: center"></progress>
-                                    <button type="button" class="btn btn-outline btn-secondary mt-6">Cancel</button>
+                                    <button @onclick="CancelUpload" type="button" class="btn btn-outline btn-secondary mt-6">Cancel</button>
                                 }
                                 else
                                 {
@@ -185,9 +185,8 @@
         if (result.IsSuccess)
         {
             var groupId = result.AsSuccess.Value.Id;
-            NavigationManager.NavigateTo("/Counter");
+            NavigationManager.NavigateTo($"/GR/{groupId}");
             await JsRuntime.InvokeVoidAsync("ResizeComponent");
-            //go to group chat
         }
 
         if (result.IsValidationFailureList)
@@ -243,7 +242,6 @@
             Console.WriteLine(privateRoomId);
             NavigationManager.NavigateTo($"/PV/{privateRoomId}");
             await JsRuntime.InvokeVoidAsync("ResizeComponent");
-            //redirect to chat component
         }
         // show a message box that not found
     }

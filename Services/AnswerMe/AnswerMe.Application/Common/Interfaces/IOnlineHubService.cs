@@ -16,6 +16,4 @@ public interface IOnlineHubService
     /// <returns>A task that represents the asynchronous operation. The task result contains a ReadResponse object with the online status of the user.</returns>
     Task<ReadResponse<BooleanResponse>> IsOnlineAsync(Guid userId);
     
-    Task<CreateResponse<VoidResponse>> NotifyNewPvMessageAsync(Guid roomId,string message);
-    Task<CreateResponse<VoidResponse>> NotifyNewGroupMessageAsync(Guid roomId,string message);
 }

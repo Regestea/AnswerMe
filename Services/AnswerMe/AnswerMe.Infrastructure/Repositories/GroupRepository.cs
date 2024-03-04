@@ -19,6 +19,7 @@ using AnswerMe.Application.Common.Interfaces;
 using AnswerMe.Application.DTOs.Room;
 using Google.Protobuf;
 using Models.Shared.Responses.Message;
+using Models.Shared.Responses.PrivateRoom;
 
 namespace AnswerMe.Infrastructure.Repositories
 {
@@ -28,7 +29,8 @@ namespace AnswerMe.Infrastructure.Repositories
         private readonly FileStorageService _fileStorageService;
         private ICacheRepository _cacheRepository;
 
-        public GroupRepository(AnswerMeDbContext context, FileStorageService fileStorageService, ICacheRepository cacheRepository)
+        public GroupRepository(AnswerMeDbContext context, FileStorageService fileStorageService,
+            ICacheRepository cacheRepository)
         {
             _context = context;
             _fileStorageService = fileStorageService;
@@ -81,7 +83,7 @@ namespace AnswerMe.Infrastructure.Repositories
                 .ToListAsync();
 
             var groupQuery = _context.GroupChats.Where(x => groupIdList.Contains(x.id))
-                .OrderByDescending(x=>x.CreatedDate)
+                .OrderByDescending(x => x.CreatedDate)
                 .Select(x => new GroupResponse
                 {
                     Group = new PreviewGroupResponse()
@@ -104,12 +106,11 @@ namespace AnswerMe.Infrastructure.Repositories
                 groupQuery,
                 paginationRequest
             );
-            
+
             foreach (var groupResponse in pagedResult.Items)
             {
-              
-                var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>(loggedInUserId.ToString());
-                
+                var isInRoom = await _cacheRepository.GetAsync<RoomConnectionDto>("GR-" + loggedInUserId.ToString());
+
                 if (isInRoom == null)
                 {
                     var lastVisit = await _context.RoomLastSeen
@@ -118,18 +119,17 @@ namespace AnswerMe.Infrastructure.Repositories
                     if (lastVisit != null)
                     {
                         groupResponse.RoomNotify.TotalUnRead = await _context.Messages
-                            .Where(x => x.RoomChatId == groupResponse.RoomNotify.RoomId && x.CreatedDate > lastVisit.LastSeenUtc)
+                            .Where(x => x.RoomChatId == groupResponse.RoomNotify.RoomId &&
+                                        x.CreatedDate > lastVisit.LastSeenUtc)
                             .CountAsync();
                     }
                 }
 
                 groupResponse.RoomNotify.MessageGlance = await _context.Messages
                     .Where(x => x.RoomChatId == groupResponse.RoomNotify.RoomId)
-                    .OrderByDescending(x=>x.CreatedDate)
+                    .OrderByDescending(x => x.CreatedDate)
                     .Select(x => x.Text)
                     .FirstOrDefaultAsync() ?? string.Empty;
-                
-              
             }
 
             return new Success<PagedListResponse<GroupResponse>>(pagedResult);
@@ -332,6 +332,33 @@ namespace AnswerMe.Infrastructure.Repositories
             return new Success();
         }
 
+        public async Task<ReadResponse<RoomLastSeenResponse>> GetLastSeenAsync(Guid loggedInUserId, Guid groupId, Guid userId)
+        {
+            var isUserInGroup = await _context.UserGroups.AnyAsync(x =>
+                x.UserId == loggedInUserId && x.GroupId == groupId);
+
+            if (!isUserInGroup)
+            {
+                return new NotFound();
+            }
+
+            var lastSeenResponse = await _context.RoomLastSeen
+                .Where(x => x.RoomId == groupId && x.UserId == userId)
+                .Select(x => new RoomLastSeenResponse()
+                {
+                    UserId = x.UserId,
+                    RoomId = x.RoomId,
+                    LastSeenUtc = x.LastSeenUtc
+                }).FirstOrDefaultAsync();
+
+            if (lastSeenResponse == null)
+            {
+                return new NotFound();
+            }
+
+            return new Success<RoomLastSeenResponse>(lastSeenResponse);
+        }
+
         public async Task<CreateResponse<IdResponse>> JoinUserAsync(Guid loggedInUserId, Guid groupId, Guid joinUserId)
         {
             var existUser = await _context.Users.AnyAsync(x => x.id == joinUserId);
@@ -364,6 +391,23 @@ namespace AnswerMe.Infrastructure.Repositories
             await _context.SaveChangesAsync();
 
             return new Success<IdResponse>(new IdResponse() { FieldName = "JoinedUserId", Id = joinUserId });
+        }
+
+        public async Task<ReadResponse<MemberCountResponse>> MembersCountAsync(Guid loggedInUserId, Guid groupId)
+        {
+            var isInGroup=await _context.UserGroups.AnyAsync(x=>x.UserId==loggedInUserId && x.GroupId==groupId);
+
+            if (!isInGroup)
+            {
+                return new AccessDenied();
+            }
+
+            var result = await _context.UserGroups
+                .Where(x => x.GroupId == groupId)
+                .CountAsync();
+            
+            return new Success<MemberCountResponse>(new MemberCountResponse(){Count = result});
+            
         }
 
         public async Task<DeleteResponse> KickUserAsync(Guid loggedInUserId, Guid groupId, Guid kickUserId)

@@ -2,6 +2,7 @@
 using Models.Shared.Requests.Group;
 using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Group;
+using Models.Shared.Responses.PrivateRoom;
 using Models.Shared.Responses.Shared;
 
 namespace AnswerMe.Application.Common.Interfaces;
@@ -30,29 +31,14 @@ public interface IGroupRepository
     /// , containing a read response with a paged list of group responses.</returns>
     Task<ReadResponse<PagedListResponse<GroupResponse>>> GetListAsync(Guid loggedInUserId, PaginationRequest paginationRequest);
 
-    /// Retrieves a list of users
-    /// in a group with pagination
-    /// .
-    /// @param loggedInUserId The
-    /// ID of the currently logged
-    /// in user.
-    /// @param groupId The ID of
-    /// the group to retrieve the
-    /// user list from.
-    /// @param paginationRequest
-    /// The pagination details for
-    /// retrieving the user list.
-    /// @return A task that represents
-    /// the asynchronous operation
-    /// . The task result contains
-    /// a response
-    /// containing the user
-    /// list, along with the pagination
-    /// information.
-    /// @see ReadResponse
-    /// @see PagedListResponse
-    /// @see PreviewGroupUserResponse
-    /// /
+    /// <summary>
+    /// Retrieves a paged list of users in a group asynchronously.
+    /// </summary>
+    /// <param name="loggedInUserId">The ID of the logged in user.</param>
+    /// <param name="groupId">The ID of the group.</param>
+    /// <param name="paginationRequest">The pagination request settings.</param>
+    /// <returns>A task representing the asynchronous operation
+    /// , containing a read response with a paged list of user responses.</returns>
     Task<ReadResponse<PagedListResponse<PreviewGroupUserResponse>>> UserListAsync(Guid loggedInUserId, Guid groupId, PaginationRequest paginationRequest);
 
     /// <summary>
@@ -91,6 +77,17 @@ public interface IGroupRepository
     /// <param name="request">The request containing the updated group information.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the response from the update operation.</returns>
     Task<UpdateResponse> EditAsync(Guid loggedInUserId, Guid groupId, EditGroupRequest request);
+    
+    
+    /// <summary>
+    /// Get last seen information for a specific user in group.
+    /// </summary>
+    /// <param name="loggedInUserId">The unique identifier of the logged-in user.</param>
+    /// <param name="groupId">The unique identifier of the group.</param>
+    /// <param name="userId">The unique identifier of the user for whom to retrieve the last seen information.</param>
+    /// <returns>A task that represents the asynchronous operation with the result
+    /// being a <see cref="ReadResponse{T}"/> containing the last seen information of type <see cref="RoomLastSeenResponse"/>.</returns>
+    Task<ReadResponse<RoomLastSeenResponse>> GetLastSeenAsync(Guid loggedInUserId, Guid groupId, Guid userId);
 
     /// <summary>
     /// Joins a user to a group asynchronously.
@@ -101,6 +98,15 @@ public interface IGroupRepository
     /// <returns>A task representing the asynchronous operation. The task result contains
     /// a <see cref="CreateResponse{T}"/> object, where T is of type <see cref="IdResponse"/>.</returns>
     Task<CreateResponse<IdResponse>> JoinUserAsync(Guid loggedInUserId, Guid groupId, Guid joinUserId);
+    
+    ///<summary>
+    /// Gets the number of members in a group
+    /// </summary>
+    /// <param name="loggedInUserId">The ID of the logged-in user.</param>
+    /// <param name="groupId">The ID of the group.</param>
+    /// <returns>A <see cref="ReadResponse{T}"/> object, where T is of type <see cref="MemberCountResponse"/>
+    /// a <see cref="ReadResponse{T}"/> object, where T is of type <see cref="MemberCountResponse"/>.</returns>
+    Task<ReadResponse<MemberCountResponse>> MembersCountAsync(Guid loggedInUserId, Guid groupId);
 
     /// <summary>
     /// Kicks a user from a group asynchronously.

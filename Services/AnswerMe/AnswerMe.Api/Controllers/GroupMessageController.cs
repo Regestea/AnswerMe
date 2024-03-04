@@ -32,6 +32,7 @@ namespace AnswerMe.Api.Controllers
         /// </summary>
         /// <param name="groupId">The unique identifier of the group.</param>
         /// <param name="paginationRequest">The request for pagination.</param>
+        /// <param name="jumpToUnRead">should jump to unRead page</param>
         /// <response code="200">OK: Returns the list of messages in the group.</response>
         /// <response code="403">Forbidden: You don't have permission to access the group.</response>
         /// <response code="404">Not Found: The group or messages could not be found.</response>
@@ -39,12 +40,14 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(typeof(PagedListResponse<MessageResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetListAsync([FromRoute] Guid groupId, [FromQuery] PaginationRequest paginationRequest)
+        public async Task<IActionResult> GetListAsync([FromRoute] Guid groupId,
+            [FromQuery] PaginationRequest paginationRequest, [FromQuery] bool jumpToUnRead = false)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
-            var result = await _groupMessageService.GetListAsync(loggedInUser.id, groupId, paginationRequest);
+            var result =
+                await _groupMessageService.GetListAsync(loggedInUser.id, groupId, jumpToUnRead, paginationRequest);
 
             if (result.IsAccessDenied)
             {
@@ -59,7 +62,7 @@ namespace AnswerMe.Api.Controllers
             return Ok(result.AsSuccess.Value);
         }
 
-        
+
         /// <summary>
         /// Get details of a specific message.
         /// </summary>
@@ -73,14 +76,14 @@ namespace AnswerMe.Api.Controllers
         /// <response code="404">If the message with the given ID is not found, returns a not found status.</response>
         /// <response code="403">If access to the message is denied, returns a forbidden status.</response>
         [HttpGet("{messageId:guid}")]
-        [ProducesResponseType(typeof(MessageResponse),StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(MessageResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetAsync([FromRoute] Guid messageId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
-           
+
             var result = await _groupMessageService.GetAsync(loggedInUser.id, messageId);
 
             if (result.IsNotFound)
@@ -95,8 +98,8 @@ namespace AnswerMe.Api.Controllers
 
             return Ok(result.AsSuccess.Value);
         }
-        
-        
+
+
         /// <summary>
         /// Send a message to a group.
         /// </summary>
@@ -194,7 +197,6 @@ namespace AnswerMe.Api.Controllers
         }
 
 
-
         /// <summary>
         /// Edit media content of a message in a group.
         /// </summary>
@@ -210,7 +212,8 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> EditMediaAsync([FromRoute] Guid messageId, [FromRoute] Guid mediaId, EditMessageMediaRequest request)
+        public async Task<IActionResult> EditMediaAsync([FromRoute] Guid messageId, [FromRoute] Guid mediaId,
+            EditMessageMediaRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);

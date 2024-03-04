@@ -21,15 +21,17 @@ namespace AnswerMe.Infrastructure.Services
         private readonly IGroupHubService _groupHubService;
         private readonly IOnlineHubService _onlineHubService;
 
-        public GroupMessageService(AnswerMeDbContext context, FileStorageService fileStorageService, IGroupHubService groupHubService, IOnlineHubService onlineHubService)
+        public GroupMessageService(AnswerMeDbContext context, FileStorageService fileStorageService,
+            IGroupHubService groupHubService, IOnlineHubService onlineHubService)
         {
             _context = context;
             _fileStorageService = fileStorageService;
             _groupHubService = groupHubService;
             _onlineHubService = onlineHubService;
         }
-        
-        public async Task<CreateResponse<IdResponse>> SendAsync(Guid loggedInUserId, Guid groupId, SendMessageRequest request)
+
+        public async Task<CreateResponse<IdResponse>> SendAsync(Guid loggedInUserId, Guid groupId,
+            SendMessageRequest request)
         {
             var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
@@ -38,7 +40,8 @@ namespace AnswerMe.Infrastructure.Services
                 return new NotFound();
             }
 
-            var isUserInGroup = await _context.UserGroups.AnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
+            var isUserInGroup =
+                await _context.UserGroups.AnyAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
 
             if (!isUserInGroup)
             {
@@ -67,7 +70,8 @@ namespace AnswerMe.Infrastructure.Services
             {
                 foreach (var tokenRequest in request.MediaTokenList)
                 {
-                    var storageResponse = await _fileStorageService.GetObjectPathAsync(loggedInUserId, tokenRequest.Token);
+                    var storageResponse =
+                        await _fileStorageService.GetObjectPathAsync(loggedInUserId, tokenRequest.Token);
                     if (!string.IsNullOrWhiteSpace(storageResponse.FilePath))
                     {
                         var media = new Media()
@@ -82,6 +86,7 @@ namespace AnswerMe.Infrastructure.Services
                         {
                             media.BlurHash = storageResponse.BlurHash;
                         }
+
                         message.MediaList.Add(media);
                     }
                 }
@@ -90,12 +95,12 @@ namespace AnswerMe.Infrastructure.Services
             var userSenderPreview = await _context.Users
                 .Where(x => x.id == message.UserSenderId)
                 .Select(x =>
-                new PreviewUserResponse()
-                {
-                    Id = x.id,
-                    Name = x.FullName,
-                    ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
-                }).SingleAsync();
+                    new PreviewUserResponse()
+                    {
+                        Id = x.id,
+                        Name = x.FullName,
+                        ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
+                    }).SingleAsync();
 
             var messageResponse = new MessageResponse()
             {
@@ -122,12 +127,8 @@ namespace AnswerMe.Infrastructure.Services
                 }
             }
 
-            await _groupHubService.SendMessageAsync(groupId, messageResponse);
+            await _groupHubService.SendMessageAsync(loggedInUserId, groupId, messageResponse);
             
-            if (!string.IsNullOrWhiteSpace(message.Text))
-            {
-                await _onlineHubService.NotifyNewPvMessageAsync(groupId, message.Text);
-            }
             await _context.Messages.AddAsync(message);
 
             await _context.SaveChangesAsync();
@@ -135,7 +136,8 @@ namespace AnswerMe.Infrastructure.Services
             return new Success<IdResponse>(new IdResponse() { FieldName = "MessageId", Id = message.id });
         }
 
-        public async Task<ReadResponse<PagedListResponse<MessageResponse>>> GetListAsync(Guid loggedInUserId, Guid groupId, PaginationRequest paginationRequest)
+        public async Task<ReadResponse<PagedListResponse<MessageResponse>>> GetListAsync(Guid loggedInUserId,
+            Guid groupId, bool jumpToUnRead, PaginationRequest paginationRequest)
         {
             var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
@@ -144,12 +146,28 @@ namespace AnswerMe.Infrastructure.Services
                 return new NotFound();
             }
 
-            var isUserInGroup = await _context.UserGroups.AnyAsync(x => x.GroupId == groupId && x.UserId == loggedInUserId);
+            var isUserInGroup =
+                await _context.UserGroups.AnyAsync(x => x.GroupId == groupId && x.UserId == loggedInUserId);
 
             if (!isUserInGroup)
             {
                 return new AccessDenied();
             }
+
+            var lastRoomVisit = await _context.RoomLastSeen
+                .Where(x => x.RoomId == groupId && x.UserId == loggedInUserId)
+                .Select(x => x.LastSeenUtc).FirstOrDefaultAsync();
+
+            if (jumpToUnRead && lastRoomVisit != DateTimeOffset.MinValue)
+            {
+                var unReadMessagesCount =
+                    await _context.Messages.CountAsync(x => x.RoomChatId == groupId && x.CreatedDate > lastRoomVisit);
+                var page = unReadMessagesCount > 0
+                    ? (int)Math.Ceiling((decimal)unReadMessagesCount / paginationRequest.PageSize)
+                    : 1;
+                paginationRequest.CurrentPage = page;
+            }
+
 
             var messagesQuery = _context.Messages
                 .Where(x => x.RoomChatId == groupId)
@@ -172,40 +190,43 @@ namespace AnswerMe.Infrastructure.Services
                         GroupInviteToken = message.GroupInvitationToken,
                         ModifiedDate = message.ModifiedDate,
                         ReplyMessageId = message.ReplyMessageId,
-                        UserSender = _context.Users.Select(x => new PreviewUserResponse()
-                        {
-                            Id =x.id,
-                            Name = x.FullName,
-                            ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
-                        }).First()
+                        UserSender = _context.Users.Where(x => x.id == message.UserSenderId).Select(x =>
+                            new PreviewUserResponse()
+                            {
+                                Id = x.id,
+                                Name = x.FullName,
+                                ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
+                            }).Single()
                     }).AsQueryable();
 
             var pagedResult = await PagedListResponse<MessageResponse>.CreateAsync(
                 messagesQuery,
                 paginationRequest
-                );
-
+            );
+            pagedResult.Items.Reverse();
             return new Success<PagedListResponse<MessageResponse>>(pagedResult);
         }
 
         public async Task<ReadResponse<MessageResponse>> GetAsync(Guid loggedInUserId, Guid messageId)
         {
-             var existMessage = await _context.Messages.AnyAsync(x => x.id == messageId);
-            
+            var existMessage = await _context.Messages.AnyAsync(x => x.id == messageId);
+
             if (!existMessage)
             {
                 return new NotFound();
             }
-            
-            var roomId = await _context.Messages.Where(x => x.id == messageId).Select(x=>x.RoomChatId).FirstOrDefaultAsync();
-            var isUserInRoom = await _context.UserGroups.AnyAsync(x=>x.GroupId == roomId && x.UserId == loggedInUserId);
+
+            var roomId = await _context.Messages.Where(x => x.id == messageId).Select(x => x.RoomChatId)
+                .FirstOrDefaultAsync();
+            var isUserInRoom =
+                await _context.UserGroups.AnyAsync(x => x.GroupId == roomId && x.UserId == loggedInUserId);
 
             if (!isUserInRoom)
             {
                 return new AccessDenied();
             }
 
-            var message =await _context.Messages
+            var message = await _context.Messages
                 .Where(x => x.id == messageId)
                 .Include(x => x.MediaList)
                 .Select(message =>
@@ -300,13 +321,13 @@ namespace AnswerMe.Infrastructure.Services
             }
 
 
-            await _groupHubService.UpdateMessageAsync(message.RoomChatId, messageResponse);
+            await _groupHubService.UpdateMessageAsync(loggedInUserId, message.RoomChatId, messageResponse);
 
             return new Success();
-
         }
 
-        public async Task<UpdateResponse> UpdateMediaAsync(Guid loggedInUserId, Guid messageId, Guid mediaId, EditMessageMediaRequest request)
+        public async Task<UpdateResponse> UpdateMediaAsync(Guid loggedInUserId, Guid messageId, Guid mediaId,
+            EditMessageMediaRequest request)
         {
             var existMessage = await _context.Messages.AnyAsync(x => x.id == messageId);
 
@@ -333,14 +354,14 @@ namespace AnswerMe.Infrastructure.Services
 
             if (string.IsNullOrWhiteSpace(request.MediaToken))
                 return new ValidationFailed()
-                { Field = nameof(request.MediaToken), Error = $"Invalid {request.MediaToken}" };
+                    { Field = nameof(request.MediaToken), Error = $"Invalid {request.MediaToken}" };
 
 
             var storageResponse = await _fileStorageService.GetObjectPathAsync(loggedInUserId, request.MediaToken);
 
             if (string.IsNullOrWhiteSpace(storageResponse.FilePath))
                 return new ValidationFailed()
-                { Field = nameof(request.MediaToken), Error = $"Invalid {request.MediaToken}" };
+                    { Field = nameof(request.MediaToken), Error = $"Invalid {request.MediaToken}" };
 
             var media = new Media()
             {
@@ -357,7 +378,7 @@ namespace AnswerMe.Infrastructure.Services
 
             if (message.MediaList == null)
                 return new ValidationFailed()
-                { Field = nameof(messageId), Error = $"Invalid {nameof(messageId)}" };
+                    { Field = nameof(messageId), Error = $"Invalid {nameof(messageId)}" };
 
             var messageMedias = message.MediaList.ToList();
 
@@ -365,7 +386,7 @@ namespace AnswerMe.Infrastructure.Services
 
             if (oldMedia == null)
                 return new ValidationFailed()
-                { Field = nameof(mediaId), Error = $"Invalid {nameof(mediaId)}" };
+                    { Field = nameof(mediaId), Error = $"Invalid {nameof(mediaId)}" };
 
             await _fileStorageService.DeleteObjectAsync(loggedInUserId, oldMedia.Path);
 
@@ -377,7 +398,6 @@ namespace AnswerMe.Infrastructure.Services
                 MessageId = oldMedia.MessageId,
                 Path = storageResponse.FilePath,
                 Type = FileStorageHelper.GetMediaType(storageResponse.FileFormat),
-
             };
 
             if (!string.IsNullOrWhiteSpace(storageResponse.BlurHash))
@@ -430,14 +450,14 @@ namespace AnswerMe.Infrastructure.Services
             }
 
 
-            await _groupHubService.UpdateMessageAsync(message.RoomChatId, messageResponse);
+            await _groupHubService.UpdateMessageAsync(loggedInUserId, message.RoomChatId, messageResponse);
 
             return new Success();
         }
 
         public async Task<DeleteResponse> DeleteAsync(Guid loggedInUserId, Guid messageId)
         {
-            var existMessage =await _context.Messages.AnyAsync(x => x.id == messageId);
+            var existMessage = await _context.Messages.AnyAsync(x => x.id == messageId);
 
             if (!existMessage)
             {
@@ -461,7 +481,7 @@ namespace AnswerMe.Infrastructure.Services
                 _context.Messages.Remove(message);
                 await _context.SaveChangesAsync();
 
-                await _groupHubService.RemoveMessageAsync(message.RoomChatId, message.id);
+                await _groupHubService.RemoveMessageAsync(loggedInUserId, message.RoomChatId, message.id);
 
                 return new Success();
             }
@@ -532,7 +552,7 @@ namespace AnswerMe.Infrastructure.Services
                         }
                     }
 
-                    await _groupHubService.UpdateMessageAsync(message.RoomChatId, messageResponse);
+                    await _groupHubService.UpdateMessageAsync(loggedInUserId, message.RoomChatId, messageResponse);
 
                     return new Success();
                 }

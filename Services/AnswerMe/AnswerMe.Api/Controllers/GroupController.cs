@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Models.Shared.Requests.Group;
 using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Group;
+using Models.Shared.Responses.PrivateRoom;
 using Models.Shared.Responses.Shared;
 
 namespace AnswerMe.Api.Controllers
@@ -150,6 +151,59 @@ namespace AnswerMe.Api.Controllers
 
             return NoContent();
         }
+        
+        /// <summary>
+        /// Get the last seen status of a user in a group
+        /// </summary>
+        /// <param name="groupId">The ID of the group.</param>
+        /// <param name="userId">The ID of the user to query the last seen status.</param>
+        /// <returns>Last seen status on success, 403 (Forbidden) if unauthorized, 404 (Not Found) if not found.</returns>
+        [HttpGet("{groupId:guid}/User/{userId:guid}/LastSeen")]
+        [ProducesResponseType(typeof(RoomLastSeenResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetLastSeenStatusAsync([FromRoute] Guid groupId, [FromRoute] Guid userId)
+        {
+            var requestToken = _jwtTokenRepository.GetJwtToken();
+            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+
+            var result = await _groupRepository.GetLastSeenAsync(loggedInUser.id, groupId, userId);
+
+            if (result.IsAccessDenied)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            if (result.IsNotFound)
+            {
+                return NotFound();
+            }
+
+            return Ok(result.AsSuccess.Value);
+        }
+
+        ///<summary>
+        ///Get group members count
+        /// </summary>
+
+        [HttpGet("{groupId:guid}/User/Count")]
+        public async Task<IActionResult> GetGroupMembersCountAsync([FromRoute] Guid groupId)
+        {
+            var requestToken = _jwtTokenRepository.GetJwtToken();
+            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+            
+            var result=await _groupRepository.MembersCountAsync(loggedInUser.id, groupId);
+            
+            if (result.IsAccessDenied)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            return Ok(result.AsSuccess.Value);
+        }
+        
+        
+        
 
 
         /// <summary>

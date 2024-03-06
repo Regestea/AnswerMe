@@ -107,7 +107,7 @@ function ChatScroll(elementId) {
     if (scrollStatus != null) {
 
         let totalScroll = scrollStatus.ScrollHeight - scrollStatus.ClientHeight;
-        let remainingOneThird = totalScroll / 10;
+        let remainingOneThird = totalScroll /20;
         let lastOneThird = scrollStatus.ScrollTop > (totalScroll - remainingOneThird);
         let firstOneThird = scrollStatus.ScrollTop < remainingOneThird;
 

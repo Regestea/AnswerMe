@@ -11,23 +11,6 @@ window.addEventListener('hashchange', () => {
 window.addEventListener('popstate', (event) => {
     console.log('URL changed! New URL:', window.location.href);
 });
-
-function ScrollToView(id) {
-    let element = document.getElementById(id);
-    if (element != null) {
-        element.scrollIntoView(
-            // {behavior: 'smooth'}
-        );
-    }
-}
-
-function AddClass(id, className) {
-    let element = document.getElementById(id);
-    if (element != null) {
-        element.classList.add(className)
-    }
-}
-
 function GetScrollStatus(elementId) {
     let element = document.getElementById(elementId);
 
@@ -42,26 +25,7 @@ function GetScrollStatus(elementId) {
     return null;
 }
 
-function RemoveClass(id, className) {
-    let element = document.getElementById(id);
-    if (element != null) {
-        element.classList.remove(className);
-    }
-}
 
-function ReplaceClass(id, oldClassName, newClassName) {
-    let element = document.getElementById(id);
-    if (element != null) {
-        element.classList.replace(oldClassName, newClassName);
-    }
-}
-
-function SetInnerText(id, text) {
-    let element = document.getElementById(id);
-    if (element != null) {
-        element.innerText = text;
-    }
-}
 
 function ScrollToEnd(id){
     var element = document.getElementById(id);

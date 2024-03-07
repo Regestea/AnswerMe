@@ -7,6 +7,13 @@ function ScrollToView(id) {
     }
 }
 
+function SubmitForm(id) {
+    let element = document.getElementById(id);
+    if (element != null) {
+        element.submit();
+    }
+}
+
 function AddClass(id, className) {
     let element = document.getElementById(id);
     if (element != null) {

@@ -38,14 +38,12 @@
     
     public async Task LoadNewMessages()
     {
-        Console.WriteLine("load new one");
-        await _groupMessageRef.LoadNewMessages();
+        await _groupMessageRef.LoadNewMessagesAsync();
     }
 
     public async Task LoadOldMessages()
     {
-        Console.WriteLine("load old one");
-        await _groupMessageRef.LoadOldMessages();
+        await _groupMessageRef.LoadOldMessagesAsync();
     }
     
     private async Task<DateTime?> GetLastVisit(Guid userId)

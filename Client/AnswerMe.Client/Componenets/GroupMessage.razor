@@ -127,7 +127,7 @@
     }
     
     
-    public async Task LoadNewMessages()
+    public async Task LoadNewMessagesAsync()
     {
         if (_newMessagePaginationRequest.CurrentPage > 1)
         {
@@ -143,7 +143,7 @@
         }
     }
 
-    public async Task LoadOldMessages()
+    public async Task LoadOldMessagesAsync()
     {
         var _lastLook = _messageList.First().id + "-message";
 

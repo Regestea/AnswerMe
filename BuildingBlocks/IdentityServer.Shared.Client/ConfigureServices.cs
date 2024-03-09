@@ -13,7 +13,8 @@ namespace IdentityServer.Shared.Client
 {
     public static class ConfigureServices
     {
-        public static IServiceCollection AddIdentityServerClientServices(this IServiceCollection services, Action<ConfigureOptions> options)
+        public static IServiceCollection AddIdentityServerClientServices(this IServiceCollection services,
+            Action<ConfigureOptions> options)
         {
             var configureOptions = new ConfigureOptions();
             options.Invoke(configureOptions);
@@ -31,18 +32,18 @@ namespace IdentityServer.Shared.Client
 
             #region Redis Cache
 
-            services.AddDistributedRedisCache(options =>
+            services.AddStackExchangeRedisCache(redisCacheOptions =>
             {
-                options.Configuration = configureOptions.RedisConnectionString;
-                options.InstanceName = configureOptions.RedisInstanceName;
-
+                redisCacheOptions.Configuration = configureOptions.RedisConnectionString;
+                redisCacheOptions.InstanceName = configureOptions.RedisInstanceName;
             });
 
             #endregion
 
             #region Redis Multiplexer
 
-            services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect("localhost:9191,password=123456"));
+            services.AddSingleton<IConnectionMultiplexer>(provider =>
+                ConnectionMultiplexer.Connect("localhost:9191,password=123456"));
 
             #endregion
 

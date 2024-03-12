@@ -12,7 +12,7 @@
  
 <div class="p-4 sm:ml-64 body-content element">
 
-    <PvNavHeader @key="RoomId" RoomId="RoomId" IsContactInRoom="_isContactInRoom" ContactLastRoomVisit="_contactLastRoomVisit"/>
+    <PvNavHeader @key="RoomId" RoomId="RoomId" IsContactInRoom="_isContactInRoom" ContactLastRoomVisit="_contactLastRoomVisit" />
     
     <ChatLayout CallLoadNewMessages="LoadNewMessages" CallLoadOldMessages="LoadOldMessages">
         <ChatContent>
@@ -34,17 +34,6 @@
     private DateTimeOffset? _userLastRoomVisit;
 
 
-    public async Task LoadNewMessages()
-    {
-        Console.WriteLine("load new one");
-        await _privateMessageRef.LoadNewMessages();
-    }
-
-    public async Task LoadOldMessages()
-    {
-        Console.WriteLine("load old one");
-        await _privateMessageRef.LoadOldMessages();
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -56,13 +45,14 @@
         {
             //redirect to 404 page
         }
-
+        _privateRoomResponse = privateRoom.AsSuccess.Value;
+        
 
         PvHubService.JoinedRoom(UserJoinedRoom);
         PvHubService.LeftRoom(UserLeftRoom);
 
 
-        _privateRoomResponse = privateRoom.AsSuccess.Value;
+
 
         _userLastRoomVisit = await GetLastVisit(_loggedInUserId);
 
@@ -92,6 +82,18 @@
         return DateTimeOffset.MinValue;
     }
 
+    
+    public async Task LoadNewMessages()
+    {
+        Console.WriteLine("load new one");
+        await _privateMessageRef.LoadNewMessages();
+    }
+
+    public async Task LoadOldMessages()
+    {
+        Console.WriteLine("load old one");
+        await _privateMessageRef.LoadOldMessages();
+    }
 
     private void UserJoinedRoom(Guid userId)
     {

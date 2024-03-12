@@ -63,13 +63,34 @@ public class GroupService : IGroupService
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
-        var response = await _httpClient.SendRequestAsync($"Group/{groupId}/User/List".AddPagination(paginationRequest), HttpMethod.Get);
+        var response = await _httpClient.SendRequestAsync($"Group/{groupId}/User/List?".AddPagination(paginationRequest), HttpMethod.Get);
 
         if (response.StatusCode == HttpStatusCode.OK)
         {
             var users = await JsonConverter.ToObject<PagedListResponse<PreviewGroupUserResponse>>(response.Content);
 
             return new Success<PagedListResponse<PreviewGroupUserResponse>>(users);
+        }
+
+        if (response.StatusCode == HttpStatusCode.Forbidden)
+        {
+            return new AccessDenied();
+        }
+
+        return new NotFound();
+    }
+
+    public async Task<ReadResponse<BooleanResponse>> IsAdminAsync(Guid groupId, Guid userId)
+    {
+        await _httpClient.AddAuthHeader(_localStorageService);
+
+        var response = await _httpClient.SendRequestAsync($"Group/{groupId}/User/{userId}/IsAdmin", HttpMethod.Get);
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            var isAdmin = await JsonConverter.ToObject<BooleanResponse>(response.Content);
+
+            return new Success<BooleanResponse>(isAdmin);
         }
 
         if (response.StatusCode == HttpStatusCode.Forbidden)

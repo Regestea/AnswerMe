@@ -1,0 +1,55 @@
+@using AnswerMe.Client.Core.Extensions
+@using Models.Shared.Responses.User
+@inject IUserService UserService
+<div class="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100" style="display:contents">
+    <form class="card-body" style="display:grid;justify-content: center">
+        <div class="form-control mt-6" style="display:grid">
+            <div class="avatar" style="display: grid">
+                <div class="w-36 rounded-full " style="justify-self: center">
+                    <UserAvatar Class="w-36" ImageUrl="@_userResponse.ProfileImage" Letter="@_userResponse.FullName.FirstLetter()"/>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="form-control mt-6">
+                <label class="label">
+                    <span class="label-text">Display Name</span>
+                </label>
+                <div class="badge badge-neutral badge-lg">@_userResponse.FullName</div>
+            </div>
+
+            <div class="form-control mt-6">
+                <label class="label">
+                    <span class="label-text">User Name</span>
+                </label>
+                <div class="badge badge-neutral badge-lg">@@@_userResponse.IdName</div>
+            </div>
+
+            <div class="form-control mt-6">
+                <label class="label">
+                    <span class="label-text">Phone Number</span>
+                </label>
+                <div class="badge badge-neutral badge-lg">@@@_userResponse.PhoneNumber</div>
+            </div>
+
+        </div>
+
+    </form>
+</div>
+
+@code {
+    [Parameter] public Guid UserId { get; set; }
+    
+    private UserResponse _userResponse;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await UserService.GetUserByIdAsync(UserId);
+        if (response.IsSuccess)
+        {
+            _userResponse = response.AsSuccess.Value;
+        }
+    }
+
+}

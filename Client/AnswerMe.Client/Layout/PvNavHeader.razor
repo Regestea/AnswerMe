@@ -55,33 +55,7 @@
         
         <Modal @ref="@_userDetailModalRef">
             <Content>
-                <div class="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100" style="display:contents">
-                    <form class="card-body" style="display:grid;justify-content: center">
-                        <div class="form-control mt-6" style="display:grid">
-                            <div class="avatar" style="display: grid">
-                                <div class="w-24 rounded-full " style="justify-self: center">
-                                    <UserAvatar Class="w-24" ImageUrl="" Letter="A"/>
-                                </div>
-                            </div>
-                       
-
-                        </div>
-
-                        <div class="form-control mt-6">
-                            <label class="label">
-                                <span class="label-text">Display Name</span>
-                            </label>
-                            <input type="text" placeholder="Group Name" class="input input-bordered" required/>
-                        </div>
-
-
-                        <form method="dialog" class="form-control mt-6">
-                            <button  class="btn btn-outline btn-primary">Save</button>
-
-                        </form>
-
-                    </form>
-                </div>
+                <UserDetail UserId="_privateRoomResponse.Contact.Id"/>
             </Content>
         </Modal>
         
@@ -93,6 +67,7 @@
     [Parameter] public Guid RoomId { get; set; }
     [Parameter] public bool IsContactInRoom { get; set; }
     [Parameter] public DateTimeOffset ContactLastRoomVisit { get; set; }
+
     private Modal _userDetailModalRef;
     private bool _isConnected;
     private PrivateRoomResponse? _privateRoomResponse;
@@ -100,6 +75,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        
         var response = await PrivateRoomService.GetPrivateRoomByIdAsync(RoomId);
         if (response.IsSuccess)
         {

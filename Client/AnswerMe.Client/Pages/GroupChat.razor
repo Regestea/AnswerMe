@@ -7,7 +7,7 @@
 
 <div class="p-4 sm:ml-64 body-content element">
 
-    <GrNavHeader @key="RoomId" RoomId="RoomId"/>
+    <GrNavHeader @key="RoomId" RoomId="RoomId" IsGroupAdmin="_isGroupAdmin"/>
 
     <ChatLayout CallLoadNewMessages="LoadNewMessages" CallLoadOldMessages="LoadOldMessages">
         <ChatContent>
@@ -24,12 +24,20 @@
     private Guid _loggedInUserId;
     private DateTimeOffset? _userLastRoomVisit;
     private GroupMessage _groupMessageRef;
+    private bool _isGroupAdmin;
 
 
     protected override async Task OnInitializedAsync()
     {
         var user = await AuthStateProvider.ExtractUserDataFromLocalTokenAsync();
         _loggedInUserId = user.id;
+
+        var response = await GroupService.IsAdminAsync(RoomId, _loggedInUserId);
+        
+        if (response.IsSuccess)
+        {
+            _isGroupAdmin = response.AsSuccess.Value.Result;
+        }
         
         _userLastRoomVisit = await GetLastVisit(_loggedInUserId);
         

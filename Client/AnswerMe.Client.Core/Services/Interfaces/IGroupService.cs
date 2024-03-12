@@ -12,6 +12,7 @@ public interface IGroupService
     Task<ReadResponse<PreviewGroupResponse>> GetByIdAsync(Guid groupId);
     Task<ReadResponse<PagedListResponse<GroupResponse>>> GetGroupsAsync(PaginationRequest paginationRequest);
     Task<ReadResponse<PagedListResponse<PreviewGroupUserResponse>>> UserListAsync(Guid groupId, PaginationRequest paginationRequest);
+    Task<ReadResponse<BooleanResponse>> IsAdminAsync(Guid groupId, Guid userId);
     Task<CreateResponse<IdResponse>> SetUserAsAdminAsync(Guid groupId, Guid userId);
     Task<DeleteResponse> RemoveUserFromAdminsAsync(Guid groupId, Guid userId);
     Task<CreateResponse<IdResponse>> CreateAsync(CreateGroupRequest request);

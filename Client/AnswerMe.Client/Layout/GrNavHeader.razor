@@ -17,7 +17,7 @@
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center justify-start ">
-                    <div class=" btn-ghost pr-3 pl-3 cursor-pointer" style="display: flex;align-items: center;border-radius: 10px">
+                    <div @onclick="() => _groupDetailModalRef.ShowModal()" class=" btn-ghost pr-3 pl-3 cursor-pointer" style="display: flex;align-items: center;border-radius: 10px">
                         @if (_group != null)
                         {
                             <UserAvatar ImageUrl="@_group.RoomImage" Class="w-12" Letter="@_group.Name.FirstLetter()"/>
@@ -40,7 +40,7 @@
     </div>
 
 
-    <div class="dropdown dropdown-end" s>
+    <div class="dropdown dropdown-end" >
         <div tabindex="0" role="button" class="m-3 mr-6">
 
             <button class="btn  btn-circle">
@@ -89,19 +89,56 @@
             }
 
         </ul>
+        
     </div>
+    <Modal @ref="@_groupDetailModalRef">
+        <Content>
 
+            <div class="flex justify-center">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-start ">
+                        <div @onclick="() => _groupDetailModalRef.ShowModal()" class=" btn-ghost pr-3 pl-3 cursor-pointer" style="display: flex;align-items: center;border-radius: 10px">
+                            @if (_group != null)
+                            {
+                                <UserAvatar ImageUrl="@_group.RoomImage" Class="w-24" Letter="@_group.Name.FirstLetter()"/>
+                                <div style="margin-left: 10px;font-size: 25px">
+                                    <div style="margin-right: 5px">@_group.Name</div>
+
+                                    <p class="text-primary" style="text-transform: lowercase;margin-top: 2px;font-size: 13px;">@_memberCount member</p>
+
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-block mt-8 text-primary" style="text-transform: lowercase">
+                <svg style="max-width: 30px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="addperson"><path fill="none" d="M0 0h24v24H0V0z"></path><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V8c0-.55-.45-1-1-1s-1 .45-1 1v2H2c-.55 0-1 .45-1 1s.45 1 1 1h2v2c0 .55.45 1 1 1s1-.45 1-1v-2h2c.55 0 1-.45 1-1s-.45-1-1-1H6zm9 4c-2.67 0-8 1.34-8 4v1c0 .55.45 1 1 1h14c.55 0 1-.45 1-1v-1c0-2.66-5.33-4-8-4z" fill="#595bd4" class="color000000 svgShape"></path></svg>
+                Add Members
+            </button>
+            <div class="flex justify-center mt-8">
+                <span class="badge bg-base-300 badge-lg p-6 rounded-t-3xl rounded-b-none " style="">Members</span>
+            </div>
+          
+            <div class="flex justify-center rounded-full " >
+
+                <GroupMemberList RoomId="@RoomId" IsGroupAdmin="@IsGroupAdmin" />
+            </div>
+
+
+        </Content>
+    </Modal>
 </nav>
 
 @code {
 
     [Parameter] public Guid RoomId { get; set; }
     [Parameter] public bool IsGroupAdmin { get; set; }
-
+    private Modal _groupDetailModalRef;
     private int _memberCount;
     private bool _isConnected;
     private PreviewGroupResponse? _group;
-    
+
     protected override async Task OnInitializedAsync()
     {
         var response = await GroupService.GetByIdAsync(RoomId);
@@ -110,7 +147,7 @@
             _group = response.AsSuccess.Value;
         }
 
-        var memberCountResponse =await GroupService.MembersCountAsync(RoomId);
+        var memberCountResponse = await GroupService.MembersCountAsync(RoomId);
 
         if (memberCountResponse.IsSuccess)
         {
@@ -118,16 +155,16 @@
         }
 
         GrHubService.SetRoomId(RoomId);
-        
+
         await GrHubService.ConnectToHubAsync(() =>
         {
             _isConnected = true;
             StateHasChanged();
         });
-        
+
         GrHubService.OnClosed(() =>
         {
-            _isConnected = false; 
+            _isConnected = false;
             StateHasChanged();
         });
 

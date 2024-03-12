@@ -16,7 +16,12 @@
         </div>
 
         <div class="h-full px-3 pb-4 overflow-y-auto ">
-            @Content
+           @if (_shouldRender)
+           {
+               @Content
+
+           }
+         
         </div>
 
 
@@ -26,22 +31,31 @@
 @code {
     [Parameter]
     public  RenderFragment? Content { get; set; }
+    private bool _shouldRender = false;
 
     public class ElementIdsModel
     {
         public  Guid Modal { get; } = Guid.NewGuid();
         public  Guid ModalClose { get; } = Guid.NewGuid();
     }
-    
+
     public ElementIdsModel ElementIds { get; } = new();
-    
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine(_shouldRender);
+        base.OnInitialized();
+    }
+
     public void ShowModal()
     {
+        _shouldRender = true;
         _ = JsRuntime.InvokeVoidAsync("eval", $"document.getElementById('{ElementIds.Modal}').showModal()");
     }
-    
+
     public void CloseModal()
     {
+        _shouldRender = false;
         _= JsRuntime.InvokeVoidAsync("eval", $"document.getElementById('{ElementIds.ModalClose}').submit()");
     }
 }

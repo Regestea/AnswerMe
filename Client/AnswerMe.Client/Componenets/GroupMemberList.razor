@@ -3,8 +3,10 @@
 @using Models.Shared.Responses.Group
 @using Models.Shared.Responses.Shared
 @inject IGroupService GroupService
+@inject AuthStateProvider AuthStateProvider
 
-<ul class="space-y-2 font-medium" style="height: 300px;overflow-y: auto">
+
+<ul class="space-y-2 font-medium p-2 rounded-lg bg-base-300 w-full" style="height: 300px;overflow-y: auto">
 
     @foreach (var user in _users)
     {
@@ -22,22 +24,32 @@
                 </div>
                 <div style="display: grid">
                     <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">@user.Name </h1>
-                    <form method="dialog" style=" grid-column-end: 12;position: relative">
-                        <button  class="btn btn-square" style="position: absolute;right: 10px">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="message">
-                                <path fill="url(#paint0_linear_1_13112)" fill-rule="evenodd" d="M20.455 4.73005C21 5.79961 21 7.19974 21 10V12.6988C21 12.9785 21 13.1183 20.9944 13.2364C20.8725 15.812 18.812 17.8725 16.2364 17.9944C16.1183 18 15.9623 18 15.6504 18L15.5703 18.0001C14.5501 18.0066 13.5562 18.3251 12.7222 18.9128L12.6692 18.9506L10.0585 20.8154C9.1635 21.4546 7.98743 20.5314 8.3959 19.5103C8.68525 18.7869 8.15251 18 7.37341 18H6.77166C4.68863 18 3 16.3114 3 14.2283V10C3 7.19974 3 5.79961 3.54497 4.73005C4.02433 3.78924 4.78924 3.02433 5.73005 2.54497C6.79961 2 8.19974 2 11 2H13C15.8003 2 17.2004 2 18.27 2.54497C19.2108 3.02433 19.9757 3.78924 20.455 4.73005ZM8 7.25C7.58579 7.25 7.25 7.58579 7.25 8C7.25 8.41421 7.58579 8.75 8 8.75H16C16.4142 8.75 16.75 8.41421 16.75 8C16.75 7.58579 16.4142 7.25 16 7.25H8ZM8 11.75C7.58579 11.75 7.25 12.0858 7.25 12.5C7.25 12.9142 7.58579 13.25 8 13.25H16C16.4142 13.25 16.75 12.9142 16.75 12.5C16.75 12.0858 16.4142 11.75 16 11.75H8Z" clip-rule="evenodd"></path>
-                                <defs>
-                                    <linearGradient id="paint0_linear_1_13112" x1="12" x2="12" y1="2" y2="21.026" gradientUnits="userSpaceOnUse">
-                                        <stop stop-color="#6622e8" class="stopColor834d9b svgShape"></stop><stop offset="1" stop-color="#717af8" class="stopColord04ed6 svgShape"></stop>
-                                    </linearGradient>
-                                </defs>
+                    <div method="dialog" style=" grid-column-end: 12;position: relative">
+                        <button class="btn btn-square" style="position: absolute;right: 10px">
+                            <svg style="max-width: 30px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="Message">
+                                <g data-name="Layer 2" fill="#6563ff" class="color000000 svgShape">
+                                    <g data-name="message-circle" fill="#6563ff" class="color000000 svgShape">
+                                        <rect width="24" height="24" opacity="0" fill="#6563ff" class="color000000 svgShape"></rect><path d="M19.07 4.93a10 10 0 0 0-16.28 11 1.06 1.06 0 0 1 .09.64L2 20.8a1 1 0 0 0 .27.91A1 1 0 0 0 3 22h.2l4.28-.86a1.26 1.26 0 0 1 .64.09 10 10 0 0 0 11-16.28zM8 13a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm4 0a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm4 0a1 1 0 1 1 1-1 1 1 0 0 1-1 1z" fill="#6563ff" class="color000000 svgShape"></path>
+                                    </g>
+                                </g>
                             </svg>
                         </button>
-                    </form>
+                        <button @onclick="() => KickUser(user.Id)" class="btn btn-square" style="position: absolute;right: 80px">
+                            <svg style="max-width: 30px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" id="Kickstarter">
+                                <path fill="#f22874" d="m10.379 8 3.471-3.819A2.5 2.5 0 0 0 10.151.817L6 5.384V2.5a2.5 2.5 0 1 0-5 0v11a2.5 2.5 0 1 0 5 0v-2.883l4.15 4.565a2.494 2.494 0 0 0 1.851.818 2.5 2.5 0 0 0 1.849-4.181L10.379 8z" class="color4caf50 svgShape"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
             </div>
 
+        </li>
+    }
+    @if (_showLoadMore)
+    {
+        <li class="flex " style="border-radius: 0.5em;margin-top:40px ;justify-content: center">
+            <button @onclick="LoadMore" class="btn btn-outline btn-accent btn-sm">Load More</button>
         </li>
     }
 
@@ -47,19 +59,60 @@
 @code {
     [Parameter] public Guid RoomId { get; set; }
     [Parameter] public bool IsGroupAdmin { get; set; }
-    private PaginationRequest _paginationRequest = new() { CurrentPage = 1, PageSize = 10 };
-    private bool _showLoadMore = false;
-    private List<PreviewGroupUserResponse> _users= [];
+    private PaginationRequest _paginationRequest = new() { CurrentPage = 1, PageSize = 2 };
+    private bool _showLoadMore = true;
+    private List<PreviewGroupUserResponse> _users = [];
+
 
     protected override async Task OnInitializedAsync()
     {
-        var response =await GroupService.UserListAsync(RoomId, _paginationRequest);
+        var response = await GroupService.UserListAsync(RoomId, _paginationRequest);
         if (response.IsSuccess)
         {
             var result = response.AsSuccess.Value;
             _showLoadMore = result.TotalPages > _paginationRequest.CurrentPage;
+
             _users = result.Items;
+            await RemoveCurrentUser();
             _paginationRequest.CurrentPage = result.Page;
+        }
+    }
+
+    private async Task RemoveCurrentUser()
+    {
+        var user = await AuthStateProvider.ExtractUserDataFromLocalTokenAsync();
+        var currentUser = _users.SingleOrDefault(x => x.Id == user.id);
+        if (currentUser != null)
+        {
+            _users.Remove(currentUser);
+        }
+    }
+
+    private async Task LoadMore()
+    {
+        _paginationRequest.CurrentPage += 1;
+        var response = await GroupService.UserListAsync(RoomId, _paginationRequest);
+        if (response.IsSuccess)
+        {
+            var result = response.AsSuccess.Value;
+            _users.AddRange(result.Items);
+            if (_paginationRequest.CurrentPage == result.TotalPages)
+            {
+                _showLoadMore = false;
+            }
+
+            await RemoveCurrentUser();
+        }
+    }
+
+    private async Task KickUser(Guid userId)
+    {
+        var response = await GroupService.KickUserAsync(RoomId, userId);
+        if (response.IsSuccess)
+        {
+        var user = _users.Single(x => x.Id == userId);
+        _users.Remove(user);
+        StateHasChanged();
         }
     }
 

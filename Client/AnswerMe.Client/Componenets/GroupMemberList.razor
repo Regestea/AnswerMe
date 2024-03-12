@@ -1,0 +1,66 @@
+@using AnswerMe.Client.Core.Extensions
+@using Models.Shared.Requests.Shared
+@using Models.Shared.Responses.Group
+@using Models.Shared.Responses.Shared
+@inject IGroupService GroupService
+
+<ul class="space-y-2 font-medium" style="height: 300px;overflow-y: auto">
+
+    @foreach (var user in _users)
+    {
+        <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:40px ">
+            <div class="avatar" style="display: grid">
+                <div class="w-16 rounded-full  ring-offset-base-100 ring-offset-2" style="justify-self: center">
+                    <UserAvatar Class="w-16" ImageUrl="@user.ProfileImage" Letter="@user.Name?.FirstLetter()"/>
+
+                </div>
+            </div>
+            <div class="w-full  flex flex-col-reverse">
+                <div style="display: grid;margin-top: 15px">
+                    <p style="margin-left: 15px;font-size: 12px">@user.Name</p>
+
+                </div>
+                <div style="display: grid">
+                    <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">@user.Name </h1>
+                    <form method="dialog" style=" grid-column-end: 12;position: relative">
+                        <button  class="btn btn-square" style="position: absolute;right: 10px">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="message">
+                                <path fill="url(#paint0_linear_1_13112)" fill-rule="evenodd" d="M20.455 4.73005C21 5.79961 21 7.19974 21 10V12.6988C21 12.9785 21 13.1183 20.9944 13.2364C20.8725 15.812 18.812 17.8725 16.2364 17.9944C16.1183 18 15.9623 18 15.6504 18L15.5703 18.0001C14.5501 18.0066 13.5562 18.3251 12.7222 18.9128L12.6692 18.9506L10.0585 20.8154C9.1635 21.4546 7.98743 20.5314 8.3959 19.5103C8.68525 18.7869 8.15251 18 7.37341 18H6.77166C4.68863 18 3 16.3114 3 14.2283V10C3 7.19974 3 5.79961 3.54497 4.73005C4.02433 3.78924 4.78924 3.02433 5.73005 2.54497C6.79961 2 8.19974 2 11 2H13C15.8003 2 17.2004 2 18.27 2.54497C19.2108 3.02433 19.9757 3.78924 20.455 4.73005ZM8 7.25C7.58579 7.25 7.25 7.58579 7.25 8C7.25 8.41421 7.58579 8.75 8 8.75H16C16.4142 8.75 16.75 8.41421 16.75 8C16.75 7.58579 16.4142 7.25 16 7.25H8ZM8 11.75C7.58579 11.75 7.25 12.0858 7.25 12.5C7.25 12.9142 7.58579 13.25 8 13.25H16C16.4142 13.25 16.75 12.9142 16.75 12.5C16.75 12.0858 16.4142 11.75 16 11.75H8Z" clip-rule="evenodd"></path>
+                                <defs>
+                                    <linearGradient id="paint0_linear_1_13112" x1="12" x2="12" y1="2" y2="21.026" gradientUnits="userSpaceOnUse">
+                                        <stop stop-color="#6622e8" class="stopColor834d9b svgShape"></stop><stop offset="1" stop-color="#717af8" class="stopColord04ed6 svgShape"></stop>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+
+        </li>
+    }
+
+
+</ul>
+
+@code {
+    [Parameter] public Guid RoomId { get; set; }
+    [Parameter] public bool IsGroupAdmin { get; set; }
+    private PaginationRequest _paginationRequest = new() { CurrentPage = 1, PageSize = 10 };
+    private bool _showLoadMore = false;
+    private List<PreviewGroupUserResponse> _users= [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response =await GroupService.UserListAsync(RoomId, _paginationRequest);
+        if (response.IsSuccess)
+        {
+            var result = response.AsSuccess.Value;
+            _showLoadMore = result.TotalPages > _paginationRequest.CurrentPage;
+            _users = result.Items;
+            _paginationRequest.CurrentPage = result.Page;
+        }
+    }
+
+}

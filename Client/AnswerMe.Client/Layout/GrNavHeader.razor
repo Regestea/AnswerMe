@@ -17,7 +17,7 @@
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center justify-start ">
-                    <div class=" btn-ghost pr-3 pl-3 cursor-pointer" style="display: flex;align-items: center;border-radius: 10px">
+                    <div @onclick="() => _groupDetailModalRef.ShowModal()" class=" btn-ghost pr-3 pl-3 cursor-pointer" style="display: flex;align-items: center;border-radius: 10px">
                         @if (_group != null)
                         {
                             <UserAvatar ImageUrl="@_group.RoomImage" Class="w-12" Letter="@_group.Name.FirstLetter()"/>
@@ -89,6 +89,38 @@
             }
 
         </ul>
+
+
+        <Modal @ref="@_groupDetailModalRef">
+            <Content>
+
+                <div class="flex justify-center">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-start ">
+                            <div @onclick="() => _groupDetailModalRef.ShowModal()" class=" btn-ghost pr-3 pl-3 cursor-pointer" style="display: flex;align-items: center;border-radius: 10px">
+                                @if (_group != null)
+                                {
+                                    <UserAvatar ImageUrl="@_group.RoomImage" Class="w-24" Letter="@_group.Name.FirstLetter()"/>
+                                    <div style="margin-left: 10px;font-size: 25px">
+                                        <div style="margin-right: 5px">@_group.Name</div>
+
+                                        <p class="text-primary" style="text-transform: lowercase;margin-top: 2px;font-size: 13px;">@_memberCount member</p>
+
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center" style="margin-top: 10px;">
+
+                    <GroupMemberList RoomId="@RoomId" IsGroupAdmin="@IsGroupAdmin" />
+                </div>
+
+
+            </Content>
+        </Modal>
     </div>
 
 </nav>
@@ -97,11 +129,11 @@
 
     [Parameter] public Guid RoomId { get; set; }
     [Parameter] public bool IsGroupAdmin { get; set; }
-
+    private Modal _groupDetailModalRef;
     private int _memberCount;
     private bool _isConnected;
     private PreviewGroupResponse? _group;
-    
+
     protected override async Task OnInitializedAsync()
     {
         var response = await GroupService.GetByIdAsync(RoomId);
@@ -110,7 +142,7 @@
             _group = response.AsSuccess.Value;
         }
 
-        var memberCountResponse =await GroupService.MembersCountAsync(RoomId);
+        var memberCountResponse = await GroupService.MembersCountAsync(RoomId);
 
         if (memberCountResponse.IsSuccess)
         {
@@ -118,16 +150,16 @@
         }
 
         GrHubService.SetRoomId(RoomId);
-        
+
         await GrHubService.ConnectToHubAsync(() =>
         {
             _isConnected = true;
             StateHasChanged();
         });
-        
+
         GrHubService.OnClosed(() =>
         {
-            _isConnected = false; 
+            _isConnected = false;
             StateHasChanged();
         });
 

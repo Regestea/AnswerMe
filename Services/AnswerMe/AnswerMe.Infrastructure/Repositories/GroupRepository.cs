@@ -224,6 +224,19 @@ namespace AnswerMe.Infrastructure.Repositories
             return new Success<IdResponse>(new IdResponse() { FieldName = "UserId", Id = userId });
         }
 
+        public async Task<ReadResponse<BooleanResponse>> IsAdminAsync(Guid loggedInUserId, Guid groupId, Guid userId)
+        {
+            var isInGroup=await _context.UserGroups.AnyAsync(x=>x.UserId==userId&&x.GroupId==groupId);
+            if (isInGroup==false)
+            {
+                return new AccessDenied();
+            }
+
+            var isAdmin = await _context.GroupAdmins.AnyAsync(x => x.UserId == userId && x.RoomId == groupId);
+            
+            return new Success<BooleanResponse>(new BooleanResponse(){FieldName = "Is Admin", Result = isAdmin});
+        }
+
         public async Task<DeleteResponse> RemoveUserFromAdminsAsync(Guid loggedInUserId, Guid groupId, Guid userId)
         {
             var existUser = await _context.Users.AnyAsync(x => x.id == userId);

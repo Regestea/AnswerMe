@@ -266,6 +266,32 @@ namespace AnswerMe.Api.Controllers
             return NoContent();
         }
 
+        
+        /// <summary>
+        /// Check if User Is Group Admin
+        /// </summary>
+        /// <response code="200">OK: Returns the result of checking if the user is an admin.</response>
+        /// <response code="403">AccessDenied: You don't have permission to access to this content</response>
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpGet("{groupId:guid}/User/{userId:guid}/IsAdmin")]
+        public async Task<IActionResult> IsGroupAdminAsync([FromRoute] Guid groupId, [FromRoute] Guid userId)
+        {
+            var requestToken = _jwtTokenRepository.GetJwtToken();
+            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+            
+            var result = await _groupRepository.IsAdminAsync(loggedInUser.id, groupId, userId);
+
+            if (result.IsAccessDenied)
+            {
+                return new StatusCodeResult(StatusCodes.Status403Forbidden);
+            }
+            
+            return Ok(result.AsSuccess.Value);
+        }
+        
+        
+        
         /// <summary>
         /// Set a User as Group Admin
         /// </summary>
@@ -278,7 +304,7 @@ namespace AnswerMe.Api.Controllers
         [ProducesResponseType(typeof(IdResponse), StatusCodes.Status200OK)] // Specify the expected response type
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> SetUserAsGroupAdminsAsync([FromRoute] Guid groupId, [FromRoute] Guid userId)
+        public async Task<IActionResult> SetUserAsGroupAdminAsync([FromRoute] Guid groupId, [FromRoute] Guid userId)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);

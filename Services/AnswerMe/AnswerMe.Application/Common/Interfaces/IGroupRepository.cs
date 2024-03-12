@@ -50,6 +50,16 @@ public interface IGroupRepository
     /// <returns>A task that represents the asynchronous operation. The task result
     /// contains a <see cref="CreateResponse{T}"/> of type <see cref="IdResponse"/>.</returns>
     Task<CreateResponse<IdResponse>> SetUserAsAdminAsync(Guid loggedInUserId, Guid groupId, Guid userId);
+    
+    /// <summary>
+    /// Is User Admin.
+    /// </summary>
+    /// <param name="loggedInUserId">The ID of the logged in user.</param>
+    /// <param name="groupId">The ID of the group.</param>
+    /// <param name="userId">The ID of the user.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result
+    /// contains a <see cref="ReadResponse{T}"/> of type <see cref="BooleanResponse"/>.</returns>
+    Task<ReadResponse<BooleanResponse>> IsAdminAsync(Guid loggedInUserId, Guid groupId, Guid userId);
 
     /// <summary>
     /// Removes a user from the admin list of a group asynchronously.

@@ -20,6 +20,7 @@ using AnswerMe.Application.DTOs.Room;
 using Google.Protobuf;
 using Models.Shared.Responses.Message;
 using Models.Shared.Responses.PrivateRoom;
+using Models.Shared.Responses.User;
 
 namespace AnswerMe.Infrastructure.Repositories
 {
@@ -154,7 +155,7 @@ namespace AnswerMe.Infrastructure.Repositories
             }
 
             var groupUserIdList = await _context.UserGroups
-                .Where(x => x.GroupId == groupId)
+                .Where(x => x.GroupId == groupId&& x.UserId != loggedInUserId)
                 .OrderByDescending(x => x.CreatedDate)
                 .Select(x => x.UserId)
                 .ToListAsync();
@@ -370,6 +371,46 @@ namespace AnswerMe.Infrastructure.Repositories
             }
 
             return new Success<RoomLastSeenResponse>(lastSeenResponse);
+        }
+
+        public async Task<ReadResponse<PagedListResponse<UserResponse>>> GetUnAddedContactsAsync(Guid loggedInUserId, Guid groupId, PaginationRequest paginationRequest)
+        {
+            var existGroup =await _context.GroupChats.AnyAsync(x => x.id == groupId);
+
+            if (!existGroup)
+            {
+                return new NotFound();
+            }
+            
+            var isUserInGroup =await _context.UserGroups.AnyAsync(x => x.GroupId == groupId && x.UserId == loggedInUserId);
+            if (!isUserInGroup)
+            {
+                return new AccessDenied();
+            }
+            
+            var contactIdList=await _context.PrivateChats.Where(x=>x.User1Id==loggedInUserId||x.User2Id==loggedInUserId)
+                .OrderByDescending(x=>x.CreatedDate)
+                .Select(x=>x.User1Id==loggedInUserId?x.User2Id:x.User1Id)
+                .Where(x=>_context.UserGroups.Any(y=>y.UserId==x && y.GroupId==groupId)==false)
+                .ToListAsync();
+
+            var usersQuery =  _context.Users
+                .Where(x => contactIdList.Contains(x.id))
+                .Select(x => new UserResponse()
+                {
+                    id = x.id,
+                    FullName = x.FullName,
+                    IdName = x.IdName,
+                    PhoneNumber = x.PhoneNumber,
+                    ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage),
+                    CreatedDate = x.CreatedDate,
+                    ModifiedDate = x.ModifiedDate
+                });
+            var pagedUsers =await PagedListResponse<UserResponse>.CreateAsync(usersQuery, paginationRequest);
+            
+            return new Success<PagedListResponse<UserResponse>>(pagedUsers);
+            
+            
         }
 
         public async Task<CreateResponse<IdResponse>> JoinUserAsync(Guid loggedInUserId, Guid groupId, Guid joinUserId)

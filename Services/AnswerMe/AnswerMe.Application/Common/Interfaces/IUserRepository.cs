@@ -21,17 +21,18 @@ public interface IUserRepository
     /// The task result contains the response indicating whether the id is online or not.
     /// </returns>
     Task<ReadResponse<BooleanResponse>> IsOnlineAsync(Guid id);
-    
+
     /// <summary>
     /// Searches for users based on a keyword asynchronously, with pagination support.
     /// </summary>
+    /// <param name="loggedInUserId">The unique identifier of the logged in user.</param>
     /// <param name="keyWord">The keyword to search for in user profiles.</param>
     /// <param name="request">The pagination request parameters.</param>
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// The task result contains a response with a paged list of user information matching the keyword.
     /// </returns>
-    Task<ReadResponse<PagedListResponse<UserResponse>>> SearchUserAsync(string keyWord , PaginationRequest request);
+    Task<ReadResponse<PagedListResponse<UserResponse>>> SearchUserAsync(Guid loggedInUserId,string keyWord , PaginationRequest request);
 
     /// <summary>
     /// Checks if an item with the specified ID exists asynchronously.

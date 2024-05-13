@@ -1,5 +1,6 @@
 ﻿using Models.Shared.RepositoriesResponseTypes;
 using Models.Shared.Requests.Group;
+using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Group;
 using Models.Shared.Responses.Shared;
 
@@ -15,7 +16,7 @@ public interface IGroupInviteRepository
     /// </summary>
     /// <param name="inviteToken">The invite token for the group.</param>
     /// <returns>A task representing the asynchronous operation. The task result contains the response containing the group preview information.</returns>
-    Task<ReadResponse<PreviewGroupResponse>> GetGroupPreviewAsync(string inviteToken);
+    Task<ReadResponse<PreviewGroupResponse>> GetGroupPreviewAsync(TokenRequest request);
 
     /// <summary>
     /// Creates an invite token asynchronously.
@@ -35,4 +36,5 @@ public interface IGroupInviteRepository
     /// <param name="inviteToken">The invite token for the group.</param>
     /// <returns>A task representing the asynchronous operation. The task result is a CreateResponse containing an IdResponse.</returns>
     Task<CreateResponse<IdResponse>> JoinGroupAsync(Guid loggedInUserId, string inviteToken);
+    
 }

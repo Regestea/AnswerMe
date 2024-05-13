@@ -197,7 +197,7 @@ namespace ObjectStorage.Api.Controllers
                 UserId = loggedInUser.id,
                 HaveUse = false,
                 Timestamp = DateTimeOffset.UtcNow,
-                Token = TokenGenerator.GenerateNewRngCrypto(),
+                Token = TokenGenerator.GenerateNewToken(),
                 ETag = ETag.All
             };
 

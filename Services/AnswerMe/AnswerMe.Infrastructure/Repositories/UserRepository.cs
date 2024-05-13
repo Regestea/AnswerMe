@@ -37,10 +37,12 @@ namespace AnswerMe.Infrastructure.Repositories
             return new Success<BooleanResponse>(isOnline.AsT0.Value);
         }
 
-        public async Task<ReadResponse<PagedListResponse<UserResponse>>> SearchUserAsync(string keyWord,
+        public async Task<ReadResponse<PagedListResponse<UserResponse>>> SearchUserAsync(Guid loggedInUserId,string keyWord,
             PaginationRequest paginationRequest)
         {
             var userQuery = _context.Users
+                .Where(x=>x.id != loggedInUserId)
+                .OrderByDescending(x=>x.CreatedDate)
                 .Where(x => x.PhoneNumber
                     .Contains(keyWord) || x.IdName
                     .Contains(keyWord.ToLower()))

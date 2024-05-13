@@ -50,6 +50,7 @@ namespace AnswerMe.Infrastructure.Services
                 UserSenderId = loggedInUserId,
                 Text = request.Text,
                 RoomChatId = room.id,
+                GroupInvitationToken = request.GroupInvitationToken,
                 MediaList = new List<Media>()
             };
             if (request.ReplyMessageId != null)

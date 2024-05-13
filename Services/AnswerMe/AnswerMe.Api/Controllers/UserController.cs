@@ -66,9 +66,13 @@ namespace AnswerMe.Api.Controllers
         /// <response code="200">Successfully retrieved the list of users matching the keyword.</response>
         [ProducesResponseType(typeof(PagedListResponse<UserResponse>), StatusCodes.Status200OK)]
         [HttpGet("Search")]
-        public async Task<IActionResult> SearchUser([FromQuery] string keyWord, [FromQuery] PaginationRequest paginationRequest)
+        public async Task<IActionResult> SearchUser([FromQuery] string keyWord,
+            [FromQuery] PaginationRequest paginationRequest)
         {
-            var result = await _userRepository.SearchUserAsync(keyWord, paginationRequest);
+            var requestToken = _jwtTokenRepository.GetJwtToken();
+            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+
+            var result = await _userRepository.SearchUserAsync(loggedInUser.id, keyWord, paginationRequest);
 
             return Ok(result.AsSuccess.Value);
         }

@@ -10,6 +10,7 @@ using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Group;
 using Models.Shared.Responses.PrivateRoom;
 using Models.Shared.Responses.Shared;
+using OneOf.Types;
 
 namespace AnswerMe.Api.Controllers
 {
@@ -182,6 +183,29 @@ namespace AnswerMe.Api.Controllers
             return Ok(result.AsSuccess.Value);
         }
 
+        [HttpGet("{groupId:guid}/UnAddedContacts/List")]
+        public async Task<IActionResult> GetUnAddedContactsAsync([FromRoute] Guid groupId,
+            [FromQuery] PaginationRequest paginationRequest)
+        {
+            var requestToken = _jwtTokenRepository.GetJwtToken();
+            var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
+
+            var result =await _groupRepository.GetUnAddedContactsAsync(loggedInUser.id, groupId, paginationRequest);
+            
+            if (result.IsAccessDenied)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            if (result.IsNotFound)
+            {
+                return NotFound();
+            }
+            
+            return Ok(result.AsSuccess.Value);
+            
+        }
+        
         ///<summary>
         ///Get group members count
         /// </summary>

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Web;
 using AnswerMe.Application.Common.Interfaces;
 using IdentityServer.Shared.Client.Attributes;
 using IdentityServer.Shared.Client.Repositories.Interfaces;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Models.Shared.OneOfTypes;
 using Models.Shared.Requests.Group;
+using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Group;
 using Models.Shared.Responses.Shared;
 
@@ -30,19 +32,19 @@ namespace AnswerMe.Api.Controllers
         /// <summary>
         /// Get Group Preview based on invite token
         /// </summary>
-        /// <param name="inviteToken">The invite token to preview the group.</param>
+        /// <param name="request">The invite token to preview the group</param>
         /// <response code="200">OK: Returns the result of the group preview based on the invite token.</response>
         /// <response code="404">Not Found: The group preview could not be found.</response>
         [ProducesResponseType(typeof(PreviewGroupResponse), StatusCodes.Status200OK)] // Specify the expected response type
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [HttpGet("{inviteToken}")]
-        public async Task<IActionResult> GetGroupPreviewAsync([FromRoute] string inviteToken)
+        [HttpGet("Preview")]
+        public async Task<IActionResult> GetGroupPreviewAsync([FromQuery] TokenRequest request)
         {
-            var result = await _groupInviteRepository.GetGroupPreviewAsync(inviteToken);
+            var result = await _groupInviteRepository.GetGroupPreviewAsync(request);
 
             if (result.IsSuccess)
             {
-                return Ok(result);
+                return Ok(result.AsSuccess.Value);
             }
 
             return NotFound();
@@ -95,16 +97,16 @@ namespace AnswerMe.Api.Controllers
         /// <response code="200">OK: Returns the result of joining the group using the invite token.</response>
         /// <response code="400">Bad Request: Invalid input data.</response>
         /// <response code="404">Not Found: The invite token or group could not be found.</response>
-        [HttpPost("Token/{inviteToken}/Join")]
+        [HttpPost("Join")]
         [ProducesResponseType(typeof(IdResponse), StatusCodes.Status200OK)] // Specify the expected response type
         [ProducesResponseType(StatusCodes.Status400BadRequest)] // Specify another expected response type
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> JoinGroupAsync([FromRoute] string inviteToken)
+        public async Task<IActionResult> JoinGroupAsync([FromQuery] TokenRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);
 
-            var result = await _groupInviteRepository.JoinGroupAsync(loggedInUser.id, inviteToken);
+            var result = await _groupInviteRepository.JoinGroupAsync(loggedInUser.id, request.Token);
 
             if (result.IsSuccess)
             {
@@ -119,6 +121,6 @@ namespace AnswerMe.Api.Controllers
 
             return NotFound();
         }
-
+        
     }
 }

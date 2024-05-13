@@ -4,6 +4,7 @@ using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Group;
 using Models.Shared.Responses.PrivateRoom;
 using Models.Shared.Responses.Shared;
+using Models.Shared.Responses.User;
 
 namespace AnswerMe.Application.Common.Interfaces;
 
@@ -29,7 +30,8 @@ public interface IGroupRepository
     /// <param name="paginationRequest">The pagination request settings.</param>
     /// <returns>A task representing the asynchronous operation
     /// , containing a read response with a paged list of group responses.</returns>
-    Task<ReadResponse<PagedListResponse<GroupResponse>>> GetListAsync(Guid loggedInUserId, PaginationRequest paginationRequest);
+    Task<ReadResponse<PagedListResponse<GroupResponse>>> GetListAsync(Guid loggedInUserId,
+        PaginationRequest paginationRequest);
 
     /// <summary>
     /// Retrieves a paged list of users in a group asynchronously.
@@ -39,7 +41,8 @@ public interface IGroupRepository
     /// <param name="paginationRequest">The pagination request settings.</param>
     /// <returns>A task representing the asynchronous operation
     /// , containing a read response with a paged list of user responses.</returns>
-    Task<ReadResponse<PagedListResponse<PreviewGroupUserResponse>>> UserListAsync(Guid loggedInUserId, Guid groupId, PaginationRequest paginationRequest);
+    Task<ReadResponse<PagedListResponse<PreviewGroupUserResponse>>> UserListAsync(Guid loggedInUserId, Guid groupId,
+        PaginationRequest paginationRequest);
 
     /// <summary>
     /// Sets a user as an admin in a group asynchronously.
@@ -50,7 +53,7 @@ public interface IGroupRepository
     /// <returns>A task that represents the asynchronous operation. The task result
     /// contains a <see cref="CreateResponse{T}"/> of type <see cref="IdResponse"/>.</returns>
     Task<CreateResponse<IdResponse>> SetUserAsAdminAsync(Guid loggedInUserId, Guid groupId, Guid userId);
-    
+
     /// <summary>
     /// Is User Admin.
     /// </summary>
@@ -87,8 +90,8 @@ public interface IGroupRepository
     /// <param name="request">The request containing the updated group information.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the response from the update operation.</returns>
     Task<UpdateResponse> EditAsync(Guid loggedInUserId, Guid groupId, EditGroupRequest request);
-    
-    
+
+
     /// <summary>
     /// Get last seen information for a specific user in group.
     /// </summary>
@@ -100,6 +103,16 @@ public interface IGroupRepository
     Task<ReadResponse<RoomLastSeenResponse>> GetLastSeenAsync(Guid loggedInUserId, Guid groupId, Guid userId);
 
     /// <summary>
+    /// Gets the list of contacts that are not in the group
+    /// </summary>
+    /// <param name="loggedInUserId"></param>
+    /// <param name="groupId"></param>
+    /// <param name="paginationRequest"></param>
+    /// <returns> A task that represents the asynchronous operation with the result being a <see cref="ReadResponse{T}"/> object. </returns>
+    Task<ReadResponse<PagedListResponse<UserResponse>>> GetUnAddedContactsAsync(Guid loggedInUserId, Guid groupId,
+        PaginationRequest paginationRequest);
+
+    /// <summary>
     /// Joins a user to a group asynchronously.
     /// </summary>
     /// <param name="loggedInUserId">The ID of the currently logged in user.</param>
@@ -108,7 +121,7 @@ public interface IGroupRepository
     /// <returns>A task representing the asynchronous operation. The task result contains
     /// a <see cref="CreateResponse{T}"/> object, where T is of type <see cref="IdResponse"/>.</returns>
     Task<CreateResponse<IdResponse>> JoinUserAsync(Guid loggedInUserId, Guid groupId, Guid joinUserId);
-    
+
     ///<summary>
     /// Gets the number of members in a group
     /// </summary>
@@ -135,5 +148,3 @@ public interface IGroupRepository
     /// <returns>A task representing the asynchronous operation, returning a DeleteResponse object.</returns>
     Task<DeleteResponse> LeaveGroupAsync(Guid loggedInUserId, Guid groupId);
 }
-
-

@@ -17,6 +17,7 @@ using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using Models.Shared.OneOfTypes;
 using AnswerMe.Application.Common.Interfaces;
+using Models.Shared.Requests.Shared;
 
 namespace AnswerMe.Infrastructure.Repositories
 {
@@ -29,9 +30,9 @@ namespace AnswerMe.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<ReadResponse<PreviewGroupResponse>> GetGroupPreviewAsync(string inviteToken)
+        public async Task<ReadResponse<PreviewGroupResponse>> GetGroupPreviewAsync(TokenRequest request)
         {
-            var groupInvitation = await _context.GroupInvitations.SingleOrDefaultAsync(x => x.Token == inviteToken);
+            var groupInvitation = await _context.GroupInvitations.FirstOrDefaultAsync(x => x.Token == request.Token && x.ExpirationDate > DateTimeOffset.UtcNow);
 
             if (groupInvitation == null)
             {
@@ -52,7 +53,8 @@ namespace AnswerMe.Infrastructure.Repositories
             return new Success<PreviewGroupResponse>(groupResponse);
         }
 
-        public async Task<CreateResponse<TokenResponse>> CreateAsync(Guid loggedInUserId, Guid groupId, CreateInviteTokenRequest request)
+        public async Task<CreateResponse<TokenResponse>> CreateAsync(Guid loggedInUserId, Guid groupId,
+            CreateInviteTokenRequest request)
         {
             var existGroup = await _context.GroupChats.AnyAsync(x => x.id == groupId);
 
@@ -61,16 +63,22 @@ namespace AnswerMe.Infrastructure.Repositories
                 return new NotFound();
             }
 
-            var isGroupAdmin = await _context.GroupAdmins.AnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
+            var isGroupAdmin =
+                await _context.GroupAdmins.AnyAsync(x => x.UserId == loggedInUserId && x.RoomId == groupId);
 
             if (!isGroupAdmin)
             {
                 return new AccessDenied();
             }
 
-            if (request.ExpirationDate < DateTimeOffset.UtcNow || request.ExpirationDate > DateTimeOffset.UtcNow.AddDays(1))
+            if (request.ExpirationDate < DateTimeOffset.UtcNow ||
+                request.ExpirationDate.ToUniversalTime() > DateTimeOffset.UtcNow.AddDays(1))
             {
-                return new ValidationFailed() { Field = nameof(request.ExpirationDate), Error = "The expiration date should have at least one day to expiry" };
+                return new ValidationFailed()
+                {
+                    Field = nameof(request.ExpirationDate),
+                    Error = "The expiration date should have at least one day to expiry"
+                };
             }
 
             var groupInvitation = new GroupInvite()
@@ -78,16 +86,16 @@ namespace AnswerMe.Infrastructure.Repositories
                 id = Guid.NewGuid(),
                 CreatedDate = DateTimeOffset.UtcNow,
                 GroupId = groupId,
-                ExpirationDate = request.ExpirationDate,
+                ExpirationDate = request.ExpirationDate.ToUniversalTime(),
                 UserCount = request.UserCount,
-                Token = TokenGenerator.GenerateNewRngCrypto()
+                Token = TokenGenerator.GenerateNewToken()
             };
 
             await _context.GroupInvitations.AddAsync(groupInvitation);
             await _context.SaveChangesAsync();
 
-            return new Success<TokenResponse>(new TokenResponse() { FieldName = "GroupInviteToken", Token = groupInvitation.Token });
-
+            return new Success<TokenResponse>(new TokenResponse()
+                { FieldName = "GroupInviteToken", Token = groupInvitation.Token });
         }
 
         public async Task<CreateResponse<IdResponse>> JoinGroupAsync(Guid loggedInUserId, string inviteToken)
@@ -102,17 +110,27 @@ namespace AnswerMe.Infrastructure.Repositories
 
             if (groupInvitation.UserCount < 1)
             {
-                return new ValidationFailed() { Field = nameof(inviteToken), Error = "max user reached ask for new invite" };
+                return new ValidationFailed()
+                    { Field = nameof(inviteToken), Error = "max user reached ask for new invite" };
             }
 
-            await _context.UserGroups.AddAsync(new UserGroup() { UserId = loggedInUserId, GroupId = groupInvitation.GroupId });
-            groupInvitation.UserCount -= 1;
+            var isUserInGroup =
+                await _context.UserGroups.AnyAsync(x =>
+                    x.UserId == loggedInUserId && x.GroupId == groupInvitation.GroupId);
 
-            _context.GroupInvitations.Update(groupInvitation);
+            if (!isUserInGroup)
+            {
+                await _context.UserGroups.AddAsync(new UserGroup()
+                    { UserId = loggedInUserId, GroupId = groupInvitation.GroupId });
+                groupInvitation.UserCount -= 1;
 
-            await _context.SaveChangesAsync();
+                _context.GroupInvitations.Update(groupInvitation);
 
-            return new Success<IdResponse>(new IdResponse() { FieldName = nameof(groupInvitation.GroupId), Id = groupInvitation.GroupId });
+                await _context.SaveChangesAsync();
+            }
+            
+            return new Success<IdResponse>(new IdResponse()
+                { FieldName = nameof(groupInvitation.GroupId), Id = groupInvitation.GroupId });
         }
     }
 }

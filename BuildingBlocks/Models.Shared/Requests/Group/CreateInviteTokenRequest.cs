@@ -14,7 +14,6 @@ namespace Models.Shared.Requests.Group
         public int UserCount { get; set; }
 
         [Required]
-        [Range(1,int.MaxValue)]
         public DateTimeOffset ExpirationDate { get; set; }
     }
 }

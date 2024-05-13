@@ -1,0 +1,33 @@
+@inject IPrivateRoomService PrivateRoomService
+@inject IJSRuntime JsRuntime
+@inject NavigationManager NavigationManager
+
+<button @onclick="() => StartMessage(UserId)" class="btn btn-square" style="position: absolute;right: 10px">
+    <svg style="max-width: 30px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="Message">
+        <g data-name="Layer 2" fill="#6563ff" class="color000000 svgShape">
+            <g data-name="message-circle" fill="#6563ff" class="color000000 svgShape">
+                <rect width="24" height="24" opacity="0" fill="#6563ff" class="color000000 svgShape"></rect><path d="M19.07 4.93a10 10 0 0 0-16.28 11 1.06 1.06 0 0 1 .09.64L2 20.8a1 1 0 0 0 .27.91A1 1 0 0 0 3 22h.2l4.28-.86a1.26 1.26 0 0 1 .64.09 10 10 0 0 0 11-16.28zM8 13a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm4 0a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm4 0a1 1 0 1 1 1-1 1 1 0 0 1-1 1z" fill="#6563ff" class="color000000 svgShape"></path>
+            </g>
+        </g>
+    </svg>
+</button>
+
+@code {
+    [Parameter] public Guid UserId { get; set; }
+    [Parameter] public EventCallback StartingChat { get; set; }
+    
+    
+    private async Task StartMessage(Guid contactId)
+    {
+        var response = await PrivateRoomService.CreateAsync(contactId);
+
+        if (response.IsSuccess)
+        {
+            var privateRoomId = response.AsSuccess.Value.Id;
+            NavigationManager.NavigateTo($"/PV/{privateRoomId}");
+            await JsRuntime.InvokeVoidAsync("ResizeComponent");
+            await StartingChat.InvokeAsync();
+        }
+        // show a message box that not found
+    }
+}

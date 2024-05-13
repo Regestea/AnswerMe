@@ -43,8 +43,14 @@
 
                     </div>
                 }
-              
 
+
+                @if (!string.IsNullOrWhiteSpace(message.GroupInviteToken))
+                {
+                <GroupInvitePreview GroupInviteToken="@message.GroupInviteToken"/>
+
+                }
+                
                 @message.Text
 
                 <div class="chat-footer " style="display: grid;margin-top: 2px">
@@ -73,7 +79,7 @@
     private PaginationRequest _newMessagePaginationRequest = new() { PageSize = 10, CurrentPage = 1 };
 
 
-   
+
 
     private bool _firstLoad = true;
     private bool _isNewMessageBannerPlaced = false;
@@ -82,14 +88,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        
+
         var group = await GroupService.GetByIdAsync(RoomId);
 
         if (!group.IsSuccess)
         {
             //redirect to 404 page
         }
-        
+
         var result = await GroupMessageService.GetGroupMessagesAsync(RoomId, _firstLoad, _newMessagePaginationRequest);
         if (result.IsSuccess)
         {
@@ -105,10 +111,10 @@
         if (result.IsAccessDenied)
         {
         }
-        
+
         GrHubService.NewGrMessage(AddNewMessage);
     }
-    
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (_firstLoad && _isNewMessageBannerPlaced == false && _messageList.Any())
@@ -118,15 +124,15 @@
         }
         else
         {
-            if (_isNewMessageBannerPlaced )
+            if (_isNewMessageBannerPlaced)
             {
                 await JsRuntime.ScrollToViewAsync(_messageList[5].id + "-message");
             }
         }
-       
+
     }
-    
-    
+
+
     public async Task LoadNewMessagesAsync()
     {
         if (_newMessagePaginationRequest.CurrentPage > 1)
@@ -160,8 +166,8 @@
 
         await JsRuntime.ScrollToViewAsync(_lastLook);
     }
-    
-    
+
+
 
 
     private void AddNewMessage(MessageResponse messageResponse)
@@ -185,4 +191,5 @@
             JsRuntime.InvokeVoidAsync("ScrollToEnd", ChatLayout.ElementIds.ChatScroll.ToString());
         }
     }
+
 }

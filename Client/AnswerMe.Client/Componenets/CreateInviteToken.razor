@@ -1,0 +1,68 @@
+@using Models.Shared.Requests.Group
+@inject IGroupInviteService GroupInviteService
+@inject IJSRuntime JsRuntime
+
+<div class="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100" style="display:contents">
+    <form class="card-body" style="display:grid;justify-content: center">
+       
+
+        <div class="form-control mt-6">
+            <label class="label">
+                <span class="label-text"> User Can Join by this Invite Link</span>
+
+            </label>
+            <input @bind="_request.UserCount" type="number" class="input input-bordered max-w-sm" required/>
+        </div>
+
+        <div class="form-control mt-6">
+            <label class="label">
+                <span class="label-text">Valid Until</span>
+
+            </label>
+
+            <input type="date" @bind="_request.ExpirationDate" class="input input-bordered max-w-sm" required/>
+        </div>
+
+        <div class="form-control mt-6">
+            <button type="button" @onclick="CreateInvite" class="btn btn-outline btn-primary">Next</button>
+        </div>
+        
+    </form>
+</div>
+
+
+@code {
+
+    [Parameter] public Guid GroupId { get; set; }
+    [Parameter] public EventCallback<string> InviteToken { get; set; }
+    private CreateInviteTokenRequest _request = new() { ExpirationDate = DateTimeOffset.Now.AddDays(1), UserCount = 50 };
+
+
+    private async Task CreateInvite()
+    {
+        var response= await GroupInviteService.CreateAsync(GroupId, _request);
+        if (response.IsSuccess)
+        {
+            await InviteToken.InvokeAsync(response.AsSuccess.Value.Token);
+        }
+        
+        if (response.IsAccessDenied)
+        {
+            await JsRuntime.InvokeVoidAsync("MessageShow", "Error", "Access Denied", "");
+        }
+
+        if (response.IsValidationFailureList)
+        {
+            foreach (var validationFailed in response.AsValidationFailureList)
+            {
+                await JsRuntime.InvokeVoidAsync("MessageShow", "Error", validationFailed.Field, validationFailed.Error);
+
+            }
+        }
+
+        if (response.IsNotFound)
+        {
+            await JsRuntime.InvokeVoidAsync("MessageShow", "Error", "Group NotFound","");
+        }
+    }
+}

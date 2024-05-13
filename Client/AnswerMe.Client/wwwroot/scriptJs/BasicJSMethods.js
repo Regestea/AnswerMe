@@ -1,3 +1,9 @@
+
+
+
+function CallVoidMethod(dotNetObjectReference,methodName){
+   dotNetObjectReference.invokeMethodAsync(methodName);
+}
 function ScrollToView(id) {
     let element = document.getElementById(id);
     if (element != null) {

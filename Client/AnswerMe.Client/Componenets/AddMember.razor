@@ -1,0 +1,110 @@
+@using AnswerMe.Client.Core.Extensions
+@using Models.Shared.Requests.Shared
+@using Models.Shared.Responses.PrivateRoom
+@using Models.Shared.Responses.User
+@inject IPrivateRoomService PrivateRoomService
+@inject IGroupService GroupService
+@inject IJSRuntime JsRuntime
+
+
+<ul class="space-y-2 font-medium p-2 rounded-lg bg-base-300 w-full" style="height: 300px;overflow-y: auto">
+
+@if (_contacts.Any())
+{
+        @foreach (var user in _contacts)
+    {
+        <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:40px ">
+            <div class="avatar" style="display: grid">
+                <div class="w-16 rounded-full  ring-offset-base-100 ring-offset-2" style="justify-self: center">
+                    <UserAvatar Class="w-16" ImageUrl="@user.ProfileImage" Letter="@user.FullName?.FirstLetter()"/>
+
+                </div>
+            </div>
+            <div class="w-full  flex flex-col-reverse">
+                <div style="display: grid;margin-top: 15px">
+                    <p class="text-primary" style="margin-left: 15px;font-size: 12px ">admin</p>
+                </div>
+                <div style="display: grid">
+                    <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">@user.FullName </h1>
+                    <div method="dialog" style=" grid-column-end: 12;position: relative">
+                        <div class="lg:tooltip" data-tip="Start Messaging">
+                            <button @onclick="() => AddPerson(user.id)" class="btn btn-square" style="position: absolute;right: 10px">
+                                <svg style="max-width: 30px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="addperson">
+                                    <path fill="none" d="M0 0h24v24H0V0z"></path><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V8c0-.55-.45-1-1-1s-1 .45-1 1v2H2c-.55 0-1 .45-1 1s.45 1 1 1h2v2c0 .55.45 1 1 1s1-.45 1-1v-2h2c.55 0 1-.45 1-1s-.45-1-1-1H6zm9 4c-2.67 0-8 1.34-8 4v1c0 .55.45 1 1 1h14c.55 0 1-.45 1-1v-1c0-2.66-5.33-4-8-4z" fill="#595bd4" class="color000000 svgShape"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+
+                    </div>
+
+                </div>
+            </div>
+        </li>
+    }
+    @if (_showLoadMore)
+    {
+        <li class="flex " style="border-radius: 0.5em;margin-top:40px ;justify-content: center">
+            <button @onclick="LoadMore" class="btn btn-outline btn-accent btn-sm">Load More</button>
+        </li>
+    }
+}
+else
+{
+    <li class="flex " style="border-radius: 0.5em;margin-top:40px ;justify-content: center">
+        <p>All your contacts already in this group</p>
+    </li>
+}
+
+
+</ul>
+
+@code {
+    [Parameter] public Guid RoomId { get; set; }
+    [Parameter] public EventCallback RefreshMemberCount { get; set; }
+    private PaginationRequest _paginationRequest = new() { CurrentPage = 1, PageSize = 10 };
+    private List<UserResponse> _contacts = new();
+    private bool _showLoadMore;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var contacts = await GroupService.GetUnAddedContactsAsync(RoomId, _paginationRequest);
+
+        if (contacts.IsSuccess)
+        {
+            _contacts = contacts.AsSuccess.Value.Items;
+
+
+            if (contacts.AsSuccess.Value.Page == contacts.AsSuccess.Value.TotalPages)
+            {
+                _showLoadMore = false;
+            }
+        }
+    }
+
+    private async Task AddPerson(Guid userId)
+    {
+        var result = await GroupService.AddMemberAsync(RoomId, userId);
+        if (result.IsSuccess)
+        {
+            _contacts.Remove(_contacts.First(x => x.id == userId));
+            await RefreshMemberCount.InvokeAsync();
+        }
+    }
+
+    private async Task LoadMore()
+    {
+        _paginationRequest.CurrentPage++;
+        var result = await GroupService.GetUnAddedContactsAsync(RoomId, _paginationRequest);
+        if (result.IsSuccess)
+        {
+            
+            _contacts.AddRange(result.AsSuccess.Value.Items);
+            if (result.AsSuccess.Value.Page >= result.AsSuccess.Value.TotalPages)
+            {
+                _showLoadMore = false;
+            }
+        }
+    }
+
+}

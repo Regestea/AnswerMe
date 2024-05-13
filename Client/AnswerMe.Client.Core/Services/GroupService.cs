@@ -218,7 +218,7 @@ public class GroupService : IGroupService
         return new Success<RoomLastSeenResponse>(lastSeen);
     }
 
-    public async Task<CreateResponse<IdResponse>> JoinUserAsync(Guid groupId, Guid joinUserId)
+    public async Task<CreateResponse<IdResponse>> AddMemberAsync(Guid groupId, Guid joinUserId)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
         
@@ -237,6 +237,27 @@ public class GroupService : IGroupService
         }
 
         return new NotFound();
+    }
+
+    public async Task<ReadResponse<PagedListResponse<UserResponse>>> GetUnAddedContactsAsync(Guid groupId, PaginationRequest paginationRequest)
+    {
+        await _httpClient.AddAuthHeader(_localStorageService);
+
+        var response = await _httpClient.SendRequestAsync($"Group/{groupId}/UnAddedContacts/List?".AddPagination(paginationRequest), HttpMethod.Get);
+
+        if (response.StatusCode== HttpStatusCode.Forbidden)
+        {
+            return new AccessDenied();
+        }
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new NotFound();
+        }
+        
+        var users = await JsonConverter.ToObject<PagedListResponse<UserResponse>>(response.Content);
+
+        return new Success<PagedListResponse<UserResponse>>(users);
     }
 
     public async Task<DeleteResponse> KickUserAsync(Guid groupId, Guid kickUserId)

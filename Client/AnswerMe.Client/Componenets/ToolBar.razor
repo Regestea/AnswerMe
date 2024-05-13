@@ -1,0 +1,50 @@
+@using Models.Shared.Requests.Shared
+@using Models.Shared.Responses.User
+@using AnswerMe.Client.Core.Extensions
+@using Models.Shared.Requests.Group
+@using Models.Shared.Requests.ObjectStorage
+
+@inject AuthStateProvider AuthStateProvider
+
+
+<div @onclick="() => _modalRef.ShowModal()" class="btn avatar" style="position: absolute;bottom: 0;right: 40px; background: none">
+    <div class="w-20 rounded-full" style="border-radius: 100px 20px 20px 20px;">
+        <svg style="background: linear-gradient(144deg, rgba(116, 128, 255, 1) 0%, rgba(100, 25, 230, 1) 100%);padding: 15px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" id="Pen">
+            <path d="m46.242 10.245-4.467 4.467-8.616-8.352 4.599-4.599a5.999 5.999 0 1 1 8.484 8.484zm-7.083 7.08L11.694 44.79 0 48.048l3.207-11.739L30.57 8.946l8.589 8.379z" fill="#f5deb3" class="color000000 svgShape"></path>
+        </svg>
+    </div>
+</div>
+
+<Modal @ref="_modalRef">
+    <Content >
+        <div role="tablist" class="tabs tabs-boxed grid grid-cols-2 tab-primary" style="min-height: fit-content">
+
+            <input type="radio" name="my_tabs_44" role="tab" class="tab btn" aria-label="New Contact" style="color: wheat;margin: 5px;border-radius: 15px" checked>
+            <div role="tabpanel55" class="tab-content ">
+                <SearchContact StartingChat="RefreshMenu"/>
+            </div>
+
+            <input type="radio" name="my_tabs_44" role="tab" class="tab btn" aria-label="Create Group" style="color: wheat;margin: 5px;border-radius: 15px"/>
+            <div role="tabpanel55" class="tab-content ">
+                <EditGroupFrom OnSave="RefreshNavMenu"/>
+            </div>
+
+        </div>
+
+
+    </Content>
+</Modal>
+
+
+@code {
+    [Parameter] public EventCallback RefreshNavMenu { get; set; }
+    private Modal _modalRef;
+
+
+    private async Task RefreshMenu()
+    {
+        _modalRef.CloseModal();
+        await RefreshNavMenu.InvokeAsync();
+    }
+
+}

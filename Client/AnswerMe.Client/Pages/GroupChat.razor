@@ -1,13 +1,14 @@
 @page "/GR/{RoomId:guid}"
 @using AnswerMe.Client.Core.Enums
+@using AnswerMe.Client.Core.Extensions
 @using AnswerMe.Client.Core.Services
 @inject AuthStateProvider AuthStateProvider
 @inject IGroupService GroupService
-
+@inject IJSRuntime JsRuntime
 
 <div class="p-4 sm:ml-64 body-content element">
 
-    <GrNavHeader @key="RoomId" RoomId="RoomId" IsGroupAdmin="_isGroupAdmin"/>
+    <GrNavHeader RefreshNavMenu="RefreshNavMenuData" @key="RoomId" RoomId="RoomId" IsGroupAdmin="_isGroupAdmin"/>
 
     <ChatLayout CallLoadNewMessages="LoadNewMessages" CallLoadOldMessages="LoadOldMessages">
         <ChatContent>
@@ -42,6 +43,11 @@
         _userLastRoomVisit = await GetLastVisit(_loggedInUserId);
         
         
+    }
+
+    private async Task RefreshNavMenuData()
+    {
+        await JsRuntime.InvokeVoidAsync("RefreshNavMenuData");
     }
     
     public async Task LoadNewMessages()

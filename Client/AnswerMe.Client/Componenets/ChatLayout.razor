@@ -36,7 +36,7 @@
         await CallLoadNewMessages.InvokeAsync();
     }
 
-    [JSInvokableAttribute("LoadOldMessages")]
+    [JSInvokable("LoadOldMessages")]
     public  async Task LoadOldMessages()
     {
         Console.WriteLine("load Old  Messages");

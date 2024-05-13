@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
 
 <dialog id="Modal-Message" class="modal">
     <div class="modal-box glass-box ">
@@ -27,9 +28,9 @@
 
         <div class="nav-section transition-transform @NavMenuClass">
             <aside id="SidebarMenu" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 " style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
-                <NavMenu AccountMenuClass="AccountMenuClass" ChatsMenuClass="NavMenuClass" AccountMenuClassChanged="AccountMenuChanged" ChatsMenuClassChanged="ChatsMenuChanged"/>
+                <NavMenu @ref="_navMenuRef" AccountMenuClass="AccountMenuClass" ChatsMenuClass="NavMenuClass" AccountMenuClassChanged="AccountMenuChanged" ChatsMenuClassChanged="ChatsMenuChanged"/>
 
-                <NewMessage/>
+                <ToolBar RefreshNavMenu="RefreshNavMenu"/>
             </aside>
         </div>
 
@@ -48,6 +49,7 @@
 
 @code
 {
+    private NavMenu _navMenuRef;
     private bool IsAtHome = false;
     private string? ScreenSize;
     private string _chatBodyClass = "";
@@ -56,16 +58,19 @@
     private string AccountMenuClass = "-translate-x-full";
     private string NavMenuClass = "-translate-x-0";
 
-    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
+   
 
-    [JSInvokableAttribute("CallHello")]
-    public static void SeyHello(string a, string b)
+    private async Task RefreshNavMenu()
     {
-        Console.WriteLine("it works "+a+b);
+       await _navMenuRef.RefreshNavMenuData();
     }
 
     protected override async Task OnInitializedAsync()
     {
+        var ss = this;
+        var lDotNetReference = DotNetObjectReference.Create(typeof(MainLayout));
+        await JsRuntime.InvokeVoidAsync("GLOBAL.SetDotnetReference", lDotNetReference);
+        
         if (NavigationManager.Uri == NavigationManager.BaseUri)
         {
             IsAtHome = true;

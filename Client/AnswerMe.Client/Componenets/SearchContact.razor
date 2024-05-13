@@ -1,0 +1,125 @@
+@using AnswerMe.Client.Core.Extensions
+@using AnswerMe.Client.Core.Services
+@using Models.Shared.Requests.Shared
+@using Models.Shared.Responses.User
+@inject IUserService UserService
+
+<div style="display: grid;justify-content: center;margin-bottom: 15px">
+    <input @onkeydown="OnSearch" @bind:event="oninput" @bind="_searchWord" type="text" placeholder="Type here" class="input input-bordered input-primary w-full max-w-xs" style="margin-top: 30px"/>
+</div>
+
+<ul class="space-y-2 font-medium" style="height: 300px;overflow-y: auto">
+    @if (_users.Count == 0)
+    {
+    <div style="display: grid; justify-content: center;margin-top: 40px;">
+        @if (_showLoading)
+        {
+        <span class="loading loading-dots loading-lg"></span>
+        }
+        else
+        {
+        <h1>Please Search User Id or Phone Number</h1>
+        <img src="Gif/Search.gif" style="width: 200px;height: 200px;justify-self: center"/>
+        }
+    </div>
+    }
+    else
+    {
+    @foreach (var user in _users)
+    {
+    <li class="flex  hover:bg-gray-800 hover:cursor-pointer" style="border-radius: 0.5em;margin-top:40px ">
+        <div class="avatar" style="display: grid">
+            <div class="w-16 rounded-full  ring-offset-base-100 ring-offset-2" style="justify-self: center">
+                <UserAvatar Class="w-16" ImageUrl="@user.ProfileImage" Letter="@user.FullName?.FirstLetter()"/>
+
+            </div>
+        </div>
+        <div class="w-full  flex flex-col-reverse">
+            <div style="display: grid;margin-top: 15px">
+                <p style="margin-left: 15px;font-size: 12px">@user.PhoneNumber</p>
+
+            </div>
+            <div style="display: grid">
+                <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">@user.IdName </h1>
+                <div method="dialog" style=" grid-column-end: 12;position: relative">
+                    <div class="lg:tooltip" data-tip="Start Messaging">
+                        <StartChatComponent StartingChat="StartingChatEvent" UserId="user.id"/>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </li>
+    }
+
+    @if (_showLoadMore)
+    {
+    <li class="flex " style="border-radius: 0.5em;margin-top:40px ;justify-content: center">
+        <button @onclick="LoadMore" class="btn btn-outline btn-accent btn-sm">Load More</button>
+    </li>
+    }
+    }
+
+</ul>
+
+@code {
+    [Parameter] public EventCallback StartingChat { get; set; }
+    private string? _searchWord;
+    private bool _showLoadMore = true;
+    private PaginationRequest _paginationRequest = new() { CurrentPage = 1, PageSize = 2 };
+    private List<UserResponse> _users = new();
+    private int _totalPages = 0;
+    private bool _showLoading = false;
+
+    private async Task StartingChatEvent()
+    {
+        
+        await StartingChat.InvokeAsync();
+    }
+    
+    private async void OnSearch()
+    {
+        _users = new();
+        _paginationRequest.CurrentPage = 1;
+
+        if (_searchWord is { Length: >= 3 })
+        {
+            _showLoading = true;
+            StateHasChanged();
+
+            await Task.Delay(2000);
+            await Search();
+        }
+
+        _showLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task Search()
+    {
+        var searchResult = await UserService.SearchAsync(_searchWord, _paginationRequest);
+        if (searchResult.IsSuccess)
+        {
+            _users.AddRange(searchResult.AsSuccess.Value.Items);
+
+
+            _paginationRequest.CurrentPage = searchResult.AsSuccess.Value.Page;
+            if (_paginationRequest.CurrentPage == searchResult.AsSuccess.Value.TotalPages)
+            {
+                _showLoadMore = false;
+            }
+            else
+            {
+                _showLoadMore = true;
+            }
+
+            StateHasChanged();
+        }
+    }
+    private async Task LoadMore()
+    {
+        _paginationRequest.CurrentPage += 1;
+        await Search();
+    }
+}

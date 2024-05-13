@@ -1,0 +1,32 @@
+
+<div class="form-control mt-6" style="display:grid">
+
+    <ul class="steps steps-horizontal">
+        <li class="step step-primary text-primary">Create</li>
+        <li class="step text-primary @(step!=1?"step-primary":"")">Share</li>
+    </ul>
+
+</div>
+
+@if (step == 1)
+{
+    <CreateInviteToken InviteToken="NextStep" GroupId="@GroupId"/>
+}
+else
+{
+    <ShareInviteLink InviteToken="@_inviteToken" />
+}
+
+@code {
+    [Parameter]
+    public Guid GroupId { get; set; }
+
+    private string _inviteToken;
+    private int step = 1;
+
+    private void NextStep(string inviteToken)
+    {
+        _inviteToken = inviteToken;
+        step = 2;
+    }
+}

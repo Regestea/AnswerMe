@@ -4,6 +4,7 @@ using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Group;
 using Models.Shared.Responses.PrivateRoom;
 using Models.Shared.Responses.Shared;
+using Models.Shared.Responses.User;
 
 namespace AnswerMe.Client.Core.Services.Interfaces;
 
@@ -19,7 +20,8 @@ public interface IGroupService
     Task<UpdateResponse> EditAsync(Guid groupId, EditGroupRequest request);
     Task<ReadResponse<MemberCountResponse>> MembersCountAsync(Guid groupId);
     Task<ReadResponse<RoomLastSeenResponse>> GetGroupLastSeenAsync(Guid contactId,Guid roomId);
-    Task<CreateResponse<IdResponse>> JoinUserAsync(Guid groupId, Guid joinUserId);
+    Task<CreateResponse<IdResponse>> AddMemberAsync(Guid groupId, Guid joinUserId);
+    Task<ReadResponse<PagedListResponse<UserResponse>>>GetUnAddedContactsAsync(Guid groupId, PaginationRequest paginationRequest);
     Task<DeleteResponse> KickUserAsync(Guid groupId, Guid kickUserId);
     Task<DeleteResponse> LeaveGroupAsync(Guid groupId);
 }

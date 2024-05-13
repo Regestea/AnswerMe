@@ -63,7 +63,7 @@
                             </div>
                             <div class="w-full  flex flex-col-reverse">
                                 <div style="display: grid;margin-top: 15px">
-                                    <p style="margin-left: 15px;font-size: 12px">@pv.RoomNotify.MessageGlance</p>
+                                    <p style="margin-left: 15px;font-size: 12px;min-height: 18px">@pv.RoomNotify.MessageGlance</p>
 
                                 </div>
                                 <div style="display: grid">
@@ -104,11 +104,11 @@
                             </div>
                             <div class="w-full  flex flex-col-reverse">
                                 <div style="display: grid;margin-top: 15px">
-                                    <p style="margin-left: 15px;font-size: 12px">@gr.RoomNotify.MessageGlance</p>
+                                    <p style="margin-left: 15px;font-size: 12px;min-height: 18px">@gr.RoomNotify.MessageGlance</p>
 
                                 </div>
                                 <div style="display: grid">
-                                    <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">@gr.Group.Name Group</h1>
+                                    <h1 style="margin-left: 15px;font-style: italic;font-weight: bold">@gr.Group.Name</h1>
 
                                     <div style=" grid-column-end: 12">
 
@@ -154,18 +154,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var privateRoomsResponse = await PrivateRoomService.GetPrivateRoomsAsync(_privatePaginationRequest);
-        var groupResponse = await GroupService.GetGroupsAsync(_groupPaginationRequest);
-
-        if (privateRoomsResponse.IsSuccess)
-        {
-            _privateRoomResponseList = privateRoomsResponse.AsSuccess.Value.Items;
-        }
-
-        if (groupResponse.IsSuccess)
-        {
-            _groupResponseList = groupResponse.AsSuccess.Value.Items;
-        }
+        var lDotNetReference = DotNetObjectReference.Create(this);
+        await JsRuntime.InvokeVoidAsync("GLOBAL.SetNavMenuDotnetReference", lDotNetReference);
+        
+        await SetData();
 
         OnlineService.UserWentOnline(SetContactOnline);
         OnlineService.UserWentOffline(SetContactOffline);
@@ -179,6 +171,30 @@
         OnlineService.NotifyRemoveGrMessage(RemoveGrMessage);
     }
 
+
+    [JSInvokable("RefreshNavMenuData")]
+    public async Task RefreshNavMenuData()
+    {
+        await SetData();
+        StateHasChanged();
+    }
+
+    private async Task SetData()
+    {
+        var privateRoomsResponse = await PrivateRoomService.GetPrivateRoomsAsync(_privatePaginationRequest);
+        var groupResponse = await GroupService.GetGroupsAsync(_groupPaginationRequest);
+
+        if (privateRoomsResponse.IsSuccess)
+        {
+            _privateRoomResponseList = privateRoomsResponse.AsSuccess.Value.Items;
+        }
+
+        if (groupResponse.IsSuccess)
+        {
+            _groupResponseList = groupResponse.AsSuccess.Value.Items;
+        }
+    }
+    
     private void SetUrlIdIfExist()
     {
         var uri = new Uri(NavigationManager.Uri);

@@ -1,10 +1,12 @@
 using System.Net;
+using System.Web;
 using AnswerMe.Client.Core.Extensions;
 using AnswerMe.Client.Core.Services.Interfaces;
 using Blazored.LocalStorage;
 using Models.Shared.OneOfTypes;
 using Models.Shared.RepositoriesResponseTypes;
 using Models.Shared.Requests.Group;
+using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Group;
 using Models.Shared.Responses.PrivateRoom;
 using Models.Shared.Responses.Shared;
@@ -24,19 +26,20 @@ public class GroupInviteService : IGroupInviteService
     }
 
 
-    public async Task<ReadResponse<PreviewGroupResponse>> GetGroupInvitePreviewAsync(string inviteToken)
+    public async Task<ReadResponse<PreviewGroupResponse>> GetGroupInvitePreviewAsync(TokenRequest request)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
+        
 
-        var response = await _httpClient.SendRequestAsync($"GroupInvite/{inviteToken}", HttpMethod.Get);
+        var response = await _httpClient.SendRequestAsync($"GroupInvite/Preview?".AddQuery(nameof(request.Token),HttpUtility.UrlEncode(request.Token)), HttpMethod.Get);
 
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return new NotFound();
         }
-
+        
         var group = await JsonConverter.ToObject<PreviewGroupResponse>(response.Content);
-
+        
         return new Success<PreviewGroupResponse>(group);
     }
 
@@ -72,7 +75,7 @@ public class GroupInviteService : IGroupInviteService
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
-        var response = await _httpClient.SendRequestAsync($"GroupInvite/{inviteToken}/Join", HttpMethod.Post);
+        var response = await _httpClient.SendRequestAsync($"GroupInvite/Join?".AddQuery("inviteToken",inviteToken), HttpMethod.Post);
 
         if (response.StatusCode == HttpStatusCode.OK)
         {

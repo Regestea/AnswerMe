@@ -3,6 +3,14 @@ GLOBAL.DotNetReference = null;
 GLOBAL.SetDotnetReference = function (pDotNetReference) {
     GLOBAL.DotNetReference = pDotNetReference;
 };
+GLOBAL.NavMenuDotNetReference=null;
+GLOBAL.SetNavMenuDotnetReference = function (pDotNetReference) {
+    GLOBAL.NavMenuDotNetReference = pDotNetReference;
+};
+
+function RefreshNavMenuData(){
+    GLOBAL.NavMenuDotNetReference.invokeMethodAsync('RefreshNavMenuData');
+}
 
 
 window.addEventListener('hashchange', () => {
@@ -59,6 +67,8 @@ function UnRegisterChatScrollListener(elementId) {
     }
 }
 
+//fix this shit!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 var IsLoadMessageLocked = false;
 
 function ChatScroll(elementId) {
@@ -69,9 +79,8 @@ function ChatScroll(elementId) {
     }
 
     if (scrollStatus != null) {
-
         let totalScroll = scrollStatus.ScrollHeight - scrollStatus.ClientHeight;
-        let remainingOneThird = totalScroll /20;
+        let remainingOneThird = totalScroll * 0.1;
         let lastOneThird = scrollStatus.ScrollTop > (totalScroll - remainingOneThird);
         let firstOneThird = scrollStatus.ScrollTop < remainingOneThird;
 
@@ -204,7 +213,7 @@ function MessageShow(messageType, messageHeader, messageText) {
     modalBox.innerHTML = "";
     let modalHeaderClass = "";
 
-    switch (messageType) {
+    switch (messageType.toLowerCase()) {
         case "info":
             modalHeaderClass = "mt-4 stat-value text-info";
             break;

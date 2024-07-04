@@ -5,51 +5,42 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using IdentityServer.Shared.Client.Repositories;
 using IdentityServer.Shared.Client.Repositories.Interfaces;
 using IdentityServer.Shared.Client.Service;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
+using Microsoft.Extensions.Options;
 
 
 namespace IdentityServer.Shared.Client
 {
     public static class ConfigureServices
     {
-        public static IServiceCollection AddIdentityServerClientServices(this IServiceCollection services,
+        public static WebApplicationBuilder AddIdentityServerClientServices(this WebApplicationBuilder builder,
             Action<ConfigureOptions> options)
         {
             var configureOptions = new ConfigureOptions();
             options.Invoke(configureOptions);
+            
+            builder.Services.AddGrpcClient<AuthorizationService.AuthorizationServiceClient>(o =>
+                o.Address = new Uri(builder.Configuration.GetSection("services:IdentityServerApi:https:0").Value ?? throw new InvalidOperationException()));
+            
+            
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<AuthorizationGrpcServices>();
 
-            services.AddGrpcClient<AuthorizationService.AuthorizationServiceClient>(o =>
-                o.Address = new Uri(configureOptions.IdentityServerGrpcUrl));
-            services.AddHttpContextAccessor();
-            services.AddScoped<AuthorizationGrpcServices>();
+            builder.Services.AddScoped<IJwtCacheRepository, JwtCacheRepository>();
 
-            services.AddScoped<IJwtCacheRepository, JwtCacheRepository>();
+            builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
-            services.AddScoped<IAuthenticationService, AuthenticationService>();
-
-            services.AddScoped<IJwtTokenRepository, JwtTokenRepository>();
-
-            #region Redis Cache
-
-            services.AddStackExchangeRedisCache(redisCacheOptions =>
-            {
-                redisCacheOptions.Configuration = configureOptions.RedisConnectionString;
-                redisCacheOptions.InstanceName = configureOptions.RedisInstanceName;
-            });
-
-            #endregion
-
-            #region Redis Multiplexer
-
-            services.AddSingleton<IConnectionMultiplexer>(provider =>
-                ConnectionMultiplexer.Connect("localhost:9191,password=123456"));
-
-            #endregion
+            builder.Services.AddScoped<IJwtTokenRepository, JwtTokenRepository>();
+            
+            builder.AddRedisClient("RedisCache");
 
             #region JwtBarer
 
-            services.AddAuthentication(options =>
+            builder.Services.AddAuthentication(options =>
                 {
                     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -59,7 +50,7 @@ namespace IdentityServer.Shared.Client
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = true,
-                        ValidIssuer = configureOptions.IssuerUrl,
+                        ValidIssuer = builder.Configuration.GetSection("services:IdentityServerApi:https:0").Value,
                         ValidateAudience = false,
                         ValidateLifetime = true
                     };
@@ -67,7 +58,7 @@ namespace IdentityServer.Shared.Client
 
             #endregion
 
-            return services;
+            return builder;
         }
     }
 }

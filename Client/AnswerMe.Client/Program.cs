@@ -6,6 +6,7 @@ using AnswerMe.Client.Core.DTOs.Base;
 
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
@@ -14,7 +15,5 @@ var settings = new AppSettings();
 builder.Configuration.Bind("AppSettings", settings);
 builder.Services.AddSingleton(settings);
 builder.Services.AddCoreServices(settings);
-
-// builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
 await builder.Build().RunAsync();

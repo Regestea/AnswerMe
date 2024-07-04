@@ -2,43 +2,37 @@
 using System.Text.Json;
 using AnswerMe.Application.Common.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
+using StackExchange.Redis;
 
 namespace AnswerMe.Infrastructure.Repositories
 {
-    public class CacheRepository : ICacheRepository
+    public class CacheRepository(IConnectionMultiplexer redis) : ICacheRepository
     {
-        private readonly IDistributedCache _distributedCache;
+        private readonly IDatabase _redisCli = redis.GetDatabase();
 
-        public CacheRepository(IDistributedCache distributedCache)
-        {
-            _distributedCache = distributedCache;
-        }
 
         public async Task<T?> GetAsync<T>(string key)
         {
-            var responseJson = await _distributedCache.GetAsync(key);
+            var responseJson = await _redisCli.StringGetAsync(key);
 
-            if (responseJson != null)
+            if (!responseJson.IsNullOrEmpty)
             {
-                return JsonSerializer.Deserialize<T>(responseJson);
+                return JsonSerializer.Deserialize<T>(responseJson.ToString());
             }
-            return default;
+
+            return default(T);
         }
 
         public async Task SetAsync<T>(string key, T value, TimeSpan expiry)
         {
-            var options = new DistributedCacheEntryOptions()
-                .SetSlidingExpiration(expiry);
-
             var content = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value));
 
-            await _distributedCache.SetAsync(key, content, options);
+            await _redisCli.StringSetAsync(key, content, expiry);
         }
 
         public async Task RemoveAsync(string key)
         {
-            await _distributedCache.RemoveAsync(key);
+            await _redisCli.KeyDeleteAsync(key);
         }
     }
 }
-

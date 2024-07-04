@@ -1,7 +1,4 @@
-﻿
-
-
-using AnswerMe.Application.Common.Interfaces;
+﻿using AnswerMe.Application.Common.Interfaces;
 using AnswerMe.Application.Extensions;
 using AnswerMe.Infrastructure.Configs;
 using AnswerMe.Infrastructure.Persistence;
@@ -11,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ObjectStorage.Api.Protos;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Hosting;
+using AnswerMe.Infrastructure.Common.Extensions;
 
 namespace AnswerMe.Infrastructure
 {
@@ -18,37 +18,32 @@ namespace AnswerMe.Infrastructure
     public static class ConfigureServices
     {
         /// <summary>
-        /// Adds infrastructure services to the <see cref="IServiceCollection"/>.
+        /// Adds infrastructure services to the <see cref="WebApplicationBuilder"/>.
         /// </summary>
-        /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
+        /// <param name="builder">The <see cref="WebApplicationBuilder"/> builder to configure.</param>
         /// <param name="configuration">The <see cref="IConfiguration"/> containing the configuration settings.</param>
         /// <returns>The modified <see cref="IServiceCollection"/> with added services.</returns>
-        public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
+        public static WebApplicationBuilder AddInfrastructureServices(this WebApplicationBuilder builder, IConfiguration configuration)
         {
-            services.AddDbContext<AnswerMeDbContext>(
-                o => o.UseNpgsql(configuration.GetSection("DatabaseSettings:ConnectionString").Value));
+            builder.AddNpgsqlDbContext<AnswerMeDbContext>("AnswerMeDB");
 
-            services.AddGrpcClient<ObjectStorageService.ObjectStorageServiceClient>(o =>
-                o.Address = new Uri(configuration.GetSection("ObjectStorageServer:GrpcUrl").Value ?? throw new InvalidOperationException()));
-            services.AddScoped<FileStorageService>();
-            services.AddScoped<ICacheRepository, CacheRepository>();
-            services.AddScoped<IGroupHubService, GroupHubService>();
-            services.AddScoped<IGroupInviteRepository, GroupInviteRepository>();
-            services.AddScoped<IGroupMessageService, GroupMessageService>();
-            services.AddScoped<IGroupRepository, GroupRepository>();
-            services.AddScoped<IOnlineHubService, OnlineHubService>();
-            services.AddScoped<IPrivateHubService, PrivateHubService>();
-            services.AddScoped<IPrivateMessageService, PrivateMessageService>();
-            services.AddScoped<IPrivateRoomRepository, PrivateRoomRepository>();
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddSignalR();
-            
-            services.AddSwagger();
-            //services.AddSignalR()
-            //    .AddAzureSignalR(configuration.GetConnectionString("Azure:SignalRUrl"));
-
-            FileStorageHelper.Initialize(configuration.GetSection("Blob:StorageUrl").Value ?? throw new InvalidOperationException());
-            return services;
+            builder.Services.AddGrpcClient<ObjectStorageService.ObjectStorageServiceClient>(o =>
+                o.Address = new Uri(builder.Configuration.GetSection("services:ObjectStorageApi:https:0").Value ?? throw new InvalidOperationException()));
+            builder.Services.AddScoped<FileStorageService>();
+            builder.Services.AddScoped<ICacheRepository, CacheRepository>();
+            builder.Services.AddScoped<IGroupHubService, GroupHubService>();
+            builder.Services.AddScoped<IGroupInviteRepository, GroupInviteRepository>();
+            builder.Services.AddScoped<IGroupMessageService, GroupMessageService>();
+            builder.Services.AddScoped<IGroupRepository, GroupRepository>();
+            builder.Services.AddScoped<IOnlineHubService, OnlineHubService>();
+            builder.Services.AddScoped<IPrivateHubService, PrivateHubService>();
+            builder.Services.AddScoped<IPrivateMessageService, PrivateMessageService>();
+            builder.Services.AddScoped<IPrivateRoomRepository, PrivateRoomRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddSignalR();
+            builder.Services.AddSwagger();
+            FileStorageHelper.Initialize(builder.Configuration.GetConnectionString("ObjectStorage").GetBlobEndpoint()+"/");
+            return builder;
         }
     }
 }

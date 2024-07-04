@@ -7,14 +7,8 @@ using System.Threading.Tasks;
 namespace IdentityServer.Shared.Client
 {
     public class ConfigureOptions
-    {
-        public string RedisConnectionString { get; set; } = null!;
-
-        public string RedisInstanceName { get; set; } = null!;
-
-        public string IdentityServerGrpcUrl { get; set; } = null!;
-
-        public string IssuerUrl { get; set; } = null!;
-
+    { 
+        public string RedisConnectionName { get; set; } = null!;
+        public string IdentityServerUrl { get; set; } = null!;
     }
 }

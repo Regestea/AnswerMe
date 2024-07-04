@@ -21,8 +21,7 @@ builder.Services.AddGrpc();
 builder.Services.AddControllers();
 
 #region DatabaseConfig
-builder.Services.AddDbContext<IdentityServerDbContext>(
-    o => o.UseNpgsql(builder.Configuration.GetSection("DatabaseSettings:ConnectionString").Value));
+builder.AddNpgsqlDbContext<IdentityServerDbContext>("IdentityServerDb");
 #endregion
 
 builder.Services.AddSwagger();
@@ -50,7 +49,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = "https://localhost:7126",
+            ValidIssuer = builder.Configuration.GetSection("services:IdentityServerApi:https:0").Value,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
                 builder.Configuration.GetValue<string>("JWT:SecretKey") ?? throw new InvalidOperationException()))
         };

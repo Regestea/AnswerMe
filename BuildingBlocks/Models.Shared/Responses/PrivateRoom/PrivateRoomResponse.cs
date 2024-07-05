@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Models.Shared.Responses.Message;
 using Models.Shared.Responses.Shared;
+using Models.Shared.Responses.User;
 
 namespace Models.Shared.Responses.PrivateRoom
 {

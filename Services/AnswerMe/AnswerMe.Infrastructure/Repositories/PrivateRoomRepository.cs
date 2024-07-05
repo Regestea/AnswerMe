@@ -17,6 +17,7 @@ using Models.Shared.Responses.Group;
 using Models.Shared.Responses.Message;
 using Models.Shared.Responses.PrivateRoom;
 using Models.Shared.Responses.Shared;
+using Models.Shared.Responses.User;
 using OneOf.Types;
 
 namespace AnswerMe.Infrastructure.Repositories

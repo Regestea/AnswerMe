@@ -16,7 +16,7 @@ public interface IGroupInviteRepository
     /// </summary>
     /// <param name="inviteToken">The invite token for the group.</param>
     /// <returns>A task representing the asynchronous operation. The task result contains the response containing the group preview information.</returns>
-    Task<ReadResponse<PreviewGroupResponse>> GetGroupPreviewAsync(TokenRequest request);
+    Task<ReadResponse<PreviewGroupInviteResponse>> GetGroupPreviewAsync(TokenRequest request);
 
     /// <summary>
     /// Creates an invite token asynchronously.

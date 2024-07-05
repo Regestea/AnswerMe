@@ -10,6 +10,7 @@ using Models.Shared.Requests.Shared;
 using Models.Shared.Responses.Media;
 using Models.Shared.Responses.Message;
 using Models.Shared.Responses.Shared;
+using Models.Shared.Responses.User;
 using OneOf.Types;
 
 namespace AnswerMe.Infrastructure.Services
@@ -112,6 +113,7 @@ namespace AnswerMe.Infrastructure.Services
                 Text = message.Text,
                 UserSender = userSenderPreview,
                 ReplyMessageId = message.ReplyMessageId,
+                GroupInviteToken = message.GroupInvitationToken,
                 MediaList = new List<MediaResponse>()
             };
             if (message.MediaList != null)

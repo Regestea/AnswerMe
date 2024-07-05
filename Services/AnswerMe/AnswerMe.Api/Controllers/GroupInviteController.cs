@@ -35,7 +35,7 @@ namespace AnswerMe.Api.Controllers
         /// <param name="request">The invite token to preview the group</param>
         /// <response code="200">OK: Returns the result of the group preview based on the invite token.</response>
         /// <response code="404">Not Found: The group preview could not be found.</response>
-        [ProducesResponseType(typeof(PreviewGroupResponse), StatusCodes.Status200OK)] // Specify the expected response type
+        [ProducesResponseType(typeof(PreviewGroupInviteResponse), StatusCodes.Status200OK)] // Specify the expected response type
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpGet("Preview")]
         public async Task<IActionResult> GetGroupPreviewAsync([FromQuery] TokenRequest request)

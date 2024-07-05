@@ -30,9 +30,9 @@ namespace AnswerMe.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<ReadResponse<PreviewGroupResponse>> GetGroupPreviewAsync(TokenRequest request)
+        public async Task<ReadResponse<PreviewGroupInviteResponse>> GetGroupPreviewAsync(TokenRequest request)
         {
-            var groupInvitation = await _context.GroupInvitations.FirstOrDefaultAsync(x => x.Token == request.Token && x.ExpirationDate > DateTimeOffset.UtcNow);
+            var groupInvitation = await _context.GroupInvitations.FirstOrDefaultAsync(x => x.Token == request.Token );
 
             if (groupInvitation == null)
             {
@@ -41,16 +41,16 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var groupResponse = await _context.GroupChats
                 .Where(x => x.id == groupInvitation.GroupId)
-                .Select(x => new PreviewGroupResponse()
+                .Select(x => new PreviewGroupInviteResponse()
                 {
                     Id = x.id,
                     CreatedDate = x.CreatedDate,
-                    ModifiedDate = x.ModifiedDate,
+                    ExpirationDate = groupInvitation.ExpirationDate,
                     Name = x.Name,
                     RoomImage = FileStorageHelper.GetUrl(x.RoomImage)
                 }).SingleAsync();
 
-            return new Success<PreviewGroupResponse>(groupResponse);
+            return new Success<PreviewGroupInviteResponse>(groupResponse);
         }
 
         public async Task<CreateResponse<TokenResponse>> CreateAsync(Guid loggedInUserId, Guid groupId,

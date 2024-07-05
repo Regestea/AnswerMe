@@ -47,7 +47,7 @@
 
                 @if (!string.IsNullOrWhiteSpace(message.GroupInviteToken))
                 {
-                <GroupInvitePreview GroupInviteToken="@message.GroupInviteToken"/>
+                <GroupInvitePreview @key="@message.GroupInviteToken" GroupInviteToken="@message.GroupInviteToken"/>
 
                 }
                 
@@ -172,6 +172,8 @@
 
     private void AddNewMessage(MessageResponse messageResponse)
     {
+        Console.WriteLine("invite token is " + messageResponse.GroupInviteToken);
+        
         _isNewMessageBannerPlaced = true;
         if (_newMessagePaginationRequest.CurrentPage == 1)
         {

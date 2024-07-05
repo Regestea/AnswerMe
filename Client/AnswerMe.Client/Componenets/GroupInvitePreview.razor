@@ -12,7 +12,14 @@
         <div class="card-body">
             <h2 class="card-title">@_previewGroupResponse.Name</h2>
             <div class="card-actions justify-end">
-                <button @onclick="JoinGroup" class="btn btn-outline w-full ">Join Group</button>
+                @if (_previewGroupResponse.ExpirationDate > DateTimeOffset.UtcNow)
+                {
+                    <button @onclick="JoinGroup" class="btn btn-outline w-full ">Join Group</button>
+                }
+                else
+                {
+                    <button  class="btn-disabled btn btn-outline w-full ">Invite Expired</button>
+                }
             </div>
         </div>
     </div>
@@ -21,7 +28,7 @@
 @code {
     [Parameter] public string GroupInviteToken { get; set; }
 
-    private PreviewGroupResponse? _previewGroupResponse = null;
+    private PreviewGroupInviteResponse? _previewGroupResponse = null;
 
     protected override async Task OnInitializedAsync()
     {

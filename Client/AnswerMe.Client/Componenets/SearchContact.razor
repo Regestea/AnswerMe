@@ -104,8 +104,8 @@
             _users.AddRange(searchResult.AsSuccess.Value.Items);
 
 
-            _paginationRequest.CurrentPage = searchResult.AsSuccess.Value.Page;
-            if (_paginationRequest.CurrentPage == searchResult.AsSuccess.Value.TotalPages)
+            _paginationRequest.CurrentPage = searchResult.AsSuccess.Value.Pagination.CurrentPage;
+            if (_paginationRequest.CurrentPage == searchResult.AsSuccess.Value.Pagination.TotalPages)
             {
                 _showLoadMore = false;
             }

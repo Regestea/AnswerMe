@@ -15,14 +15,14 @@
 
     @foreach (var message in _messageList)
     {
-        if (UserLastRoomVisit != null  && message.CreatedDate > UserLastRoomVisit && _isNewMessageBannerPlaced == false)
+        if (UserLastRoomVisit != null && message.CreatedDate > UserLastRoomVisit && _isNewMessageBannerPlaced == false)
         {
             _isNewMessageBannerPlaced = true;
 
-            <div class="divider divider-info text-info">New Messages</div>
+            <div id="@ElementIds.NewMessageBanner" class="divider divider-info text-info">New Messages</div>
         }
-        
-        
+
+
         <div id="@message.id-message" class="chat  @(message.UserSender.Id == LoggedInUserId ? "chat-end" : "chat-start")">
             @if (message.UserSender.Id != LoggedInUserId)
             {
@@ -32,8 +32,8 @@
                     </div>
                 </div>
             }
-            
-           
+
+
             <div class="chat-bubble @(message.UserSender.Id == LoggedInUserId ? "primary-liner-gradient" : "dark-liner-gradient")">
                 @if (message.UserSender.Id != LoggedInUserId)
                 {
@@ -47,10 +47,9 @@
 
                 @if (!string.IsNullOrWhiteSpace(message.GroupInviteToken))
                 {
-                <GroupInvitePreview @key="@message.GroupInviteToken" GroupInviteToken="@message.GroupInviteToken"/>
-
+                    <GroupInvitePreview @key="@message.GroupInviteToken" GroupInviteToken="@message.GroupInviteToken"/>
                 }
-                
+
                 @message.Text
 
                 <div class="chat-footer " style="display: grid;margin-top: 2px">
@@ -71,14 +70,15 @@
     [Parameter] public DateTimeOffset? UserLastRoomVisit { get; set; }
     [Parameter] public Guid LoggedInUserId { get; set; }
     private List<MessageResponse> _messageList = new();
-
+    internal static class ElementIds
+    {
+        public static string NewMessageBanner { get; } = Guid.NewGuid().ToString();
+    }
     private string _lastLook = "";
 
 
     private PaginationRequest _oldMessagePaginationRequest = new() { PageSize = 10, CurrentPage = 1 };
     private PaginationRequest _newMessagePaginationRequest = new() { PageSize = 10, CurrentPage = 1 };
-
-
 
 
     private bool _firstLoad = true;
@@ -88,7 +88,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-
         var group = await GroupService.GetByIdAsync(RoomId);
 
         if (!group.IsSuccess)
@@ -100,12 +99,15 @@
         if (result.IsSuccess)
         {
             _messageList = result.AsSuccess.Value.Items;
-            _newMessagePaginationRequest.CurrentPage = result.AsSuccess.Value.Page;
-            _oldMessagePaginationRequest.CurrentPage = result.AsSuccess.Value.Page;
+            _newMessagePaginationRequest.CurrentPage = result.AsSuccess.Value.Pagination.CurrentPage;
+            _oldMessagePaginationRequest.CurrentPage = result.AsSuccess.Value.Pagination.CurrentPage;
+
+            await CalculateDisableLoadMessage(result.AsSuccess.Value.Pagination);
         }
 
         if (result.IsNotFound)
         {
+            await CalculateDisableLoadMessage(null);
         }
 
         if (result.IsAccessDenied)
@@ -119,32 +121,61 @@
     {
         if (_firstLoad && _isNewMessageBannerPlaced == false && _messageList.Any())
         {
-            await JsRuntime.InvokeVoidAsync("ScrollToView", _messageList.Last().id + "-message");
+            await JsRuntime.ScrollToEndAsync(ChatLayout.ElementIds.ChatScroll.ToString());
             _firstLoad = false;
         }
         else
         {
-            if (_isNewMessageBannerPlaced)
+            if (_isNewMessageBannerPlaced && _messageList.Count() > _newMessagePaginationRequest.PageSize)
             {
-                await JsRuntime.ScrollToViewAsync(_messageList[5].id + "-message");
+                await JsRuntime.ScrollToViewAsync(ElementIds.NewMessageBanner.ToString());
             }
         }
-
     }
 
+
+    private async Task CalculateDisableLoadMessage(PaginationResponse? pagination)
+    {
+        if (pagination != null)
+        {
+            if (pagination.TotalPages == pagination.CurrentPage || pagination.TotalCount == 0)
+            {
+                await JsRuntime.InvokeVoidAsync("DisableLoadOldMessage");
+            }
+
+            if (pagination.TotalPages <= 1)
+            {
+                await JsRuntime.InvokeVoidAsync("DisableLoadOldMessage");
+                await JsRuntime.InvokeVoidAsync("DisableLoadNewMessage");
+            }
+
+            if (pagination.CurrentPage == 1)
+            {
+                await JsRuntime.InvokeVoidAsync("DisableLoadNewMessage");
+            }
+        }
+        else
+        {
+            await JsRuntime.InvokeVoidAsync("DisableLoadOldMessage");
+            await JsRuntime.InvokeVoidAsync("DisableLoadNewMessage");
+        }
+    }
 
     public async Task LoadNewMessagesAsync()
     {
         if (_newMessagePaginationRequest.CurrentPage > 1)
         {
             _newMessagePaginationRequest.CurrentPage--;
-            Console.WriteLine(_newMessagePaginationRequest.CurrentPage);
             var result = await GroupMessageService.GetGroupMessagesAsync(RoomId, false, _newMessagePaginationRequest);
+
+            if (result.IsSuccess)
+            {
+                await CalculateDisableLoadMessage(result.AsSuccess.Value.Pagination);
+            }
 
             if (result.IsSuccess && result.AsSuccess.Value.Items.Any())
             {
                 _messageList.AddRange(result.AsSuccess.Value.Items);
-                StateHasChanged();
             }
         }
     }
@@ -152,28 +183,26 @@
     public async Task LoadOldMessagesAsync()
     {
         var _lastLook = _messageList.First().id + "-message";
-
         _oldMessagePaginationRequest.CurrentPage++;
-        Console.WriteLine(_oldMessagePaginationRequest.CurrentPage);
-        Console.WriteLine("AAAAAAA Old");
+
         var result = await GroupMessageService.GetGroupMessagesAsync(RoomId, false, _oldMessagePaginationRequest);
+
+        if (result.IsSuccess)
+        {
+            await CalculateDisableLoadMessage(result.AsSuccess.Value.Pagination);
+        }
 
         if (result.IsSuccess && result.AsSuccess.Value.Items.Any())
         {
             _messageList.InsertRange(0, result.AsSuccess.Value.Items);
-            StateHasChanged();
         }
 
-        await JsRuntime.ScrollToViewAsync(_lastLook);
+        // await JsRuntime.ScrollToViewAsync(_lastLook);
     }
-
-
 
 
     private void AddNewMessage(MessageResponse messageResponse)
     {
-        Console.WriteLine("invite token is " + messageResponse.GroupInviteToken);
-        
         _isNewMessageBannerPlaced = true;
         if (_newMessagePaginationRequest.CurrentPage == 1)
         {
@@ -190,7 +219,7 @@
             _messageList.Add(messageResponse);
             StateHasChanged();
             _ = JsRuntime.AddClassAsync(messageResponse.id + "-message", messageClass);
-            JsRuntime.InvokeVoidAsync("ScrollToEnd", ChatLayout.ElementIds.ChatScroll.ToString());
+            // JsRuntime.InvokeVoidAsync("ScrollToEnd", ChatLayout.ElementIds.ChatScroll.ToString());
         }
     }
 

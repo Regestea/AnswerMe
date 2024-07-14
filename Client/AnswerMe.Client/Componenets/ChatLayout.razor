@@ -32,15 +32,17 @@
     [JSInvokable("LoadNewMessages")]
     public  async Task LoadNewMessages()
     {
-        Console.WriteLine("load New  Messages");
+        await JsRuntime.InvokeVoidAsync("SaveChatLocation",ElementIds.ChatScroll);
         await CallLoadNewMessages.InvokeAsync();
+        await JsRuntime.InvokeVoidAsync("RestoreChatLocation",ElementIds.ChatScroll);
     }
 
     [JSInvokable("LoadOldMessages")]
     public  async Task LoadOldMessages()
     {
-        Console.WriteLine("load Old  Messages");
+        await JsRuntime.InvokeVoidAsync("SaveChatLocation",ElementIds.ChatScroll);
         await CallLoadOldMessages.InvokeAsync();
+        await JsRuntime.InvokeVoidAsync("RestoreChatLocation",ElementIds.ChatScroll);
     }
 
     protected override async Task OnInitializedAsync()

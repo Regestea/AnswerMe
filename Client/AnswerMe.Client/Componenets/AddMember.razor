@@ -75,7 +75,7 @@ else
             _contacts = contacts.AsSuccess.Value.Items;
 
 
-            if (contacts.AsSuccess.Value.Page == contacts.AsSuccess.Value.TotalPages)
+            if (contacts.AsSuccess.Value.Pagination.CurrentPage == contacts.AsSuccess.Value.Pagination.TotalPages)
             {
                 _showLoadMore = false;
             }
@@ -100,7 +100,7 @@ else
         {
             
             _contacts.AddRange(result.AsSuccess.Value.Items);
-            if (result.AsSuccess.Value.Page >= result.AsSuccess.Value.TotalPages)
+            if (result.AsSuccess.Value.Pagination.CurrentPage >= result.AsSuccess.Value.Pagination.TotalPages)
             {
                 _showLoadMore = false;
             }

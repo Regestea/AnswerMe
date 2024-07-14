@@ -100,8 +100,8 @@
         {
             _messageList = result.AsSuccess.Value.Items;
 
-            _newMessagePaginationRequest.CurrentPage = result.AsSuccess.Value.Page;
-            _oldMessagePaginationRequest.CurrentPage = result.AsSuccess.Value.Page;
+            _newMessagePaginationRequest.CurrentPage = result.AsSuccess.Value.Pagination.CurrentPage;
+            _oldMessagePaginationRequest.CurrentPage = result.AsSuccess.Value.Pagination.CurrentPage;
         }
 
         Console.WriteLine("Last room visit " + ContactLastRoomVisit);

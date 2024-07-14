@@ -87,10 +87,10 @@
         if (response.IsSuccess)
         {
             var result = response.AsSuccess.Value;
-            _showLoadMore = result.TotalPages > _paginationRequest.CurrentPage;
+            _showLoadMore = result.Pagination.TotalPages > _paginationRequest.CurrentPage;
             _users = result.Items;
             
-            _paginationRequest.CurrentPage = result.Page;
+            _paginationRequest.CurrentPage = result.Pagination.CurrentPage;
         }
     }
 
@@ -124,7 +124,7 @@
         {
             var result = response.AsSuccess.Value;
             _users.AddRange(result.Items);
-            if (_paginationRequest.CurrentPage == result.TotalPages)
+            if (_paginationRequest.CurrentPage == result.Pagination.TotalPages)
             {
                 _showLoadMore = false;
             }

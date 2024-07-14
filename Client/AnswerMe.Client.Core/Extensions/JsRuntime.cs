@@ -32,6 +32,12 @@ public static class JsRuntime
         await jsRuntime.InvokeVoidAsync("ScrollToView", elementId);
     }
     
+    public static async Task ScrollToEndAsync(this IJSRuntime jsRuntime, string elementId)
+    {
+        await jsRuntime.InvokeVoidAsync("ScrollToEnd", elementId);
+    }
+    
+    
     public static async Task SubmitFormAsync(this IJSRuntime jsRuntime, string elementId)
     {
         await jsRuntime.InvokeVoidAsync("SubmitForm", elementId);

@@ -12,6 +12,10 @@ function ScrollToView(id) {
         );
     }
 }
+function ScrollToEnd(id){
+    var element = document.getElementById(id);
+    element.scrollTo(0, element.scrollHeight);
+}
 
 function SubmitForm(id) {
     let element = document.getElementById(id);

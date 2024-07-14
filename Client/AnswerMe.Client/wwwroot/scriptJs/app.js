@@ -3,22 +3,55 @@ GLOBAL.DotNetReference = null;
 GLOBAL.SetDotnetReference = function (pDotNetReference) {
     GLOBAL.DotNetReference = pDotNetReference;
 };
-GLOBAL.NavMenuDotNetReference=null;
+GLOBAL.NavMenuDotNetReference = null;
 GLOBAL.SetNavMenuDotnetReference = function (pDotNetReference) {
     GLOBAL.NavMenuDotNetReference = pDotNetReference;
 };
 
-function RefreshNavMenuData(){
+function RefreshNavMenuData() {
     GLOBAL.NavMenuDotNetReference.invokeMethodAsync('RefreshNavMenuData');
 }
 
+//#region Save And Restore Chat Position
 
-window.addEventListener('hashchange', () => {
-    console.log('Hash changed! New URL:', window.location.href);
-});
-window.addEventListener('popstate', (event) => {
-    console.log('URL changed! New URL:', window.location.href);
-});
+const SavedScrollPosition = {
+    scrollTop: 0,
+    scrollHeight: 0,
+    clientHeight: 0
+};
+
+function SaveChatLocation(elementId) {
+    let element = document.getElementById(elementId);
+    
+    if (element != null) {
+        SavedScrollPosition.scrollTop = element.scrollTop;
+        SavedScrollPosition.scrollHeight = element.scrollHeight;
+        SavedScrollPosition.clientHeight = element.clientHeight;
+    }
+}
+
+function RestoreChatLocation(elementId) {
+    let element = document.getElementById(elementId);
+    if (element != null) {
+        let newScrollPosition = {
+            scrollTop: element.scrollTop,
+            scrollHeight: element.scrollHeight,
+            clientHeight: element.clientHeight
+        };
+        let scrollTop=SavedScrollPosition.scrollTop+(newScrollPosition.scrollHeight - SavedScrollPosition.scrollHeight);
+        element.scrollTop=scrollTop;
+    }
+}
+
+//#endregion
+
+
+// window.addEventListener('hashchange', () => {
+//     console.log('Hash changed! New URL:', window.location.href);
+// });
+// window.addEventListener('popstate', (event) => {
+//     console.log('URL changed! New URL:', window.location.href);
+// });
 function GetScrollStatus(elementId) {
     let element = document.getElementById(elementId);
 
@@ -33,18 +66,10 @@ function GetScrollStatus(elementId) {
     return null;
 }
 
-
-
-function ScrollToEnd(id){
-    var element = document.getElementById(id);
-    element.scrollTo(0, element.scrollHeight);
-}
-
 function SetScrollListenerLockStatus(scrollLock) {
     ScrollLock = scrollLock;
 }
 
-// this dosen't work because we doesn't scroll window , we scroll a div element so we need a function to register event listener for the div then on component dispose unRegister it
 var ScrollLock = true;
 
 function RegisterChatScrollListener(elementId) {
@@ -55,7 +80,7 @@ function RegisterChatScrollListener(elementId) {
             ChatScroll(elementId)
         });
     }
-    
+
 };
 
 function UnRegisterChatScrollListener(elementId) {
@@ -67,15 +92,34 @@ function UnRegisterChatScrollListener(elementId) {
     }
 }
 
-//fix this shit!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//fix this !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+var AllowLoadNewMessage = true;
+
+function DisableLoadNewMessage() {
+    AllowLoadNewMessage = false;
+}
+
+var AllowLoadOldMessage = true;
+
+function DisableLoadOldMessage() {
+    AllowLoadOldMessage = false;
+}
 
 var IsLoadMessageLocked = false;
 
+
+
+
 function ChatScroll(elementId) {
+
+    if (AllowLoadNewMessage === false && AllowLoadOldMessage === false) {
+        return;
+    }
 
     let scrollStatus;
     if (!ScrollLock) {
-        scrollStatus= GetScrollStatus(elementId);
+        scrollStatus = GetScrollStatus(elementId);
     }
 
     if (scrollStatus != null) {
@@ -87,6 +131,7 @@ function ChatScroll(elementId) {
         if (IsLoadMessageLocked === false) {
             if (firstOneThird) {
                 GLOBAL.DotNetReference.invokeMethodAsync('LoadOldMessages');
+
                 IsLoadMessageLocked = true;
             }
 

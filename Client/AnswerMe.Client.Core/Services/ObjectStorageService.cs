@@ -4,7 +4,8 @@ using AnswerMe.Client.Core.Services.Interfaces;
 using Blazored.LocalStorage;
 using Models.Shared.OneOfTypes;
 using Models.Shared.RepositoriesResponseTypes;
-using Models.Shared.Requests.ObjectStorage;
+using Models.Shared.Requests.Shared;
+using Models.Shared.Requests.Upload;
 using Models.Shared.Responses.Group;
 using Models.Shared.Responses.ObjectStorage;
 using Models.Shared.Responses.Shared;
@@ -26,12 +27,12 @@ public class ObjectStorageService : IObjectStorageService
     public async Task<CreateResponse<ChunkUploadResponse>> UploadChunkAsync(FileChunkRequest request)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
-
+      
         var requestStringContent = await JsonConverter.ToStringContent(request);
         
         var response = await _httpClient.SendRequestAsync($"ObjectStorage", HttpMethod.Post,requestStringContent);
 
-        if (response.StatusCode == HttpStatusCode.OK)
+        if (response.StatusCode == HttpStatusCode.Created)
         {
             var uploadResponse = await JsonConverter.ToObject<ChunkUploadResponse>(response.Content);
 
@@ -41,11 +42,13 @@ public class ObjectStorageService : IObjectStorageService
         return await JsonConverter.ToValidationFailedList(response.Content);
     }
 
-    public async Task<CreateResponse<TokenResponse>> FinalizeUploadAsync(string uploadToken)
+    public async Task<CreateResponse<TokenResponse>> FinalizeUploadAsync(TokenRequest request)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
         
-        var response = await _httpClient.SendRequestAsync($"ObjectStorage/Finalize/{uploadToken}", HttpMethod.Post);
+        var requestStringContent = await JsonConverter.ToStringContent(request);
+        
+        var response = await _httpClient.SendRequestAsync($"ObjectStorage/Finalize", HttpMethod.Post,requestStringContent);
 
         if (response.StatusCode == HttpStatusCode.OK)
         {
@@ -57,85 +60,13 @@ public class ObjectStorageService : IObjectStorageService
         return await JsonConverter.ToValidationFailedList(response.Content);
     }
 
-    public async Task<CreateResponse<TokenResponse>> GetUploadTokenAsync(ProfileImageUploadRequest request)
+    public async Task<CreateResponse<TokenResponse>> GetUploadTokenAsync(UploadRequest request)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 
         var requestStringContent = await JsonConverter.ToStringContent(request);
         
-        var response = await _httpClient.SendRequestAsync($"ObjectStorage/Profile", HttpMethod.Post,requestStringContent);
-
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var tokenResponse = await JsonConverter.ToObject<TokenResponse>(response.Content);
-
-            return new Success<TokenResponse>(tokenResponse);
-        }
-
-        return await JsonConverter.ToValidationFailedList(response.Content);
-    }
-
-    public async Task<CreateResponse<TokenResponse>> GetUploadTokenAsync(ImageUploadRequest request)
-    {
-        await _httpClient.AddAuthHeader(_localStorageService);
-
-        var requestStringContent = await JsonConverter.ToStringContent(request);
-        
-        var response = await _httpClient.SendRequestAsync($"ObjectStorage/Image", HttpMethod.Post,requestStringContent);
-
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var tokenResponse = await JsonConverter.ToObject<TokenResponse>(response.Content);
-
-            return new Success<TokenResponse>(tokenResponse);
-        }
-
-        return await JsonConverter.ToValidationFailedList(response.Content);
-    }
-
-    public async Task<CreateResponse<TokenResponse>> GetUploadTokenAsync(AudioUploadRequest request)
-    {
-        await _httpClient.AddAuthHeader(_localStorageService);
-
-        var requestStringContent = await JsonConverter.ToStringContent(request);
-        
-        var response = await _httpClient.SendRequestAsync($"ObjectStorage/Audio", HttpMethod.Post,requestStringContent);
-
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var tokenResponse = await JsonConverter.ToObject<TokenResponse>(response.Content);
-
-            return new Success<TokenResponse>(tokenResponse);
-        }
-
-        return await JsonConverter.ToValidationFailedList(response.Content);
-    }
-
-    public async Task<CreateResponse<TokenResponse>> GetUploadTokenAsync(VideoUploadRequest request)
-    {
-        await _httpClient.AddAuthHeader(_localStorageService);
-
-        var requestStringContent = await JsonConverter.ToStringContent(request);
-        
-        var response = await _httpClient.SendRequestAsync($"ObjectStorage/Video", HttpMethod.Post,requestStringContent);
-
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var tokenResponse = await JsonConverter.ToObject<TokenResponse>(response.Content);
-
-            return new Success<TokenResponse>(tokenResponse);
-        }
-
-        return await JsonConverter.ToValidationFailedList(response.Content);
-    }
-
-    public async Task<CreateResponse<TokenResponse>> GetUploadTokenAsync(OtherUploadRequest request)
-    {
-        await _httpClient.AddAuthHeader(_localStorageService);
-
-        var requestStringContent = await JsonConverter.ToStringContent(request);
-        
-        var response = await _httpClient.SendRequestAsync($"ObjectStorage/Other", HttpMethod.Post,requestStringContent);
+        var response = await _httpClient.SendRequestAsync($"ObjectStorage/RequestUploadToken", HttpMethod.Post,requestStringContent);
 
         if (response.StatusCode == HttpStatusCode.OK)
         {

@@ -92,8 +92,6 @@ function UnRegisterChatScrollListener(elementId) {
     }
 }
 
-//fix this !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 var AllowLoadNewMessage = true;
 
 function DisableLoadNewMessage() {
@@ -230,7 +228,7 @@ function getScreenSizeCategory() {
 }
 
 
-function ValidationMessageBox(validationErrors) {
+function MessageShowList(validationErrors) {
     const modalBox = document.getElementById("modal-box");
     const modal = document.getElementById("Modal-Message");
     modalBox.innerHTML = "";

@@ -1,7 +1,7 @@
 @inject IJSRuntime JsRuntime
 
 <dialog id="@ElementIds.Modal" class="modal">
-    <div class="modal-box w-11/12 max-w-2xl">
+    <div class="modal-box w-11/12 max-w-2xl ">
         <div class="modal-action" style="margin: 10px">
             <form id="@ElementIds.ModalClose" method="dialog">
                 <!-- if there is a button, it will close the modal -->
@@ -18,12 +18,11 @@
         <div class="h-full px-3 pb-4 overflow-y-auto ">
            @if (_shouldRender)
            {
-               @Content
-
+               <div class="animate__animated animate__fadeIn">
+                   @Content
+               </div>
            }
-         
         </div>
-
 
     </div>
 </dialog>

@@ -1,46 +1,98 @@
 @using AnswerMe.Client.Core.Enums
 @using Models.Shared.Requests.Message
+@using AnswerMe.Client.Componenets.Button
+@using AnswerMe.Client.Componenets.Upload
+@using AnswerMe.Client.Core.Models
+@using Models.Shared.Requests.Shared
 @inject IPrivateMessageService PrivateMessageService
 @inject IGroupMessageService GroupMessageService
 
-<div class="send-box responsive-send-box ">
-    <textarea @bind:event="oninput" @bind="_sendMessageRequest.Text" style="height: 100px;width: 85%;font-size: larger" class="textarea textarea-primary  mr-2 " placeholder="write you message ..."></textarea>
+<div class="send-box responsive-send-box block">
+    @if (_uploadedMediaList is { Count: > 0 } && _selectedFileType != null)
+    {
+        <StashUploadPreview FileType="_selectedFileType.Value" UploadedMediaList="_uploadedMediaList"/>
+    }
 
-    <button class="btn btn-circle mr-2 w-16 ">
-        <svg class="p-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="paperclip">
-            <path fill="#6563FF" d="M18.08,12.42,11.9,18.61a4.25,4.25,0,0,1-6-6l8-8a2.57,2.57,0,0,1,3.54,0,2.52,2.52,0,0,1,0,3.54l-6.9,6.89A.75.75,0,1,1,9.42,14l5.13-5.12a1,1,0,0,0-1.42-1.42L8,12.6a2.74,2.74,0,0,0,0,3.89,2.82,2.82,0,0,0,3.89,0l6.89-6.9a4.5,4.5,0,0,0-6.36-6.36l-8,8A6.25,6.25,0,0,0,13.31,20l6.19-6.18a1,1,0,1,0-1.42-1.42Z"></path>
-        </svg>
-    </button>
+    <div class="flex">
+        <textarea @bind:event="oninput" @bind="_sendMessageRequest.Text" style="height: 100px;width: 85%;font-size: larger" class="textarea textarea-primary  mr-2 " placeholder="write you message ..."></textarea>
 
-    <button @onclick="Send" class="btn btn-circle w-16   responsive-send-button">
-        <svg class="p-2 " xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="message">
-            <path fill="#6563FF" d="M20.34,9.32l-14-7a3,3,0,0,0-4.08,3.9l2.4,5.37h0a1.06,1.06,0,0,1,0,.82l-2.4,5.37A3,3,0,0,0,5,22a3.14,3.14,0,0,0,1.35-.32l14-7a3,3,0,0,0,0-5.36Zm-.89,3.57-14,7a1,1,0,0,1-1.35-1.3l2.39-5.37A2,2,0,0,0,6.57,13h6.89a1,1,0,0,0,0-2H6.57a2,2,0,0,0-.08-.22L4.1,5.41a1,1,0,0,1,1.35-1.3l14,7a1,1,0,0,1,0,1.78Z"></path>
-        </svg>
-    </button>
-    
+        <Modal @ref="_modalUploadRef">
+            <Content>
+                <FileUpload IsUploading="(x)=>_isUploading=x" UploadedMediaList="SetUploadedMedia" @ref="_fileUploadRef" SelectedFileType="_selectedFileType" RoomId="RoomId" CurrentRoomType="CurrentRoomType"/>
+                <UploadTypeToolBar IsUploading="_isUploading" DoneButtonClicked="Done" UploadButtonClicked="() => _fileUploadRef.UploadButtonClicked()" UploadFileType="(x) => _selectedFileType = x"/>
+            </Content>
+        </Modal>
+
+        @if (_uploadedMediaList is { Count: > 0 })
+        {
+            <button @onclick="() => _uploadedMediaList = null" class="btn btn-circle mr-2 w-16 self-center">
+                <svg style="color: #7170ff;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="Close">
+                    <path fill="none" d="M0 0h24v24H0Z"></path><path fill="#6563ff" d="M15.741 17.61 12 13.87l-3.742 3.74a1.323 1.323 0 0 1-1.873-1.869L10.128 12 6.385 8.258a1.324 1.324 0 0 1 1.873-1.873L12 10.127l3.741-3.742a1.324 1.324 0 0 1 1.873 1.873L13.872 12l3.742 3.741a1.323 1.323 0 0 1-1.873 1.869Z" class="color525863 svgShape"></path>
+                </svg>
+            </button>
+        }
+        else
+        {
+            <FileUploadButton ButtonClicked="UploadFile"/>
+        }
+
+
+        <SendMessageButton ButtonClicked="Send"/>
+    </div>
+
 </div>
 
 @code {
     [Parameter] public RoomType CurrentRoomType { get; set; }
-
+    private FileType? _selectedFileType = null;
+    private Modal _modalUploadRef = null!;
+    private bool _showDoneButton = false;
+    private FileUpload _fileUploadRef = null!;
     [Parameter] public Guid RoomId { get; set; }
+    private List<UploadModel>? _uploadedMediaList;
+    private bool _isUploading = false;
 
     private SendMessageRequest _sendMessageRequest = new();
 
+    private void SetUploadedMedia(List<UploadModel> uploadedMediaList)
+    {
+        _uploadedMediaList = uploadedMediaList;
+        _modalUploadRef.CloseModal();
+    }
+
+
+    private void UploadFile()
+    {
+        _modalUploadRef.ShowModal();
+    }
+
+    private async Task Done()
+    {
+        await _fileUploadRef.DoneButtonClicked();
+    }
 
     private async Task Send()
     {
+        if (_uploadedMediaList is { Count: > 0 })
+        {
+            _sendMessageRequest.MediaTokenList = _uploadedMediaList.Select(x => new TokenRequest()
+            {
+                Token = x.Token
+            }).ToList();
+            _uploadedMediaList = null;
+        }
+
         if (CurrentRoomType == RoomType.Group)
         {
             await GroupMessageService.SendMessageAsync(RoomId, _sendMessageRequest);
         }
 
-        if (CurrentRoomType==RoomType.Private)
+        if (CurrentRoomType == RoomType.Private)
         {
             await PrivateMessageService.SendMessageAsync(RoomId, _sendMessageRequest);
         }
-        
-        _sendMessageRequest= new();
+
+        _sendMessageRequest = new();
         StateHasChanged();
     }
 

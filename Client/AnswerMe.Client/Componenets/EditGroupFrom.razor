@@ -1,7 +1,6 @@
 @using AnswerMe.Client.Core.Extensions
 @using Models.Shared.Requests.Group
-@using Models.Shared.Requests.ObjectStorage
-
+@using Models.Shared.Requests.Upload
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
 @inject IObjectStorageService StorageService
@@ -23,7 +22,7 @@
             }
             else
             {
-                <InputFile OnChange="ImageChanged" type="file" class="file-input file-input-bordered file-input-primary w-full max-w-xs mt-12 "/>
+                <InputFile id="@ElementIds.UploadInput" OnChange="ImageChanged" type="file" class="file-input file-input-bordered file-input-primary w-full max-w-xs mt-12 "/>
             }
 
 
@@ -49,6 +48,10 @@
     [Parameter] public EventCallback OnSave { get; set; }
     [Parameter] public Guid? GroupId { get; set; }
     private CreateGroupRequest _createGroupRequest = new();
+    private static class ElementIds
+    {
+        public static Guid UploadInput { get; } = Guid.NewGuid();
+    }
 
     private string? ImageUrl;
 
@@ -89,7 +92,7 @@
                 Name = _createGroupRequest.Name,
                 ImageToken = _createGroupRequest.ImageToken
             });
-            
+
             if (result.IsSuccess)
             {
                 NavigationManager.NavigateTo($"/GR/{GroupId}");
@@ -112,7 +115,7 @@
     {
         var result = await GroupService.CreateAsync(_createGroupRequest);
 
-        _createGroupRequest = new();
+        _createGroupRequest = new CreateGroupRequest();
 
         if (result.IsSuccess)
         {
@@ -135,68 +138,38 @@
 
     private async Task ImageChanged(InputFileChangeEventArgs inputFile)
     {
-        ImageUrl = await inputFile.File.GetPreviewUrl();
-
-        UploadCancel = false;
-        StateHasChanged();
-        
-        var result = await StorageService.GetUploadTokenAsync(new ProfileImageUploadRequest()
+        var fileFormat = await JsRuntime.GetInputFileType(ElementIds.UploadInput.ToString());
+        ImageUrl = await inputFile.File.GetPreviewUrlAsync(fileFormat);
+        Console.WriteLine("image changed");
+        var tokenResult = await StorageService.GetUploadTokenAsync(new UploadRequest()
         {
             FileFormat = inputFile.File.ContentType.Split("/")[1],
-            FileSizeMB = inputFile.File.Size.SizeMB()
+            FileSizeMb = inputFile.File.Size.SizeMB(),
+            FileType = FileType.profile
         });
-
-        if (result.IsSuccess)
+        
+        if (tokenResult.IsSuccess)
         {
-            var chunksCount = ObjectHelperService.CalculateChunkCount(inputFile.File.Size.SizeMB());
-            var chunkPercentage = 100 / chunksCount;
-            var maxFileSize = unchecked(1024 * 1024 * 20);
-            await using var filestream = inputFile.File.OpenReadStream(maxFileSize);
+            var uploadResult= await inputFile.File.UploadChunks(ObjectHelperService, StorageService, tokenResult.AsSuccess.Value.Token, Guid.NewGuid(), StateHasChanged, (x) => UploadProgress=x, UploadCancel);
 
-
-            UploadProgress = 0;
-            StateHasChanged();
-
-            await foreach (var chunk in ObjectHelperService.GetStreamChunksAsync(filestream, chunksCount))
+            if (uploadResult.IsValidationFailure)
             {
-                if (UploadCancel)
-                {
-                    break;
-                }
-
-                var fileChunkRequest = new FileChunkRequest()
-                {
-                    Data = chunk.ToArray(),
-                    UploadToken = Guid.Parse(result.AsSuccess.Value.Token)
-                };
-
-                var chunkUploadResponse = await StorageService.UploadChunkAsync(fileChunkRequest);
-
-                UploadProgress += (1 * chunkPercentage);
-                StateHasChanged();
+                await JsRuntime.ShowErrorAsync(uploadResult.AsValidationFailure.Error);
             }
 
-            if (!UploadCancel)
+            if (uploadResult.IsSuccess)
             {
-                var fileTokenResponse = await StorageService.FinalizeUploadAsync(result.AsSuccess.Value.Token);
-                if (fileTokenResponse.IsSuccess)
-                {
-                    _createGroupRequest.ImageToken = fileTokenResponse.AsSuccess.Value.Token;
-                }
-
-                if (fileTokenResponse.IsValidationFailureList)
-                {
-                    await JsRuntime.InvokeVoidAsync("ValidationMessageBox", fileTokenResponse.AsValidationFailureList);
-                }
+                _createGroupRequest.ImageToken = uploadResult.AsSuccess.Value.Token;
             }
-
-            UploadProgress = null;
-            StateHasChanged();
         }
 
-        if (result.IsValidationFailureList)
+        if (tokenResult.IsValidationFailure)
         {
-            await JsRuntime.InvokeVoidAsync("MessageShow", "error", "error", result.AsValidationFailureList[0].Error);
+            await JsRuntime.ShowErrorAsync(tokenResult.AsValidationFailure.Error);
+        }
+        else
+        {
+            await JsRuntime.ShowErrorAsync("there is an Unknown error");
         }
     }
 

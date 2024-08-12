@@ -1,0 +1,191 @@
+@using AnswerMe.Client.Core.AnimationLibrary
+@using AnswerMe.Client.Core.Extensions
+@using AnswerMe.Client.Core.Models
+@using Models.Shared.Requests.Upload
+@using Models.Shared.Responses.Shared
+@inject IJSRuntime JsRuntime
+@inject IObjectStorageService StorageService
+@inject IObjectHelperService ObjectHelperService
+
+<div class="max-w-[800px] max-h-[400px] overflow-x-auto">
+    <div class="flex space-x-4" style="@(Images.Count <= 1 ? "justify-content:center" : "")">
+        @foreach (var image in Images)
+        {
+            <div class="relative block w-[350px] flex-none rounded-lg border border-gray-100 bg-white p-2 shadow-md dark:border-gray-800 dark:bg-gray-800 @Animations.FadeIn">
+
+                <img style="height: 200px;width:350px" src="@image.PreviewUrl" alt="image description"/>
+
+
+                @if (!image.IsDone)
+                {
+                    @if (image.UploadProgress != null)
+                    {
+                        <div role="status" class="absolute left-1/2 top-2/4 -translate-x-1/2 -translate-y-1/2">
+                            <div class="radial-progress text-primary" style="--value:@image.UploadProgress;background-color:#14191e" role="progressbar">@image.UploadProgress%</div>
+                        </div>
+                    }
+                    else
+                    {
+                        if (image.IsError)
+                        {
+                            <div role="status" class="absolute left-1/2 top-2/4 -translate-x-1/2 -translate-y-1/2">
+                                <div class="badge badge-secondary">Invalid format or</div>
+                                <div class="badge badge-secondary">size more than 20MB</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div role="status" class="absolute left-1/2 top-2/4 -translate-x-1/2 -translate-y-1/2">
+                                <div class="badge badge-primary">progressing ...</div>
+                            </div>
+                        }
+                    }
+                }
+
+                <button @onclick="() => Remove(image.Id)" class="btn btn-circle text-primary absolute right-6 top-6 px-4 text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        }
+    </div>
+</div>
+<InputFile OnChange="UploadStash" id="@ElementIds.UploadInput" type="file" hidden="hidden" multiple="multiple" accept="@_validTypes"/>
+
+
+@code {
+    [Parameter] public EventCallback<List<UploadModel>> UploadedMediaList { get; set; }
+    [Parameter] public EventCallback<bool> IsUploading { get; set; }
+    private string _validTypes = ".png,.gif,.jpg,.jpeg";
+    private List<ImageUploadModel> Images { get; set; } = new();
+
+
+    private bool _isUploading = false;
+
+
+    private static class ElementIds
+    {
+        public static Guid UploadInput { get; } = Guid.NewGuid();
+    }
+
+    private async Task UploadStash(InputFileChangeEventArgs inputFile)
+    {
+        if (inputFile.FileCount + Images.Count > 20)
+        {
+            await JsRuntime.ShowErrorAsync($"Can not upload more than 20 files , you can upload {20 - Images.Count} more");
+            return;
+        }
+
+        await IsUploading.InvokeAsync(true);
+        foreach (var file in inputFile.GetMultipleFiles(20 - Images.Count))
+        {
+            Images.Add(new ImageUploadModel
+            {
+                Id = Guid.NewGuid(),
+                UploadProgress = null,
+                PreviewUrl = await file.GetPreviewUrlAsync(file.ContentType.Split("/")[1]),
+                IsCanceled = false,
+                UploadToken = null,
+                File = file
+            });
+            StateHasChanged();
+        }
+
+        await UploadStashImages();
+    }
+
+    private async Task UploadStashImages()
+    {
+        foreach (var image in Images.Where(x => x.IsDone == false).ToList())
+        {
+            if (image.IsCanceled)
+            {
+                Images.Remove(image);
+                StateHasChanged();
+                continue;
+            }
+
+            var tokenResult = await StorageService.GetUploadTokenAsync(new UploadRequest()
+            {
+                FileFormat = image.File.ContentType.Split("/")[1],
+                FileSizeMb = image.File.Size.SizeMB(),
+                FileType = FileType.image,
+                BlurHash = FileExtension.ConvertBase64ToBlurHash(image.PreviewUrl)
+            });
+
+            if (tokenResult.IsSuccess)
+            {
+                var uploadResult = await image.File.UploadChunks(ObjectHelperService, StorageService, tokenResult.AsSuccess.Value.Token, Guid.NewGuid(), StateHasChanged, (x) => image.UploadProgress = x, image.IsCanceled);
+
+                if (image.IsCanceled)
+                {
+                    Images.Remove(image);
+                    StateHasChanged();
+                    continue;
+                }
+
+                if (uploadResult.IsSuccess)
+                {
+                    image.IsDone = true;
+                    image.UploadToken = uploadResult.AsSuccess.Value.Token;
+                }
+
+                if (!uploadResult.IsSuccess)
+                {
+                    image.IsError = true;
+                    StateHasChanged();
+                }
+            }
+
+            if (!tokenResult.IsSuccess)
+            {
+                image.IsError = true;
+                StateHasChanged();
+            }
+        }
+
+        await IsUploading.InvokeAsync(false);
+    }
+
+    private void Remove(Guid id)
+    {
+        var image = Images.FirstOrDefault(x => x.Id == id);
+        if (image != null)
+        {
+            if (string.IsNullOrWhiteSpace(image.UploadToken) || image.UploadProgress != null || image.IsDone)
+            {
+                Images.Remove(image);
+                StateHasChanged();
+            }
+            else
+            {
+                image.IsCanceled = true;
+            }
+        }
+    }
+
+    public async Task ClickDoneButtonAsync()
+    {
+        var uploadModel = new List<UploadModel>();
+        foreach (var image in Images)
+        {
+            if (image.IsDone&& !string.IsNullOrWhiteSpace(image.UploadToken))
+            {
+                uploadModel.Add(new ()
+                {
+                    Token = image.UploadToken,
+                    PreviewUrl = image.PreviewUrl
+                });
+            }
+        }
+
+        await UploadedMediaList.InvokeAsync(uploadModel);
+    }
+    
+    public async Task ClickUploadButtonAsync()
+    {
+        await JsRuntime.ClickAsync(ElementIds.UploadInput.ToString());
+    }
+
+}

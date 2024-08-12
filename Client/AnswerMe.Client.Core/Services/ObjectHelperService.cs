@@ -7,7 +7,7 @@ namespace AnswerMe.Client.Core.Services
     {
         public int CalculateChunkCount(double fileSizeMb)
         {
-            const int baseChunkSize = 10;
+            const int baseChunkSize = 5;
             const int maxChunkSize = 1000;
 
             // Calculate chunk count based on fileSizeMb
@@ -18,11 +18,10 @@ namespace AnswerMe.Client.Core.Services
 
             return chunkCount;
         }
-        
+
         
         public async IAsyncEnumerable<Memory<byte>> GetStreamChunksAsync(Stream inputStream, int numberOfChunks)
         {
-          
             if (numberOfChunks <= 0 || inputStream == null || !inputStream.CanRead)
             {
                 throw new ArgumentException("Invalid arguments");
@@ -40,8 +39,6 @@ namespace AnswerMe.Client.Core.Services
             {
                 byte[] buffer = new byte[bufferSize];
                 var bytesRead = await inputStream.ReadAtLeastAsync(buffer, buffer.Length, throwOnEndOfStream: false);
-
-                Console.WriteLine("byte read "+ bytesRead);
                 
                 if (bytesRead > 0)
                 {

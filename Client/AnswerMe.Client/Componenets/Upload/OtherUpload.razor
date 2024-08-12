@@ -1,0 +1,217 @@
+@using AnswerMe.Client.Core.AnimationLibrary
+@using AnswerMe.Client.Core.Extensions
+@using AnswerMe.Client.Core.Models
+@using Models.Shared.Requests.Upload
+@using Models.Shared.Responses.Shared
+@inject IJSRuntime JsRuntime
+@inject IObjectStorageService StorageService
+@inject IObjectHelperService ObjectHelperService
+
+<div class="grid">
+    <div class="max-h-[200px] w-80 overflow-x-auto p-2 justify-self-center">
+
+        @foreach (var file in Files)
+        {
+            <div class="relative block h-16 flex-none rounded-lg border border-gray-100 bg-white p-2 mt-2 shadow-md dark:border-gray-800 dark:bg-gray-800">
+                <div class="flex items-center gap-3">
+                    <div class="avatar">
+                        <div class="mask mask-squircle h-12 w-12">
+                            @if (!file.IsDone)
+                            {
+                                <div
+                                    role="status"
+                                    class="absolute left-1/2 top-2/4 -translate-x-1/2 -translate-y-1/2">
+                                    <div
+                                        class="radial-progress text-primary"
+                                        style="--value: @file.UploadProgress; background-color: #14191e"
+                                        role="progressbar">
+                                        @if (file.UploadProgress != null)
+                                        {
+                                            @(file.UploadProgress + "%")
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" clip-rule="evenodd" viewBox="0 0 64 64" id="blankpaper">
+                                    <g transform="translate(-2188 -168)" fill="#6563ff" class="color000000 svgShape">
+                                        <path d="M2242,190.112L2238.9,189.95C2235.54,189.775 2232.18,189.432 2228.82,188.941C2228.82,188.941 2228.82,188.941 2228.82,188.94C2224.9,188.354 2222,184.989 2222,181.028L2222,170.02C2221.33,170.007 2220.67,170 2220,170C2214.94,170 2209.88,170.404 2204.82,171.151C2204.81,171.151 2204.81,171.152 2204.81,171.152C2200.9,171.741 2198.01,175.101 2198.01,179.056C2198,189.007 2198,211.033 2198,220.967C2198,224.917 2200.88,228.276 2204.79,228.875C2204.79,228.876 2204.8,228.876 2204.8,228.877C2209.87,229.624 2214.93,230 2220,230C2225.07,230 2230.14,229.623 2235.2,228.867C2235.2,228.867 2235.21,228.867 2235.21,228.866C2239.11,228.268 2241.99,224.913 2241.99,220.967C2242,212.553 2242,195.972 2242,190.112ZM2226,171.31L2226,181.028C2226,183.008 2227.45,184.69 2229.41,184.984C2232.64,185.456 2235.87,185.787 2239.1,185.956L2240.78,186.043C2240.62,185.82 2240.43,185.608 2240.23,185.409L2226.53,171.775C2226.36,171.609 2226.18,171.454 2226,171.31Z" fill="#6563ff" class="color000000 svgShape"></path>
+                                    </g>
+                                </svg>
+                            }
+                        </div>
+                    </div>
+                    @if (file.IsError)
+                    {
+                        <div>
+                            <div class="font-bold text-red-500">@(file.FullName.SummarizeIfMoreThan(11))</div>
+                            <div class="text-sm text-red-500">Invalid size or format</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div>
+                            <div class="font-bold">@file.FullName.SummarizeIfMoreThan(11)</div>
+                            <div class="text-sm opacity-50">@((int)file.FileSize) MB</div>
+                        </div>
+                    }
+
+                    <button @onclick="() => Remove(file.Id)" class="btn btn-circle text-primary px-4 text-lg ml-auto" style="width: 3rem;height: 3rem">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-6 w-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        }
+
+
+    </div>
+</div>
+<InputFile OnChange="UploadStash" id="@ElementIds.UploadInput" type="file" hidden="hidden" multiple="multiple" accept="@_validTypes"/>
+
+
+@code {
+    [Parameter] public EventCallback<List<UploadModel>> UploadedFileList { get; set; }
+    [Parameter] public EventCallback<bool> IsUploading { get; set; }
+    private string _validTypes = ".rar,.zip,.pdf,.doc,.docx,.pdf,.xls,.xlsx";
+    private List<FileUploadModel> Files { get; set; } = new();
+
+
+    private bool _isUploading = false;
+
+
+    private static class ElementIds
+    {
+        public static Guid UploadInput { get; } = Guid.NewGuid();
+    }
+
+    private async Task UploadStash(InputFileChangeEventArgs inputFile)
+    {
+        if (inputFile.FileCount + Files.Count > 20)
+        {
+            await JsRuntime.ShowErrorAsync($"Can not upload more than 20 files , you can upload {20 - Files.Count} more");
+            return;
+        }
+
+        await IsUploading.InvokeAsync(true);
+        foreach (var file in inputFile.GetMultipleFiles(20 - Files.Count))
+        {
+            Files.Add(new FileUploadModel
+            {
+                Id = Guid.NewGuid(),
+                FullName = file.Name,
+                UploadProgress = null,
+                FileSize = file.Size.SizeMB(),
+                IsCanceled = false,
+                UploadToken = null,
+                File = file
+            });
+            StateHasChanged();
+        }
+
+        await UploadStashFiles();
+    }
+
+    private async Task UploadStashFiles()
+    {
+        foreach (var file in Files.Where(x => x.IsDone == false).ToList())
+        {
+            if (file.IsCanceled)
+            {
+                Files.Remove(file);
+                StateHasChanged();
+                continue;
+            }
+
+            var tokenResult = await StorageService.GetUploadTokenAsync(new UploadRequest()
+            {
+                FileFormat = await JsRuntime.GetInputFileType(ElementIds.UploadInput.ToString()),
+                FileSizeMb = file.File.Size.SizeMB(),
+                FileType = FileType.other
+            });
+
+            if (tokenResult.IsSuccess)
+            {
+                var uploadResult = await file.File.UploadChunks(ObjectHelperService, StorageService, tokenResult.AsSuccess.Value.Token, Guid.NewGuid(), StateHasChanged, (x) => file.UploadProgress = x, file.IsCanceled);
+
+                if (file.IsCanceled)
+                {
+                    Files.Remove(file);
+                    StateHasChanged();
+                    continue;
+                }
+
+                if (uploadResult.IsSuccess)
+                {
+                    file.IsDone = true;
+                    file.UploadToken = uploadResult.AsSuccess.Value.Token;
+                }
+
+                if (!uploadResult.IsSuccess)
+                {
+                    file.IsError = true;
+                    StateHasChanged();
+                }
+            }
+
+            if (!tokenResult.IsSuccess)
+            {
+                file.IsError = true;
+                StateHasChanged();
+            }
+        }
+
+        await IsUploading.InvokeAsync(false);
+    }
+
+    private void Remove(Guid id)
+    {
+        var file = Files.FirstOrDefault(x => x.Id == id);
+        if (file != null)
+        {
+            if (string.IsNullOrWhiteSpace(file.UploadToken) || file.UploadProgress != null || file.IsDone)
+            {
+                Files.Remove(file);
+                StateHasChanged();
+            }
+            else
+            {
+                file.IsCanceled = true;
+            }
+        }
+    }
+
+    public async Task ClickDoneButtonAsync()
+    {
+        var uploadModel = new List<UploadModel>();
+        foreach (var file in Files)
+        {
+            if (file.IsDone && !string.IsNullOrWhiteSpace(file.UploadToken))
+            {
+                uploadModel.Add(new()
+                {
+                    Token = file.UploadToken
+                });
+            }
+        }
+
+        await UploadedFileList.InvokeAsync(uploadModel);
+    }
+
+    public async Task ClickUploadButtonAsync()
+    {
+        await JsRuntime.ClickAsync(ElementIds.UploadInput.ToString());
+    }
+
+}

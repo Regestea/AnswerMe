@@ -1,0 +1,171 @@
+@using AnswerMe.Client.Core.AnimationLibrary
+@using AnswerMe.Client.Core.Extensions
+@using AnswerMe.Client.Core.Models
+@using Models.Shared.Requests.Upload
+@using Models.Shared.Responses.Shared
+@inject IJSRuntime JsRuntime
+@inject IObjectStorageService StorageService
+@inject IObjectHelperService ObjectHelperService
+
+<div class="max-w-[800px] max-h-[400px] overflow-x-auto">
+    <div class="flex space-x-4 justify-center">
+        @if (Video != null)
+        {
+            <div class="relative block w-[350px] flex-none rounded-lg border border-gray-100 bg-white p-2 shadow-md dark:border-gray-800 dark:bg-gray-800 @Animations.FadeIn">
+
+                <img style="height: 200px;width:350px" src="@Video.PreviewUrl" alt="image description"/>
+
+
+                @if (!Video.IsDone)
+                {
+                    @if (Video.UploadProgress != null)
+                    {
+                        <div role="status" class="absolute left-1/2 top-2/4 -translate-x-1/2 -translate-y-1/2">
+                            <div class="radial-progress text-primary" style="--value:@Video.UploadProgress;background-color:#14191e" role="progressbar">@Video.UploadProgress%</div>
+                        </div>
+                    }
+                    else
+                    {
+                        if (Video.IsError)
+                        {
+                            <div role="status" class="absolute left-1/2 top-2/4 -translate-x-1/2 -translate-y-1/2">
+                                <div class="badge badge-secondary">Invalid format or</div>
+                                <div class="badge badge-secondary">size more than 20MB</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div role="status" class="absolute left-1/2 top-2/4 -translate-x-1/2 -translate-y-1/2">
+                                <div class="badge badge-primary">progressing ...</div>
+                            </div>
+                        }
+                    }
+                }
+
+                <button @onclick="Remove" class="btn btn-circle text-primary absolute right-6 top-6 px-4 text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<InputFile OnChange="UploadStash" id="@ElementIds.UploadInput" type="file" accept="@_validTypes" hidden="hidden"/>
+
+
+@code {
+
+    [Parameter] public EventCallback<UploadModel> UploadedMedia { get; set; }
+    [Parameter] public EventCallback<bool> IsUploading { get; set; }
+
+    private VideoUploadModel? Video { get; set; }
+
+    private string _validTypes = ".mp4,.mkv,.mov";
+    private bool _isUploading = false;
+
+
+    private static class ElementIds
+    {
+        public static Guid UploadInput { get; } = Guid.NewGuid();
+    }
+
+    private async Task UploadStash(InputFileChangeEventArgs inputFile)
+    {
+        await IsUploading.InvokeAsync(true);
+
+        var file = inputFile.File;
+        var fileFormat=await JsRuntime.GetInputFileType(ElementIds.UploadInput.ToString());
+        Video =
+            new VideoUploadModel
+            {
+                Id = Guid.NewGuid(),
+                UploadProgress = null,
+                PreviewUrl = await JsRuntime.GenerateVideoBase64Thumbnail(ElementIds.UploadInput.ToString()),
+                IsCanceled = false,
+                UploadToken = null,
+                File = file
+            };
+        
+        StateHasChanged();
+
+
+        await UploadStashVideo();
+    }
+
+    private async Task UploadStashVideo()
+    {
+      
+            if (Video.IsCanceled)
+            {
+                Video=null;
+                StateHasChanged();
+            }
+            
+            var tokenResult = await StorageService.GetUploadTokenAsync(new UploadRequest()
+            {
+                FileFormat =await JsRuntime.GetInputFileType(ElementIds.UploadInput.ToString()),
+                FileSizeMb = Video.File.Size.SizeMB(),
+                FileType = FileType.video,
+                BlurHash = FileExtension.ConvertBase64ToBlurHash(Video.PreviewUrl)
+            });
+            
+            if (tokenResult.IsSuccess)
+            {
+                var uploadResult = await Video.File.UploadChunks(ObjectHelperService, StorageService, tokenResult.AsSuccess.Value.Token, Guid.NewGuid(), StateHasChanged, (x) => Video.UploadProgress = x, Video.IsCanceled);
+
+                if (Video.IsCanceled)
+                {
+                    Video = null;
+                    StateHasChanged();
+                }
+
+                if (uploadResult.IsSuccess)
+                {
+                    Video.IsDone = true;
+                    Video.UploadToken = uploadResult.AsSuccess.Value.Token;
+                }
+                
+                if (!uploadResult.IsSuccess)
+                {
+                    Video.IsError = true;
+                    StateHasChanged();
+                }
+           
+            if (!tokenResult.IsSuccess)
+            {
+                Video.IsError = true;
+                StateHasChanged();
+            }
+        }
+
+        await IsUploading.InvokeAsync(false);
+    }
+
+    private void Remove()
+    {
+        Video = null;
+        StateHasChanged();
+    }
+
+    public async Task ClickDoneButtonAsync()
+    {
+        if (Video == null || !Video.IsDone || string.IsNullOrWhiteSpace(Video.UploadToken))
+        {
+            return;
+        }
+        var uploadModel = new UploadModel()
+        {
+            Token = Video.UploadToken,
+            PreviewUrl = Video.PreviewUrl
+        };
+        await UploadedMedia.InvokeAsync(uploadModel);
+    }
+
+    public async Task ClickUploadButtonAsync()
+    {
+        await JsRuntime.ClickAsync(ElementIds.UploadInput.ToString());
+    }
+
+}

@@ -1,0 +1,23 @@
+@using AnswerMe.Client.Core.Models
+
+@foreach (var item in UploadedMediaList.Take(3))
+{
+    <div class="avatar rounded-[10px]">
+        <div class="w-12">
+            <img src="@item.PreviewUrl"/>
+        </div>
+    </div>
+}
+@if (UploadedMediaList.Count > 3)
+{
+    <div class="avatar placeholder rounded-[10px]">
+        <div class="bg-neutral text-neutral-content w-12">
+            <span>+@(UploadedMediaList.Count - 3)</span>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public List<UploadModel> UploadedMediaList { get; set; } = null!;
+}

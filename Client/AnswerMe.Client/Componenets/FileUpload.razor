@@ -1,0 +1,90 @@
+@using AnswerMe.Client.Core.Enums
+@using AnswerMe.Client.Componenets.Upload
+@using Models.Shared.Requests.Message
+@using Models.Shared.Requests.Shared
+@using AnswerMe.Client.Componenets.Button
+@using AnswerMe.Client.Core.Models
+
+
+
+        @switch (SelectedFileType)
+        {
+            case FileType.Image:
+                <ImageUpload IsUploading="(x)=>IsUploading.InvokeAsync(x)" UploadedMediaList="(x)=>UploadedMediaList.InvokeAsync(x)" @ref="_imageUploadRef"/>
+                break;
+            case FileType.Audio:
+                <AudioUpload IsUploading="(x)=>IsUploading.InvokeAsync(x)" UploadedMediaList="(x)=>UploadedMediaList.InvokeAsync(x)" @ref="_audioUploadRef" />
+                break;
+            case FileType.Video:
+                <VideoUpload IsUploading="(x)=>IsUploading.InvokeAsync(x)" UploadedMedia="(x)=>UploadedMediaList.InvokeAsync(new List<UploadModel>(){x})" @ref="_videoUploadRef" />
+                break;
+            case FileType.Other:
+                <OtherUpload  IsUploading="(x)=>IsUploading.InvokeAsync(x)" UploadedFileList="(x)=>UploadedMediaList.InvokeAsync(x)" @ref="_otherUploadRef" />
+                break;
+        }
+
+
+
+@code {
+    [Parameter] public Guid RoomId { get; set; }
+    [Parameter] public RoomType CurrentRoomType { get; set; }
+    [Parameter] public FileType? SelectedFileType { get; set; }
+    [Parameter] public EventCallback<bool> IsUploading { get; set; }
+    [Parameter] 
+    public EventCallback<List<UploadModel>> UploadedMediaList { get; set; }
+    
+    private ImageUpload _imageUploadRef = null!;
+    private AudioUpload _audioUploadRef = null!;
+    private VideoUpload _videoUploadRef = null!;
+    private OtherUpload _otherUploadRef = null!;
+
+    private List<UploadModel> _uploadedMediaList = new();
+    
+    
+    public async Task DoneButtonClicked()
+    {
+        switch (SelectedFileType)
+        {
+            case FileType.Image:
+                await _imageUploadRef.ClickDoneButtonAsync();
+                break;
+            case FileType.Audio:
+                await _audioUploadRef.ClickDoneButtonAsync();
+                break;
+            case FileType.Video:
+                await _videoUploadRef.ClickDoneButtonAsync();
+                break;
+            case FileType.Other:
+                await _otherUploadRef.ClickDoneButtonAsync();
+                break;
+            default:
+                break;
+        }
+    }
+
+    public async Task UploadButtonClicked()
+    {
+        switch (SelectedFileType)
+        {
+            case FileType.Image:
+                await _imageUploadRef.ClickUploadButtonAsync();
+                break;
+            case FileType.Audio:
+                await _audioUploadRef.ClickUploadButtonAsync();
+                break;
+            case FileType.Video:
+                await _videoUploadRef.ClickUploadButtonAsync();
+                break;
+            case FileType.Other:
+                await _otherUploadRef.ClickUploadButtonAsync();
+                break;
+            default:
+                break;
+        }
+    }
+    
+    public void SetUploadTokens(List<UploadModel> uploadedMediaList)
+    {
+        UploadedMediaList.InvokeAsync(uploadedMediaList);
+    }
+}

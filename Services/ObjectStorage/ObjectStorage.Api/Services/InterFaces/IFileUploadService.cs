@@ -1,6 +1,5 @@
 ﻿using Azure.Storage.Blobs.Models;
 using Models.Shared.RepositoriesResponseTypes;
-using Models.Shared.Requests.ObjectStorage;
 using Models.Shared.Responses.ObjectStorage;
 using ObjectStorage.Api.DTOs;
 using ObjectStorage.Api.Entities;

@@ -6,7 +6,6 @@ using System.Text;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs;
 using Models.Shared.RepositoriesResponseTypes;
-using Models.Shared.Requests.ObjectStorage;
 using Models.Shared.Responses.ObjectStorage;
 using OneOf.Types;
 using System.Net;

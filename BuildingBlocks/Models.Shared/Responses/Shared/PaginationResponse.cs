@@ -8,14 +8,14 @@ namespace Models.Shared.Responses.Shared
 {
     public class PaginationResponse
     {
-        public PaginationResponse(int page, int totalCount, int totalPages)
+        public PaginationResponse(int currentPage, int totalCount, int totalPages)
         {
-            Page = page;
+            CurrentPage = currentPage;
             TotalCount = totalCount;
             TotalPages = totalPages;
         }
 
-        public int Page { get; set; }
+        public int CurrentPage { get; set; }
         public int TotalCount { get; set; }
         public int TotalPages { get; set; }
     }

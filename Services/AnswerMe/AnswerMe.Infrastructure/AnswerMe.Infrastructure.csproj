@@ -30,7 +30,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
     <PackageReference Include="OneOf" Version="3.0.271" />
     <PackageReference Include="OneOf.SourceGenerator" Version="3.0.271" />
-    <PackageReference Include="SignalRSwaggerGen" Version="4.5.0" />
+    <PackageReference Include="SignalRSwaggerGen" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -26,8 +26,8 @@
 		<InternalsVisibleTo Include="$(AssemblyName).Test" />
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Aspire.Azure.Data.Tables" Version="8.0.1" />
-	  <PackageReference Include="Aspire.Azure.Storage.Blobs" Version="8.0.1" />
+	  <PackageReference Include="Aspire.Azure.Data.Tables" Version="8.0.2" />
+	  <PackageReference Include="Aspire.Azure.Storage.Blobs" Version="8.0.2" />
 	  <PackageReference Include="Azure.Data.Tables" Version="12.8.3" />
 	  <PackageReference Include="Azure.Storage.Blobs" Version="12.20.0" />
 	  <PackageReference Include="Blurhash.ImageSharp" Version="3.0.0" />

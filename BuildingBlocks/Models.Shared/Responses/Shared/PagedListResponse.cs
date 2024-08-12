@@ -8,35 +8,29 @@ using Microsoft.EntityFrameworkCore;
 using Models.Shared.Requests.Shared;
 
 namespace Models.Shared.Responses.Shared
-{    public class PagedListResponse<T> : PaginationResponse
 {
-    // Parameterless constructor for deserialization
-    public PagedListResponse() : base(0, 0, 0)
+    public class PagedListResponse<T>
     {
-        Items = new List<T>();
-    }
-
-    // Parameterized constructor for construction
-    [JsonConstructor]
-    private PagedListResponse(int page, int totalCount, int totalPages, List<T> items) : base(page, totalCount, totalPages)
-    {
-        Items = items;
-    }
-
-    public List<T> Items { get; set; }
-
-    public static async Task<PagedListResponse<T>> CreateAsync(IQueryable<T> query, PaginationRequest request)
-    {
-        var totalCount = await query.CountAsync();
-        var items = await query.Skip((request.CurrentPage - 1) * request.PageSize).Take(request.PageSize).ToListAsync();
-        var totalPages = (int)Math.Ceiling((decimal)totalCount / request.PageSize);
+        [JsonConstructor]
+        private PagedListResponse(List<T> items, PaginationResponse pagination)
+        {
+            Items = items;
+            Pagination = pagination;
+        }
         
-     
-       
+        public List<T> Items { get; set; }
+        public PaginationResponse Pagination { get; set; }
 
-        return new PagedListResponse<T>(request.CurrentPage, totalCount, totalPages, items);
+        public static async Task<PagedListResponse<T>> CreateAsync(IQueryable<T> query, PaginationRequest request)
+        {
+            var totalCount = await query.CountAsync();
+            var items = await query.Skip((request.CurrentPage - 1) * request.PageSize).Take(request.PageSize)
+                .ToListAsync();
+            var totalPages = (int)Math.Ceiling((decimal)totalCount / request.PageSize);
+            var pagination = new PaginationResponse(request.CurrentPage, totalCount, totalPages);
+
+
+            return new PagedListResponse<T>(items, pagination);
+        }
     }
-}
-
-
 }

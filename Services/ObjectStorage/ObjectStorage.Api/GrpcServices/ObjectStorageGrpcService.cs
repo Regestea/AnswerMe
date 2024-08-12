@@ -1,6 +1,5 @@
 ﻿using Azure;
 using Grpc.Core;
-using Models.Shared.Requests.ObjectStorage;
 using Models.Shared.Requests.Shared;
 using ObjectStorage.Api.Context;
 using ObjectStorage.Api.Entities;

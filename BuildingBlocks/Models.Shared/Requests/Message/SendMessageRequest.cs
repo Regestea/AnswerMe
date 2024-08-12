@@ -1,4 +1,6 @@
-﻿using Models.Shared.Requests.Shared;
+﻿using System.ComponentModel.DataAnnotations;
+using Models.Shared.Attribute;
+using Models.Shared.Requests.Shared;
 
 namespace Models.Shared.Requests.Message
 {
@@ -10,6 +12,7 @@ namespace Models.Shared.Requests.Message
 
         public string? GroupInvitationToken { get; set; }
 
+        [MaxItems(20)]
         public List<TokenRequest>? MediaTokenList { get; set; }
     }
 }

@@ -1,3 +1,24 @@
+﻿
+
+.holder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.holder .get-it-on-github {
+    margin-top: 24px;
+    margin-bottom: 24px;
+    font-family: "Roboto";
+    color: #55606E;
+}
+
+.current-time{
+    color: wheat;
+}
+
+.total-time{
+    color: wheat;
+}
 
 .audio.green-audio-player {
     width: 400px;
@@ -12,11 +33,12 @@
     border-radius: 4px;
     user-select: none;
     -webkit-user-select: none;
-    background-color: #fff;
+    background: linear-gradient(144deg, rgba(116, 128, 255, 1) 0%, rgba(100, 25, 230, 1) 100%);
 }
 .audio.green-audio-player .play-pause-btn {
     display: none;
     cursor: pointer;
+  
 }
 .audio.green-audio-player .spinner {
     width: 18px;
@@ -33,16 +55,17 @@
     position: relative;
 }
 .audio.green-audio-player .slider .progress {
-    background-color: #44BFA3;
+    background-color: wheat;
     border-radius: inherit;
     position: absolute;
     pointer-events: none;
+    overflow: visible;
 }
 .audio.green-audio-player .slider .progress .pin {
     height: 16px;
     width: 16px;
     border-radius: 8px;
-    background-color: #44BFA3;
+    background-color: white;
     position: absolute;
     pointer-events: all;
     box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.32);
@@ -63,7 +86,7 @@
     margin-left: 16px;
     margin-right: 16px;
     border-radius: 2px;
-    height: 4px;
+    height: 15px;
 }
 .audio.green-audio-player .controls .slider .progress {
     width: 0;
@@ -71,7 +94,7 @@
 }
 .audio.green-audio-player .controls .slider .progress .pin {
     right: -8px;
-    top: -6px;
+    top: -1px;
 }
 .audio.green-audio-player .controls span {
     cursor: default;
@@ -116,24 +139,9 @@
     top: -8px;
 }
 
-svg, img {
-    display: block;
-}
 
-html, body {
-    height: 100%;
-}
 
-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #F8FFAE;
-    background: -webkit-linear-gradient(-65deg, #43C6AC, #F8FFAE);
-    background: linear-gradient(-65deg, #43C6AC, #F8FFAE);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
+
 
 @keyframes spin {
     from {

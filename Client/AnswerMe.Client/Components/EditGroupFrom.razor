@@ -145,6 +145,7 @@
         {
             FileFormat = inputFile.File.ContentType.Split("/")[1],
             FileSizeMb = inputFile.File.Size.SizeMB(),
+            FileName = inputFile.File.Name,
             FileType = FileType.profile
         });
         

@@ -10,6 +10,9 @@ namespace AnswerMe.Domain.Entities
         public MediaType Type { get; set; }
 
         [Required]
+        public string FileName { get; set; } = null!;
+        
+        [Required]
         public string Path { get; set; } = null!;
 
         public string? BlurHash { get; set; }

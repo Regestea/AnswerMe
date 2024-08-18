@@ -19,10 +19,23 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.AddInfrastructureServices(builder.Configuration);
 
 
+var identityServerUrl = builder.Configuration.GetConnectionString("IdentityServerApi");
+var redisConnectionName = builder.Configuration.GetConnectionString("RedisCache");
+
+if (identityServerUrl == null )
+{
+    throw new InvalidOperationException("Required connection identity server url strings are missing.");
+}
+
+if (redisConnectionName == null)
+{
+    throw new InvalidOperationException("Required connection redisConnectionName strings are missing.");
+}
+
 builder.AddIdentityServerClientServices(options =>
 {
-    options.IdentityServerUrl = "https://"+builder.Configuration.GetConnectionString("IdentityServerApi") ?? throw new InvalidOperationException();
-    options.RedisConnectionName = builder.Configuration.GetConnectionString("RedisCache") ?? throw new InvalidOperationException();
+    options.IdentityServerUrl = "https://" + identityServerUrl;
+    options.RedisConnectionName = redisConnectionName;
 });
 
 

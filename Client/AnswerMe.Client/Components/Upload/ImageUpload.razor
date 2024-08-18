@@ -1,8 +1,6 @@
 @using AnswerMe.Client.Core.AnimationLibrary
 @using AnswerMe.Client.Core.Extensions
-@using AnswerMe.Client.Core.Models
 @using Models.Shared.Requests.Upload
-@using Models.Shared.Responses.Shared
 @inject IJSRuntime JsRuntime
 @inject IObjectStorageService StorageService
 @inject IObjectHelperService ObjectHelperService
@@ -110,6 +108,7 @@
             {
                 FileFormat = image.File.ContentType.Split("/")[1],
                 FileSizeMb = image.File.Size.SizeMB(),
+                FileName = image.File.Name,
                 FileType = FileType.image,
                 BlurHash = FileExtension.ConvertBase64ToBlurHash(image.PreviewUrl)
             });

@@ -138,6 +138,7 @@
             {
                 FileFormat = await JsRuntime.GetInputFileType(ElementIds.UploadInput.ToString()),
                 FileSizeMb = file.File.Size.SizeMB(),
+                FileName = file.File.Name,
                 FileType = FileType.other
             });
 

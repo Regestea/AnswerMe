@@ -3,6 +3,7 @@
 @using AnswerMe.Client.Core.Models
 @using Models.Shared.Requests.Upload
 @using Models.Shared.Responses.Shared
+@using FileType = Models.Shared.Requests.Upload.FileType
 @inject IJSRuntime JsRuntime
 @inject IObjectStorageService StorageService
 @inject IObjectHelperService ObjectHelperService
@@ -140,6 +141,7 @@
             {
                 FileFormat = await JsRuntime.GetInputFileType(ElementIds.UploadInput.ToString()),
                 FileSizeMb = audio.File.Size.SizeMB(),
+                FileName = audio.File.Name,
                 FileType = FileType.audio
             });
 

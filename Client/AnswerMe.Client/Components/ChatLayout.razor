@@ -2,7 +2,7 @@
 @implements IAsyncDisposable
 
 
-<div  id="@ElementIds.ChatScroll" class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 chat-area responsive-chat-area" style="border-bottom: none;height: 83%">
+<div  id="@ElementIds.ChatScroll" class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 chat-area responsive-chat-area border-t-0" style="border-bottom: none;height: 83%; @Style">
 
     @ChatContent
 
@@ -15,6 +15,7 @@
     [Parameter] public required RenderFragment ChatContent { get; set; }
     [Parameter] public  EventCallback CallLoadNewMessages { get; set; }
     [Parameter] public  EventCallback CallLoadOldMessages { get; set; }
+    [Parameter] public string? Style { get; set; }
 
     internal static class ElementIds
     {

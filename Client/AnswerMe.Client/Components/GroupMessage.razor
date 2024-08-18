@@ -4,7 +4,7 @@
 @using AnswerMe.Client.Core.Services
 @using Models.Shared.Requests.Shared
 @using Models.Shared.Responses.Shared
-@using AnswerMe.Client.Componenets.Media
+@using Models.Shared.Responses.Media
 @inject IGroupMessageService GroupMessageService
 @inject AuthStateProvider AuthStateProvider
 @inject IUserService UserService
@@ -50,6 +50,20 @@
                 {
                     <GroupInvitePreview @key="@message.GroupInviteToken" GroupInviteToken="@message.GroupInviteToken"/>
                 }
+                @if (message.MediaList != null && message.MediaList.Any())
+                {
+                    @foreach (var media in message.MediaList)
+                    {
+                        switch (media.Type)
+                        {
+                            case MediaTypeResponse.audio:
+                                <div @onclick="()=>OpenAudio.InvokeAsync(media.Path)">
+                                    <AudioFile Url="@media.Path"/>
+                                </div>
+                                break;
+                        }
+                    }
+                }
 
                 @message.Text
 
@@ -69,11 +83,14 @@
     [Parameter] public Guid RoomId { get; set; }
     [Parameter] public DateTimeOffset? UserLastRoomVisit { get; set; }
     [Parameter] public Guid LoggedInUserId { get; set; }
+    [Parameter] public EventCallback<string> OpenAudio { get; set; }
     private List<MessageResponse> _messageList = new();
+
     internal static class ElementIds
     {
         public static string NewMessageBanner { get; } = Guid.NewGuid().ToString();
     }
+
     private string _lastLook = "";
 
 
@@ -83,7 +100,6 @@
 
     private bool _firstLoad = true;
     private bool _isNewMessageBannerPlaced = false;
-
 
 
     protected override async Task OnInitializedAsync()

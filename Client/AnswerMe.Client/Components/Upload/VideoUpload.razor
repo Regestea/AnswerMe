@@ -107,6 +107,7 @@
             {
                 FileFormat =await JsRuntime.GetInputFileType(ElementIds.UploadInput.ToString()),
                 FileSizeMb = Video.File.Size.SizeMB(),
+                FileName = Video.File.Name,
                 FileType = FileType.video,
                 BlurHash = FileExtension.ConvertBase64ToBlurHash(Video.PreviewUrl)
             });

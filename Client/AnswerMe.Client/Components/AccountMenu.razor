@@ -143,6 +143,7 @@
         var tokenResult = await StorageService.GetUploadTokenAsync(new UploadRequest()
         {
             FileFormat = inputFile.File.ContentType.Split("/")[1],
+            FileName = inputFile.File.Name,
             FileSizeMb = inputFile.File.Size.SizeMB(),
             FileType = FileType.profile
         });

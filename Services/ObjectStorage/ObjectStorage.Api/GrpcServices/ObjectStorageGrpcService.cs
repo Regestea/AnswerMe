@@ -40,7 +40,7 @@ namespace ObjectStorage.Api.GrpcServices
                     blurHash = objectFile.BlurHash;
                 }
 
-                return new GetObjectPathResponse() { FilePath = objectFile.FullPath, FileFormat = objectFile.FileFormat, BlurHash = blurHash };
+                return new GetObjectPathResponse() { FilePath = objectFile.FullPath, FileFormat = objectFile.FileFormat, BlurHash = blurHash,FileName = objectFile.FileName };
             }
 
             return new GetObjectPathResponse() { FilePath = "", FileFormat = "", BlurHash = "" };

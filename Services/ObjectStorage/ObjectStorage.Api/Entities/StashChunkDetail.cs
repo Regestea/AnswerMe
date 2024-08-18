@@ -7,6 +7,7 @@ namespace ObjectStorage.Api.Entities
     public class StashChunkDetail: ITableEntity
     {
         public double FileSizeMb { get; set; }
+        public string FileName { get; set; } = null!;
         public double TotalUploadedSizeMb { get; set; }
         public int TotalUploadedChunks { get; set; }
         public string FileFormat { get; set; } = null!;

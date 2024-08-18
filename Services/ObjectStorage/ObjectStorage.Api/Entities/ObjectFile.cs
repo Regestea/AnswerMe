@@ -11,6 +11,8 @@ namespace ObjectStorage.Api.Entities
         //blobName (Guid file name)
         public required string RowKey { get; set; }
 
+        public required string FileName { get; set; }
+
         //containerName it can be a number like 879435789098 and should be uniq
         public required string PartitionKey { get; set; }
 

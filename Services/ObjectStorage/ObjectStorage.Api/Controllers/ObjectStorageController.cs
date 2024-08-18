@@ -192,6 +192,7 @@ namespace ObjectStorage.Api.Controllers
 
             var objectIndex = new ObjectFile()
             {
+                FileName = stashChunkDetail.FileName,
                 PartitionKey = stashChunkDetail.PartitionKey,
                 RowKey = stashChunkDetail.RowKey,
                 FileFormat = stashChunkDetail.FileFormat,
@@ -234,6 +235,7 @@ namespace ObjectStorage.Api.Controllers
             
             var stashChunkDetail = new StashChunkDetail()
             {
+                FileName = request.FileName,
                 FileFormat = request.FileFormat,
                 PartitionKey = request.FileType.ToString(),
                 RowKey = Guid.NewGuid().ToString(),

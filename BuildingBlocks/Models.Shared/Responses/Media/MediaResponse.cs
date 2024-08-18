@@ -11,6 +11,8 @@ namespace Models.Shared.Responses.Media
     {
         public Guid Id { get; set; }
 
+        public string FileName { get; set; } = null!;
+
         public string? BlurHash { get; set; }
 
         public MediaTypeResponse Type { get; set; }

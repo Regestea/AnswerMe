@@ -79,6 +79,7 @@ namespace AnswerMe.Infrastructure.Services
                         var media = new Media()
                         {
                             id = Guid.NewGuid(),
+                            FileName = storageResponse.FileName,
                             MessageId = message.id,
                             Path = storageResponse.FilePath,
                             Type = FileStorageHelper.GetMediaType(storageResponse.FileFormat),
@@ -123,6 +124,7 @@ namespace AnswerMe.Infrastructure.Services
                     messageResponse.MediaList.Add(new MediaResponse()
                     {
                         Id = media.id,
+                        FileName = media.FileName,
                         Type = (MediaTypeResponse)media.Type,
                         BlurHash = media.BlurHash,
                         Path = FileStorageHelper.GetUrl(media.Path)
@@ -184,6 +186,7 @@ namespace AnswerMe.Infrastructure.Services
                         MediaList = message.MediaList!.Select(x => new MediaResponse
                         {
                             Id = x.id,
+                            FileName = x.FileName,
                             Type = (MediaTypeResponse)x.Type,
                             BlurHash = x.BlurHash,
                             Path = x.Path
@@ -241,6 +244,7 @@ namespace AnswerMe.Infrastructure.Services
                         MediaList = message.MediaList!.Select(x => new MediaResponse
                         {
                             Id = x.id,
+                            FileName = x.FileName,
                             Type = (MediaTypeResponse)x.Type,
                             BlurHash = x.BlurHash,
                             Path = x.Path
@@ -316,6 +320,7 @@ namespace AnswerMe.Infrastructure.Services
                     messageResponse.MediaList.Add(new MediaResponse()
                     {
                         Id = media.id,
+                        FileName = media.FileName,
                         Type = (MediaTypeResponse)media.Type,
                         BlurHash = media.BlurHash,
                         Path = FileStorageHelper.GetUrl(media.Path)
@@ -369,6 +374,7 @@ namespace AnswerMe.Infrastructure.Services
             var media = new Media()
             {
                 id = Guid.NewGuid(),
+                FileName = storageResponse.FileName,
                 MessageId = message.id,
                 Path = storageResponse.FilePath,
                 Type = FileStorageHelper.GetMediaType(storageResponse.FileFormat),
@@ -398,6 +404,7 @@ namespace AnswerMe.Infrastructure.Services
             var newMedia = new Media()
             {
                 id = oldMedia.id,
+                FileName = storageResponse.FileName,
                 MessageId = oldMedia.MessageId,
                 Path = storageResponse.FilePath,
                 Type = FileStorageHelper.GetMediaType(storageResponse.FileFormat),
@@ -445,6 +452,7 @@ namespace AnswerMe.Infrastructure.Services
                     messageResponse.MediaList.Add(new MediaResponse()
                     {
                         Id = messageMedia.id,
+                        FileName = messageMedia.FileName,
                         Type = (MediaTypeResponse)messageMedia.Type,
                         BlurHash = messageMedia.BlurHash,
                         Path = FileStorageHelper.GetUrl(messageMedia.Path)
@@ -548,6 +556,7 @@ namespace AnswerMe.Infrastructure.Services
                             messageResponse.MediaList.Add(new MediaResponse()
                             {
                                 Id = messageMedia.id,
+                                FileName = messageMedia.FileName,
                                 Type = (MediaTypeResponse)messageMedia.Type,
                                 BlurHash = messageMedia.BlurHash,
                                 Path = FileStorageHelper.GetUrl(messageMedia.Path)

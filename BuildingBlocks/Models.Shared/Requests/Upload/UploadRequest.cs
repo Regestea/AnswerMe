@@ -11,6 +11,10 @@ public class UploadRequest
     [MinLength(28, ErrorMessage = "the component size should be 4 x 3 and string length 28")]
     public string? BlurHash { get; set; }
 
+    [MaxLength(50)] 
+    [Required] 
+    public string FileName { get; set; } = null!;
+
     [RangeAllowed(nameof(FileType))]
     public double FileSizeMb { get; set; }
 

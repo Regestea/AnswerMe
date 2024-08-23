@@ -189,7 +189,7 @@ namespace AnswerMe.Infrastructure.Services
                             FileName = x.FileName,
                             Type = (MediaTypeResponse)x.Type,
                             BlurHash = x.BlurHash,
-                            Path = FileStorageHelper.GetUrl(x.Path)
+                            Path = x.Path
                         }).ToList(),
 
                         Text = message.Text,
@@ -247,7 +247,7 @@ namespace AnswerMe.Infrastructure.Services
                             FileName = x.FileName,
                             Type = (MediaTypeResponse)x.Type,
                             BlurHash = x.BlurHash,
-                            Path = FileStorageHelper.GetUrl(x.Path)
+                            Path = x.Path
                         }).ToList(),
 
                         Text = message.Text,

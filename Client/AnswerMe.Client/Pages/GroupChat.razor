@@ -4,19 +4,18 @@
 @using AnswerMe.Client.Core.Extensions
 @using AnswerMe.Client.Core.Services
 @using AnswerMe.Client.Components.Media
-@using AnswerMe.Client.Core.AnimationLibrary
 @inject AuthStateProvider AuthStateProvider
 @inject IGroupService GroupService
 @inject IJSRuntime JsRuntime
 
-<div class="p-4 sm:ml-64 body-content element " >
+<div class="p-4 sm:ml-64 body-content element" >
 
     <GrNavHeader RefreshNavMenu="RefreshNavMenuData" @key="RoomId" RoomId="RoomId" IsGroupAdmin="_isGroupAdmin"/>
     @if (AudioUrl != null)
     {
-        <AudioPlayer @key="@AudioUrl" Close="()=>AudioUrl=null" Url="@AudioUrl" />
+        <AudioPlayer Close="()=>AudioUrl=null" Url="@AudioUrl" />
     }
-    <ChatLayout Class="@(AudioUrl != null ? "top-[8em] sm:top-[8em] md:top-[7em] lg:top-[6em] xl:top-[6em] 2xl:top-[5em];":"")"  CallLoadNewMessages="LoadNewMessages" CallLoadOldMessages="LoadOldMessages">
+    <ChatLayout Style="@(AudioUrl != null ? "top:6em" : "")" CallLoadNewMessages="LoadNewMessages" CallLoadOldMessages="LoadOldMessages">
         <ChatContent>
             <GroupMessage OpenAudio="(x)=>AudioUrl=x" @ref="_groupMessageRef" @key="RoomId" RoomId="RoomId" UserLastRoomVisit="_userLastRoomVisit" LoggedInUserId="_loggedInUserId" />
             

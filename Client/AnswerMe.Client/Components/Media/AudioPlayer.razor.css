@@ -1,40 +1,15 @@
-﻿/* Define the keyframes for the fade-in animation */
-@keyframes fadeInDown {
-    0% {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fade-in-down {
-    animation: fadeInDown 0.5s ease-out;
-}
-
-@keyframes fadeOutUp {
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-}
-
-.fade-out-up {
-    animation: fadeOutUp 0.5s ease-out;
-}
-
-
-
+﻿
 
 .holder {
     display: flex;
-   justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+.holder .get-it-on-github {
+    margin-top: 24px;
+    margin-bottom: 24px;
+    font-family: "Roboto";
+    color: #55606E;
 }
 
 .current-time{
@@ -55,11 +30,10 @@
     align-items: center;
     padding-left: 24px;
     padding-right: 24px;
-    border-radius: 0 0 12px 12px;
-    border: none;
+    border-radius: 4px;
     user-select: none;
     -webkit-user-select: none;
-    background-color: #1f2937;
+    background: linear-gradient(144deg, rgba(116, 128, 255, 1) 0%, rgba(100, 25, 230, 1) 100%);
 }
 .audio.green-audio-player .play-pause-btn {
     display: none;

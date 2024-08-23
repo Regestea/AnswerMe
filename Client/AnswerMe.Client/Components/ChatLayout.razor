@@ -1,9 +1,8 @@
 @inject IJSRuntime JsRuntime
-@using AnswerMe.Client.Core.AnimationLibrary
 @implements IAsyncDisposable
 
 
-<div  id="@ElementIds.ChatScroll" class="p-4 pt-0 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 chat-area responsive-chat-area border-t-0 @Animations.FadeIn  @Class" style="border-bottom: none;height: 83%;max-height: 600px; margin-bottom: 70px; @Style">
+<div  id="@ElementIds.ChatScroll" class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 chat-area responsive-chat-area border-t-0" style="border-bottom: none;height: 83%; @Style">
 
     @ChatContent
 
@@ -17,7 +16,6 @@
     [Parameter] public  EventCallback CallLoadNewMessages { get; set; }
     [Parameter] public  EventCallback CallLoadOldMessages { get; set; }
     [Parameter] public string? Style { get; set; }
-    [Parameter] public string? Class { get; set; }
 
     internal static class ElementIds
     {

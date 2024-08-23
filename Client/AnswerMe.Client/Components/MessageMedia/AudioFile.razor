@@ -1,37 +1,48 @@
-@inject IJSRuntime Js
-
-<div class="px-3 py-3 lg:px-5 lg:pl-3">
+<div class="px-3 py-3 lg:px-5 lg:pl-3 cursor-pointer btn-ghost" style="border: none;border-radius: 20px;">
     <div class="flex items-center justify-between">
         <div class="flex items-center justify-start ">
-            <div class=" btn-ghost pr-3 pl-3 cursor-pointer" style="display: flex;align-items: center;border-radius: 10px">
+            <div class="  pr-3 pl-3 " style="display: flex;align-items: center;border-radius: 10px">
 
-                <div class="avatar placeholder">
-                    <div class="bg-neutral text-neutral-content rounded-full w-12">
-                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 470 468" id="Music">
-                            <defs>
-                                <filter id="a" width="111.8%" height="111.9%" x="-5.9%" y="-3.9%" filterUnits="objectBoundingBox">
-                                    <feOffset dy="5" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset><feGaussianBlur in="shadowOffsetOuter1" result="shadowBlurOuter1" stdDeviation="4"></feGaussianBlur><feColorMatrix in="shadowBlurOuter1" result="shadowMatrixOuter1" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.078125 0"></feColorMatrix><feOffset dy="4" in="SourceAlpha" result="shadowOffsetOuter2"></feOffset><feGaussianBlur in="shadowOffsetOuter2" result="shadowBlurOuter2" stdDeviation="5.5"></feGaussianBlur><feColorMatrix in="shadowBlurOuter2" result="shadowMatrixOuter2" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.210824275 0"></feColorMatrix>
-                                    <feMerge>
-                                        <feMergeNode in="shadowMatrixOuter1"></feMergeNode><feMergeNode in="shadowMatrixOuter2"></feMergeNode>
-                                    </feMerge>
-                                </filter><path id="b" d="M9.635 132.808C24.782 59.782 71.388 19.109 144.085 6.822c53.74-9.081 107.5-9.196 161.15.255 74.852 13.185 119.85 56.23 134.185 130.36 11.075 57.29 11.249 115.191-.174 172.427-15.324 72.52-63.132 117.285-135.561 129.527-53.74 9.08-107.5 9.195-161.15-.255-74.852-13.186-120.05-58.38-134.384-132.509-11.64-57.668-10.52-115.935 1.484-173.82z"></path>
-                            </defs>
-                            <g fill="none" fill-rule="evenodd">
-                                <g transform="translate(-21 -26)" fill="#6622e8" class="color000000 svgShape">
-                                    <g fill="#6622e8" class="color000000 svgShape">
-                                        <g transform="translate(32 33)" fill="#6622e8" class="color000000 svgShape">
-                                            <use fill="#6622e8" filter="url(#a)" xlink:href="#b" class="color000000 svgShape"></use><use fill="#717af8" xlink:href="#b" class="color60baff svgShape"></use>
-                                        </g><path fill="#ffffff" d="M297.336 148.102C269.564 120.026 219 95 219 95v192.005c0 9.206-2.837 18.268-8.472 25.55-5.488 7.09-14.285 13.536-28.131 13.536-16.225 0-24.896-9.6-24.896-24.833 0-15.234 15.243-25.695 31.16-28.833 3.38-.667 8.339-.98 8.339-.98v-17.27a58.9 58.9 0 0 0-3-.084c-27.622 0-55 22.065-55 48s16.71 41.667 44.334 41.667c27.398 0 52.912-19.72 52.912-62.986 0-43.264.088-157.753.088-157.753 11.372 6.37 29.556 17.522 45.534 31.652 25.534 22.58-8.534 60.42-8.534 60.42l13.333 11.667s40.333-48.667 10.669-78.656" transform="translate(32 33)" class="colorffffff svgShape"></path>
-                                    </g>
-                                </g>
-                            </g>
-                        </svg>
-                    </div>
-                </div>
+                <svg
+                    class="w-16"
+                    xmlns="http://www.w3.org/2000/svg"
+                    xmlns:xlink="http://www.w3.org/1999/xlink"
+                    viewBox="0 0 28 28"
+                    id="Music"
+                >
+                    <defs>
+                        <linearGradient id="a" x1="0%" x2="100%" y1="0%" y2="100%">
+                            <stop offset="0%" stop-color="rgba(130, 145, 255, 1)"></stop>
+                            <stop offset="100%" stop-color="rgba(110, 30, 235, 1)"></stop>
+                        </linearGradient>
+                    </defs>
+                    <rect width="28" height="28" fill="url(#a)" rx="5.917" ry="5.917"></rect>
+                    <path
+                        fill="#ffffff"
+                        d="M18.48 7a.5.5 0 0 0-.106.016l-8 2a.5.5 0 0 0-.378.484v7.781a1.969 1.969 0 0 0-1-.28c-1.1 0-2 .9-2 2 0 1.098.9 2 2 2 1.06 0 1.928-.843 1.988-1.89a.498.498 0 0 0 .012-.11v-5.61l7-1.75v3.64a1.969 1.969 0 0 0-1-.28c-1.1 0-2 .9-2 2 0 1.098.9 2 2 2 1.06 0 1.928-.843 1.988-1.89a.498.498 0 0 0 .012-.11v-5.934a.5.5 0 0 0 0-.133V7.5a.5.5 0 0 0-.516-.5zm-.484 1.14v2.47l-7 1.75V9.89zm-1 7.86c.558 0 1 .442 1 1s-.442 1-1 1c-.559 0-1-.442-1-1s.441-1 1-1zm-8 2c.558 0 1 .442 1 1s-.442 1-1 1c-.559 0-1-.442-1-1s.441-1 1-1z"
+                        color="#000"
+                        font-family="sans-serif"
+                        font-weight="400"
+                        overflow="visible"
+                        style="
+      line-height: normal;
+      text-indent: 0;
+      text-align: start;
+      text-decoration-line: none;
+      text-decoration-style: solid;
+      text-decoration-color: #000;
+      text-transform: none;
+      block-progression: tb;
+      isolation: auto;
+      mix-blend-mode: normal;
+    "
+                    ></path>
+                </svg>
+
 
                 <div style="margin-left: 10px">
-                    <div style="margin-right: 5px">@Name</div>
-                    <p class="text-primary" style="text-transform: lowercase;margin-top: 2px;font-size: 13px;">@_audioDuration</p>
+                    <div style="margin-right: 5px">@Name.SummarizeIfMoreThan(30)</div>
+                    <p style="text-transform: lowercase;margin-top: 2px;font-size: 13px;">audio file</p>
                 </div>
             </div>
         </div>
@@ -43,19 +54,5 @@
     [Parameter] public required string Url { get; set; }
 
     [Parameter] public required string Name { get; set; }
-
-    private string? _audioDuration;
-
-    private IJSObjectReference? module;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            module = await Js.InvokeAsync<IJSObjectReference>("import", "../Components/MessageMedia/AudioFile.razor.js");
-        }
-        if (module is not null)
-            _audioDuration = await module.InvokeAsync<string>("Window.getAudioDuration", Url);
-    }
 
 }

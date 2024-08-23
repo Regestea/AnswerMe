@@ -58,7 +58,12 @@
                         {
                             case MediaTypeResponse.audio:
                                 <div @onclick="()=>OpenAudio.InvokeAsync(media.Path)">
-                                    <AudioFile Url="@media.Path"/>
+                                    <AudioFile Url="@media.Path" Name="@media.FileName"/>
+                                </div>
+                                break;
+                            case MediaTypeResponse.other:
+                                <div>
+                                    <OtherFile Url="@media.Path" Name="@media.FileName"/>
                                 </div>
                                 break;
                         }

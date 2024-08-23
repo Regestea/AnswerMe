@@ -1,0 +1,35 @@
+<a href="@Url" target="_blank">
+    <div class="px-3 py-3 lg:px-5 lg:pl-3 cursor-pointer btn-ghost" style="border: none;border-radius: 20px;">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center justify-start ">
+                <div class="  pr-3 pl-3 " style="display: flex;align-items: center;border-radius: 10px">
+
+                    <svg class="w-16" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 28 28" id="File">
+                        <defs>
+                            <linearGradient id="a" x1="0%" x2="100%" y1="0%" y2="100%">
+                                <stop offset="0%" stop-color="#550cf0"></stop>
+                                <stop offset="100%" stop-color="#7624f3"></stop>
+                            </linearGradient>
+                        </defs>
+                        <rect width="28" height="28" fill="url(#a)" rx="5.917" ry="5.917"></rect>
+                        <path fill="#ffffff" d="M9.754 7C8.787 7 8 7.787 8 8.754v10.992c0 .967.787 1.754 1.754 1.754h7.992c.967 0 1.754-.787 1.754-1.754v-8.475c0-.007-.007-.012-.008-.019a.246.246 0 0 0-.064-.158l-4-4a.246.246 0 0 0-.15-.067C15.251 7.02 15.232 7 15.206 7H9.754zm0 .5H15v2.281c0 .96.78 1.74 1.738 1.74H19v8.225c0 .691-.563 1.254-1.254 1.254H9.754A1.256 1.256 0 0 1 8.5 19.746V8.754c0-.691.563-1.254 1.254-1.254Zm5.744.393c.771.766 2.316 2.3 3.147 3.128h-1.907c-.683 0-1.24-.557-1.24-1.24V7.893z"></path>
+                    </svg>
+
+
+                    <div style="margin-left: 10px">
+                        <div style="margin-right: 5px">@Name.SummarizeIfMoreThan(30)</div>
+                        <p style="text-transform: lowercase;margin-top: 2px;font-size: 13px;">file</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</a>
+
+
+@code {
+    [Parameter] public required string Url { get; set; }
+
+    [Parameter] public required string Name { get; set; }
+
+}

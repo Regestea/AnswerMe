@@ -1,3 +1,4 @@
+@using AnswerMe.Client.Core.AnimationLibrary
 @using AnswerMe.Client.Core.Extensions
 @using AnswerMe.Client.Core.Services
 @using Models.Shared.Responses.Group
@@ -17,7 +18,7 @@
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center justify-start ">
-                    <div @onclick="() => _groupDetailModalRef.ShowModal()" class=" btn-ghost pr-3 pl-3 cursor-pointer" style="display: flex;align-items: center;border-radius: 10px">
+                    <div @onclick="() => _groupDetailModalRef.ShowModal()" class=" btn-ghost pr-3 pl-3 cursor-pointer @Animations.FadeIn" style="display: flex;align-items: center;border-radius: 10px">
                         @if (_group != null)
                         {
                             <UserAvatar ImageUrl="@_group.RoomImage" Class="w-12" Letter="@_group.Name.FirstLetter()"/>

@@ -1,0 +1,40 @@
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+<div id="VideoPlayer-player" class='player'>
+    <video id="VideoPlayer-video" class="video-screen" preload='auto' src="@Url" type='video/mp4' poster='https://raw.githubusercontent.com/gregoriB/custom-html5-video-player/master/play-button.png' msallowfullscreen webkitallowfullscreen mozallowfullscreen allowfullscreen>
+        Sorry, your browser doesn't support HTML5 video playback.
+    </video>
+    <div id="VideoPlayer-controls" class='controls active'>
+        <button id="VideoPlayer-playButton" class='play start'></button>
+        <input id="VideoPlayer-volumeSlider" type="range" class='volume-bar range range-primary' value='70' min='0' max='100'>
+        <input id="VideoPlayer-timeBar" type="range" class='time-bar range range-primary' value='0' min='0' max=''>
+        <time id="VideoPlayer-timeCounter" class='time'>N/A</time>
+        <button id="VideoPlayer-fullscreen" class='fullscreen-button'></button>
+    </div>
+</div>
+
+<!-- Ignore this part -->
+
+@code {
+    [Parameter] public required string Url { get; set; }
+    private IJSObjectReference? module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        module = await Js.InvokeAsync<IJSObjectReference>("import", "../Components/Media/VideoPlayer.razor.js");
+
+        await module.InvokeVoidAsync("LoadVideoPlayer");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (module != null)
+        {
+            await module.InvokeVoidAsync("DisposeVideoPlayer");
+            module?.DisposeAsync();
+            module = null;
+        }
+    }
+
+}

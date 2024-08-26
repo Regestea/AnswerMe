@@ -5,6 +5,7 @@
 @using Models.Shared.Requests.Shared
 @using Models.Shared.Responses.Shared
 @using Models.Shared.Responses.Media
+@using AnswerMe.Client.Components.Media
 @inject IGroupMessageService GroupMessageService
 @inject AuthStateProvider AuthStateProvider
 @inject IUserService UserService
@@ -61,6 +62,15 @@
                                     <AudioFile Url="@media.Path" Name="@media.FileName"/>
                                 </div>
                                 break;
+                            case MediaTypeResponse.video:
+                                <button @onclick="()=>_videoPlayerModal.ShowModal()">test</button>
+                                <Modal @ref="_videoPlayerModal">
+                                    <Content>
+                                        <VideoPlayer Url="@media.Path"></VideoPlayer>
+                                    </Content>
+                                </Modal>
+                                
+                                break;
                             case MediaTypeResponse.other:
                                 <div>
                                     <OtherFile Url="@media.Path" Name="@media.FileName"/>
@@ -89,6 +99,7 @@
     [Parameter] public DateTimeOffset? UserLastRoomVisit { get; set; }
     [Parameter] public Guid LoggedInUserId { get; set; }
     [Parameter] public EventCallback<string> OpenAudio { get; set; }
+    private Modal? _videoPlayerModal;
     private List<MessageResponse> _messageList = new();
 
     internal static class ElementIds

@@ -76,7 +76,7 @@ namespace AnswerMe.Infrastructure.Services
                 .Where(x => x.RoomChatId == roomId)
                 .OrderByDescending(x => x.CreatedDate)
                 .Select(x => x.Text)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
             
             var onlineMemberConnectionIdList = await OnlineUserConnectionIdListAsync(roomId);
             if (onlineMemberConnectionIdList.Any())
@@ -123,7 +123,7 @@ namespace AnswerMe.Infrastructure.Services
             var userIds = await _context.PrivateChats
                 .Where(x => x.id == roomId)
                 .Select(chat => new List<Guid> { chat.User1Id, chat.User2Id })
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             var onlineContactConnectionIdList = new List<string>();
 

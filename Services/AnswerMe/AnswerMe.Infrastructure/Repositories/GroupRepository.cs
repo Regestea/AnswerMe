@@ -64,7 +64,7 @@ namespace AnswerMe.Infrastructure.Repositories
                     CreatedDate = x.CreatedDate,
                     ModifiedDate = x.ModifiedDate,
                     RoomImage = FileStorageHelper.GetUrl(x.RoomImage)
-                }).SingleOrDefaultAsync();
+                }).FirstOrDefaultAsync();
 
             if (groupResponse == null)
             {
@@ -258,7 +258,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             if (isAdmin)
             {
-                var admin = await _context.GroupAdmins.SingleOrDefaultAsync(x =>
+                var admin = await _context.GroupAdmins.FirstOrDefaultAsync(x =>
                     x.UserId == userId && x.RoomId == groupId);
 
                 if (admin != null)
@@ -317,7 +317,7 @@ namespace AnswerMe.Infrastructure.Repositories
                 return new AccessDenied();
             }
 
-            var group = await _context.GroupChats.SingleOrDefaultAsync(x => x.id == groupId);
+            var group = await _context.GroupChats.FirstOrDefaultAsync(x => x.id == groupId);
 
             if (group == null)
             {
@@ -471,7 +471,7 @@ namespace AnswerMe.Infrastructure.Repositories
             if (isAdmin)
             {
                 var userGroup =
-                    await _context.UserGroups.SingleOrDefaultAsync(x => x.UserId == kickUserId && x.GroupId == groupId);
+                    await _context.UserGroups.FirstOrDefaultAsync(x => x.UserId == kickUserId && x.GroupId == groupId);
 
                 if (userGroup != null)
                 {
@@ -490,7 +490,7 @@ namespace AnswerMe.Infrastructure.Repositories
         public async Task<DeleteResponse> LeaveGroupAsync(Guid loggedInUserId, Guid groupId)
         {
             var userGroup =
-                await _context.UserGroups.SingleOrDefaultAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
+                await _context.UserGroups.FirstOrDefaultAsync(x => x.UserId == loggedInUserId && x.GroupId == groupId);
 
             if (userGroup != null)
             {

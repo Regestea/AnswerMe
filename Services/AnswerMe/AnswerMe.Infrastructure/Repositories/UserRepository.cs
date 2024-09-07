@@ -102,7 +102,7 @@ namespace AnswerMe.Infrastructure.Repositories
                     ModifiedDate = x.ModifiedDate,
                     ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
                 })
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             if (userDto != null)
             {

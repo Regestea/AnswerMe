@@ -261,7 +261,7 @@ namespace AnswerMe.Infrastructure.Services
                                 Name = x.FullName,
                                 ProfileImage = FileStorageHelper.GetUrl(x.ProfileImage)
                             }).Single()
-                    }).SingleOrDefaultAsync();
+                    }).FirstOrDefaultAsync();
 
             return new Success<MessageResponse>(message!);
         }
@@ -277,7 +277,7 @@ namespace AnswerMe.Infrastructure.Services
 
             var message = await _context.Messages
                 .Where(x => x.UserSenderId == loggedInUserId && x.id == messageId)
-                .Include(message => message.MediaList).SingleOrDefaultAsync();
+                .Include(message => message.MediaList).FirstOrDefaultAsync();
 
             if (message == null)
             {
@@ -477,7 +477,7 @@ namespace AnswerMe.Infrastructure.Services
 
             var message = await _context.Messages
                 .Where(x => x.UserSenderId == loggedInUserId && x.id == messageId)
-                .Include(message => message.MediaList).SingleOrDefaultAsync();
+                .Include(message => message.MediaList).FirstOrDefaultAsync();
 
             if (message != null)
             {
@@ -512,7 +512,7 @@ namespace AnswerMe.Infrastructure.Services
             var message = await _context.Messages
                 .Where(x => x.UserSenderId == loggedInUserId && x.id == messageId)
                 .Include(message => message.MediaList)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             if (message?.MediaList != null && message.MediaList.Any())
             {

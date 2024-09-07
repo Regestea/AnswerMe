@@ -44,7 +44,7 @@ namespace AnswerMe.Infrastructure.Repositories
 
             var privateRoom = await _context.PrivateChats
                 .Where(x => x.id == roomId)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             if (privateRoom == null)
             {
@@ -132,7 +132,7 @@ namespace AnswerMe.Infrastructure.Repositories
             var privateChat = await _context.PrivateChats.Where(x =>
                     (x.User1Id == loggedInUserId && x.User2Id == contactId) ||
                     x.User2Id == loggedInUserId && x.User1Id == contactId)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             if (privateChat != null)
             {

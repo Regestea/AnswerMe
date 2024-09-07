@@ -18,25 +18,21 @@ var redisCache = builder.AddRedis("RedisCache")
     .WithRedisCommander()
     .WithDataVolume();
 
-var table=builder.AddAzureStorage("azureobjectindextable")
-    .RunAsEmulator(emulator=>
+var table = builder.AddAzureStorage("azureobjectindextable")
+    .RunAsEmulator(emulator =>
     {
+        emulator.WithTablePort(9000);
         emulator.WithDataVolume();
-        emulator.WithImageTag("3.30.0");
     })
-    .AddTables("ObjectIndexTable")
-    .WithHttpEndpoint();
+    .AddTables("ObjectIndexTable");
 
-var blobs=builder.AddAzureStorage("azureobjectstorage")
-    .RunAsEmulator(emulator=>
+var blobs = builder.AddAzureStorage("azureobjectstorage")
+    .RunAsEmulator(emulator =>
     {
         emulator.WithBlobPort(10000);
         emulator.WithDataVolume();
-        emulator.WithImageTag("3.30.0");
     })
-    .AddBlobs("ObjectStorage")
-    .WithHttpsEndpoint()
-    .WithHttpEndpoint();
+    .AddBlobs("ObjectStorage");
 
 
 

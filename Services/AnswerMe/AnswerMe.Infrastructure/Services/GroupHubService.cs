@@ -76,7 +76,7 @@ namespace AnswerMe.Infrastructure.Services
                 .Where(x => x.RoomChatId == roomId)
                 .OrderByDescending(x => x.CreatedDate)
                 .Select(x => x.Text)
-                .SingleOrDefaultAsync();
+                .FirstOrDefaultAsync();
             
             var onlineMemberConnectionIdList = await OnlineMemberConnectionIdListAsync(roomId);
             if (onlineMemberConnectionIdList.Any())

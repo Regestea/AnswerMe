@@ -74,7 +74,7 @@ namespace IdentityServer.Api.Repositories
                     IdName = x.IdName,
                     CreatedDate = x.CreatedDate,
                     ModifiedDate = x.ModifiedDate
-                }).SingleOrDefaultAsync();
+                }).FirstOrDefaultAsync();
 
             if (userDto != null)
             {

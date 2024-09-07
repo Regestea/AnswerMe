@@ -40,7 +40,9 @@ public class GroupMessageService : IGroupMessageService
         return new Success<PagedListResponse<MessageResponse>>(messages);
     }
 
-    public async Task<ReadResponse<MessageResponse>> GetByIdAsync(Guid messageId)
+   
+
+    public async Task<ReadResponse<MessageResponse>> GetGroupMessageAsync(Guid messageId)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
 

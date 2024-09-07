@@ -1,0 +1,56 @@
+@using AnswerMe.Client.Core.Enums
+@using Models.Shared.Responses.Message
+@inject IGroupMessageService GroupMessage
+@inject IPrivateMessageService PrivateMessage
+
+@if (_message != null)
+{
+    <div class="Replayed">
+        <div class="Title">@_message.UserSender.Name</div>
+        <div class="Content">@_message.Text?.SummarizeIfMoreThan(15)</div>
+    </div>
+    
+}
+else
+{
+    <dvi class="Replayed">Message Deleted</dvi>
+}
+
+<Modal>
+    <Content>
+        <Message></Message>
+    </Content>
+</Modal>
+
+@code {
+    [Parameter] public Guid ReplayedMessageId { get; set; }
+    [Parameter] public RoomType RoomType { get; set; }
+
+    private MessageResponse? _message;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        switch (RoomType)
+        {
+            case RoomType.Private:
+                var privateResponse = await PrivateMessage.GetPrivateMessageAsync(ReplayedMessageId);
+                if (privateResponse.IsSuccess)
+                {
+                    _message = privateResponse.AsSuccess.Value;
+                }
+
+                break;
+            case RoomType.Group:
+                var groupResponse = await GroupMessage.GetGroupMessageAsync(ReplayedMessageId);
+                if (groupResponse.IsSuccess)
+                {
+                    _message = groupResponse.AsSuccess.Value;
+                }
+
+                break;
+        }
+    }
+
+}

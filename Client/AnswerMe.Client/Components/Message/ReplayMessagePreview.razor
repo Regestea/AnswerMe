@@ -1,0 +1,46 @@
+@using AnswerMe.Client.Core.Enums
+@inject IGroupMessageService GroupMessage
+@inject IPrivateMessageService PrivateMessage
+<div style="width: 85%;font-size: larger" class="grid grid-cols-12 gap-8 mb-2">
+    <div class="col-span-10 ">
+        <div class="avatar-group -space-x-6 rtl:space-x-reverse">
+            <p class="bg-gray-900 rounded-lg p-4 text-sm">
+                <span class="bg-gray-800 rounded-lg p-2" style="color: wheat">reply to :</span>
+                @_replayMessage?.SummarizeIfMoreThan(20)
+            </p>
+        </div>
+    </div>
+
+
+</div>
+
+@code {
+    [Parameter] public Guid MessageId { get; set; }
+    [Parameter] public RoomType RoomType { get; set; }
+    
+    private string? _replayMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        switch (RoomType)
+        {
+            case RoomType.Private:
+                var result=await PrivateMessage.GetPrivateMessageAsync(MessageId);
+                if (result.IsSuccess)
+                {
+                    _replayMessage = result.AsSuccess.Value.Text;
+                }
+                break;
+            case RoomType.Group:
+                var result2 = await GroupMessage.GetGroupMessageAsync(MessageId);
+                if (result2.IsSuccess)
+                {
+                    _replayMessage = result2.AsSuccess.Value.Text;
+                }
+                break;
+                
+        }
+        
+    }
+
+}

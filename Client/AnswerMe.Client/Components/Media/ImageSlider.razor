@@ -1,0 +1,92 @@
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+
+<div id="slider" class="image-container">
+    <div id="img_slider">
+        @foreach (var image in Images)
+        {
+            <img src="@image" class="image">
+        }
+    </div>
+    <button id="ImageSliderPreviousButton" class="overlay-button left-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="ChevronLeftCircle">
+            <defs>
+                <linearGradient id="gradientChevronLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#7624f3"/>
+                    <stop offset="100%" stop-color="#550cf0"/>
+                </linearGradient>
+            </defs>
+            <path fill="none" d="M0 0h24v24H0Z"></path>
+            <path fill="url(#gradientChevronLeft)" d="M18.788 18.788a9.6 9.6 0 0 0 0-13.577 9.6 9.6 0 0 0-13.576 0 9.6 9.6 0 0 0 0 13.577A9.57 9.57 0 0 0 12 21.6a9.569 9.569 0 0 0 6.788-2.812Zm-1.272-12.3a7.809 7.809 0 0 1 0 11.03 7.809 7.809 0 0 1-11.031 0 7.808 7.808 0 0 1 0-11.03A7.776 7.776 0 0 1 12 4.2a7.776 7.776 0 0 1 5.516 2.285Zm-3.289 9.121a1.2 1.2 0 0 0 0-1.7L12.318 12l1.909-1.909a1.2 1.2 0 0 0 0-1.7 1.2 1.2 0 0 0-1.7 0l-2.758 2.758a1.2 1.2 0 0 0 0 1.7l2.758 2.758a1.2 1.2 0 0 0 .848.351 1.194 1.194 0 0 0 .852-.352Z" class="color525863 svgShape"></path>
+        </svg>
+    </button>
+    <button id="ImageSliderNextButton" class="overlay-button right-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="ChevronRightCircle">
+            <defs>
+                <linearGradient id="gradientChevron" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#7624f3"/>
+                    <stop offset="100%" stop-color="#550cf0"/>
+                </linearGradient>
+            </defs>
+            <path fill="none" d="M0 0h24v24H0Z"></path>
+            <path fill="url(#gradientChevron)" d="M5.212 18.788a9.6 9.6 0 0 1 0-13.577 9.6 9.6 0 0 1 13.576 0 9.6 9.6 0 0 1 0 13.577A9.569 9.569 0 0 1 12 21.6a9.569 9.569 0 0 1-6.788-2.812Zm1.272-12.3a7.809 7.809 0 0 0 0 11.03 7.809 7.809 0 0 0 11.031 0 7.808 7.808 0 0 0 0-11.03A7.776 7.776 0 0 0 12 4.2a7.776 7.776 0 0 0-5.516 2.285Zm3.289 9.121a1.2 1.2 0 0 1 0-1.7L11.682 12l-1.909-1.909a1.2 1.2 0 0 1 0-1.7 1.2 1.2 0 0 1 1.7 0l2.758 2.758a1.2 1.2 0 0 1 0 1.7l-2.758 2.758a1.2 1.2 0 0 1-.848.351 1.194 1.194 0 0 1-.852-.352Z" class="color525863 svgShape"></path>
+        </svg>
+
+    </button>
+    <div class="overlay-button bottom-button">
+        <button id="ImageSliderDownloadImage">
+            <svg class="w-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="DownloadFromCloud">
+                <defs>
+                    <linearGradient id="gradient20" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="rgba(130, 145, 255, 1)" />
+                        <stop offset="50%" stop-color="rgba(110, 30, 235, 1)" />
+                        <stop offset="100%" stop-color="rgba(90, 20, 210, 1)" />
+                    </linearGradient>
+                </defs>
+                <g fill="url(#gradient20)">
+                    <rect width="24" height="24" opacity="0"></rect>
+                    <path d="M21.9 11c0-.11-.06-.22-.09-.33a4.17 4.17 0 0 0-.18-.57c-.05-.12-.12-.24-.18-.37s-.15-.3-.24-.44S21 9.08 21 9s-.2-.25-.31-.37-.21-.2-.32-.3L20 8l-.36-.24a3.68 3.68 0 0 0-.44-.23l-.39-.18a4.13 4.13 0 0 0-.5-.15 3 3 0 0 0-.41-.09h-.18A6 6 0 0 0 6.33 7h-.18a3 3 0 0 0-.41.09 4.13 4.13 0 0 0-.5.15l-.39.18a3.68 3.68 0 0 0-.44.23L4.05 8l-.37.31c-.11.1-.22.19-.32.3s-.21.25-.31.37-.18.23-.26.36-.16.29-.24.44-.13.25-.18.37a4.17 4.17 0 0 0-.18.57c0 .11-.07.22-.09.33A5.23 5.23 0 0 0 2 12a5.5 5.5 0 0 0 .09.91c0 .1.05.19.07.29a5.58 5.58 0 0 0 .18.58l.12.29a5 5 0 0 0 .3.56l.14.22a.56.56 0 0 0 .05.08L3 15a5 5 0 0 0 4 2 2 2 0 0 1 .59-1.41A2 2 0 0 1 9 15a1.92 1.92 0 0 1 1 .27V12a2 2 0 0 1 4 0v3.37a2 2 0 0 1 1-.27 2.05 2.05 0 0 1 1.44.61A2 2 0 0 1 17 17a5 5 0 0 0 4-2l.05-.05a.56.56 0 0 0 .05-.08l.14-.22a5 5 0 0 0 .3-.56l.12-.29a5.58 5.58 0 0 0 .18-.58c0-.1.05-.19.07-.29A5.5 5.5 0 0 0 22 12a5.23 5.23 0 0 0-.1-1z"></path>
+                    <path d="M14.31 16.38L13 17.64V12a1 1 0 0 0-2 0v5.59l-1.29-1.3a1 1 0 0 0-1.42 1.42l3 3A1 1 0 0 0 12 21a1 1 0 0 0 .69-.28l3-2.9a1 1 0 1 0-1.38-1.44z"></path>
+                </g>
+            </svg>
+
+        </button>
+        <button id="ImageSliderFullscreenImage">
+            <svg class="w-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="full-screen">
+                <defs>
+                    <linearGradient id="gradient10" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="rgba(130, 145, 255, 1)"/>
+                        <stop offset="100%" stop-color="rgba(110, 30, 235, 1)"/>
+                    </linearGradient>
+                </defs>
+                <path d="M7 22h2c.6 0 1-.4 1-1s-.4-1-1-1H7c-1.1 0-2-.9-2-2v-2c0-.6-.4-1-1-1s-1 .4-1 1v2c0 2.2 1.8 4 4 4zm8 0h2c2.2 0 4-1.8 4-4v-2c0-.6-.4-1-1-1s-1 .4-1 1v2c0 1.1-.9 2-2 2h-2c-.6 0-1 .4-1 1s.4 1 1 1zm0-17h2c1.1 0 2 .9 2 2v2c0 .6.4 1 1 1s1-.4 1-1V7c0-2.2-1.8-4-4-4h-2c-.6 0-1 .4-1 1s.4 1 1 1zM4 10c.6 0 1-.4 1-1V7c0-1.1.9-2 2-2h2c.6 0 1-.4 1-1s-.4-1-1-1H7C4.8 3 3 4.8 3 7v2c0 .6.4 1 1 1z" fill="url(#gradient10)"></path>
+            </svg>
+        </button>
+    </div>
+
+</div>
+
+
+@code {
+    [Parameter] public required List<string> Images { get; set; }
+    private IJSObjectReference? module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        module = await Js.InvokeAsync<IJSObjectReference>("import", "../Components/Media/ImageSlider.razor.js");
+
+        await module.InvokeVoidAsync("InitializeImageSlider", Images.Count);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (module != null)
+        {
+            await module.InvokeVoidAsync("Dispose");
+            await module.DisposeAsync();
+        }
+        
+    }
+
+}

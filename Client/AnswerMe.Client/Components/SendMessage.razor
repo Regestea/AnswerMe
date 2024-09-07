@@ -4,29 +4,50 @@
 @inject IGroupMessageService GroupMessageService
 
 <div class="send-box responsive-send-box block">
+    
+    @if (_editMessageId != null)
+    {
+        <div style="width: 85%;font-size: larger" class="grid grid-cols-12 gap-8 mb-2">
+            <div class="col-span-10 ">
+                <div class="avatar-group -space-x-6 rtl:space-x-reverse">
+                    <p class="bg-gray-900 rounded-lg p-4 text-sm">
+                        <span class="bg-gray-800 rounded-lg p-2" style="color: wheat">edit message</span>
+                    </p>
+                </div>
+            </div>
+
+
+        </div>
+    }
+    
+    @if (_replayMessageId != null)
+    {
+        <ReplayMessagePreview MessageId="(Guid)_replayMessageId" RoomType="CurrentRoomType"/>
+    }
+
     @if (_uploadedMediaList is { Count: > 0 } && _selectedFileType != null)
     {
         <StashUploadPreview FileType="_selectedFileType.Value" UploadedMediaList="_uploadedMediaList"/>
     }
 
     <div class="flex">
-        <textarea @bind:event="oninput" @bind="_sendMessageRequest.Text" style="height: 100px;width: 85%;font-size: larger" class="textarea textarea-primary  mr-2 " placeholder="write you message ..."></textarea>
+        <textarea @bind:event="oninput" @bind="@_sendMessageRequest.Text" style="height: 100px;width: 85%;font-size: larger"  class="textarea textarea-primary  mr-2 " placeholder="write you message ..."></textarea>
 
         <Modal @ref="_modalUploadRef">
             <Content>
-                <FileUpload IsUploading="(x)=>_isUploading=x" UploadedMediaList="SetUploadedMedia" @ref="_fileUploadRef" SelectedFileType="_selectedFileType" RoomId="RoomId" CurrentRoomType="CurrentRoomType"/>
+                <FileUpload IsUploading="(x) => _isUploading = x" UploadedMediaList="SetUploadedMedia" @ref="_fileUploadRef" SelectedFileType="_selectedFileType" RoomId="RoomId" CurrentRoomType="CurrentRoomType"/>
                 <UploadTypeToolBar IsUploading="_isUploading" DoneButtonClicked="Done" UploadButtonClicked="() => _fileUploadRef.UploadButtonClicked()" UploadFileType="(x) => _selectedFileType = x"/>
             </Content>
         </Modal>
 
-        @if (_uploadedMediaList is { Count: > 0 })
+        @if (_uploadedMediaList is { Count: > 0 } || _replayMessageId != null || _editMessageId != null)
         {
-            <button @onclick="() => _uploadedMediaList = null" class="btn btn-circle mr-2 w-16 self-center">
+            <button @onclick="Cancel" class="btn btn-circle mr-2 w-16 self-center">
                 <svg style="color: #7170ff;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="Close">
                     <defs>
                         <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="rgba(130, 145, 255, 1)" />
-                            <stop offset="100%" stop-color="rgba(110, 30, 235, 1)" />
+                            <stop offset="0%" stop-color="rgba(130, 145, 255, 1)"/>
+                            <stop offset="100%" stop-color="rgba(110, 30, 235, 1)"/>
                         </linearGradient>
                     </defs>
                     <path fill="none" d="M0 0h24v24H0Z"></path>
@@ -40,7 +61,6 @@
         {
             <FileUploadButton ButtonClicked="UploadFile"/>
         }
-
 
         <SendMessageButton ButtonClicked="Send"/>
     </div>
@@ -56,6 +76,8 @@
     [Parameter] public Guid RoomId { get; set; }
     private List<UploadModel>? _uploadedMediaList;
     private bool _isUploading = false;
+    private Guid? _replayMessageId = null;
+    private Guid? _editMessageId = null;
 
     private SendMessageRequest _sendMessageRequest = new();
 
@@ -65,10 +87,52 @@
         _modalUploadRef.CloseModal();
     }
 
+    public void SetReplayMessageId(Guid replayMessageId)
+    {
+        _replayMessageId=replayMessageId;
+        StateHasChanged();
+    }
+
+    public async Task SetEditMessageId(Guid editMessageId)
+    {
+        _editMessageId = editMessageId;
+        if (_editMessageId != null)
+        {
+
+            switch (CurrentRoomType)
+            {
+                case RoomType.Group:
+                    var grResult=await GroupMessageService.GetGroupMessageAsync((Guid)_editMessageId);
+                    if (grResult.IsSuccess)
+                    {
+                        _sendMessageRequest.Text = grResult.AsSuccess.Value.Text;
+                    }
+                    break;
+                case RoomType.Private:
+                    var pvResult = await PrivateMessageService.GetPrivateMessageAsync((Guid)_editMessageId);
+                    if (pvResult.IsSuccess)
+                    {
+                        _sendMessageRequest.Text = pvResult.AsSuccess.Value.Text;
+                    }
+                    break;
+            }
+        }
+        StateHasChanged();
+    }
+
 
     private void UploadFile()
     {
         _modalUploadRef.ShowModal();
+    }
+
+    private void Cancel()
+    {
+        _uploadedMediaList = null;
+        _replayMessageId = null;
+        _editMessageId = null;
+        _sendMessageRequest.ReplyMessageId = null;
+        _sendMessageRequest.Text = null;
     }
 
     private async Task Done()
@@ -87,17 +151,44 @@
             _uploadedMediaList = null;
         }
 
-        if (CurrentRoomType == RoomType.Group)
+        if (_editMessageId != null)
         {
-            await GroupMessageService.SendMessageAsync(RoomId, _sendMessageRequest);
-        }
+            if (CurrentRoomType == RoomType.Group)
+            {
+                await GroupMessageService.EditMessageTextAsync((Guid)_editMessageId,new EditMessageRequest()
+                {
+                    Text = _sendMessageRequest.Text
+                });
+            }
 
-        if (CurrentRoomType == RoomType.Private)
+            if (CurrentRoomType == RoomType.Private)
+            {
+                await PrivateMessageService.EditMessageTextAsync((Guid)_editMessageId, new EditMessageRequest()
+                {
+                    Text = _sendMessageRequest.Text
+                });
+            }
+        }
+        else
         {
-            await PrivateMessageService.SendMessageAsync(RoomId, _sendMessageRequest);
+            if (_replayMessageId != null)
+            {
+                _sendMessageRequest.ReplyMessageId=(Guid)_replayMessageId;
+            }
+            if (CurrentRoomType == RoomType.Group)
+            {
+                await GroupMessageService.SendMessageAsync(RoomId, _sendMessageRequest);
+            }
+
+            if (CurrentRoomType == RoomType.Private)
+            {
+                await PrivateMessageService.SendMessageAsync(RoomId, _sendMessageRequest);
+            }
         }
 
         _sendMessageRequest = new();
+        _replayMessageId=null;
+        _editMessageId=null;
         StateHasChanged();
     }
 

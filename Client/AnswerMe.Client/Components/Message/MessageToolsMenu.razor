@@ -1,0 +1,106 @@
+﻿@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+
+<div id="menuContent" class="menu-content" @onclick="CloseMenuAsync">
+    <button class="menu-button" @onclick="Copy">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" id="Copy">
+            <path fill="#f5deb3" d="M4.00029246,4.08524952 L4,10.5 C4,11.8254834 5.03153594,12.9100387 6.33562431,12.9946823 L6.5,13 L10.9143985,13.000703 C10.7082819,13.5829319 10.1528467,14 9.5,14 L6,14 C4.34314575,14 3,12.6568542 3,11 L3,5.5 C3,4.84678131 3.41754351,4.29108512 4.00029246,4.08524952 Z M11.5,2 C12.3284271,2 13,2.67157288 13,3.5 L13,10.5 C13,11.3284271 12.3284271,12 11.5,12 L6.5,12 C5.67157288,12 5,11.3284271 5,10.5 L5,3.5 C5,2.67157288 5.67157288,2 6.5,2 L11.5,2 Z M11.5,3 L6.5,3 C6.22385763,3 6,3.22385763 6,3.5 L6,10.5 C6,10.7761424 6.22385763,11 6.5,11 L11.5,11 C11.7761424,11 12,10.7761424 12,10.5 L12,3.5 C12,3.22385763 11.7761424,3 11.5,3 Z" class="color212121 svgShape"></path>
+        </svg>
+
+        <span style="color: wheat">Copy</span>
+    </button>
+    <button class="menu-button" @onclick="Reply">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="ReplyMessage">
+            <path d="M14.12 5.037C13.662 4.982 12.505 5 12 5V3a1 1 0 0 0-1.515-.857l-8 4.8a1 1 0 0 0 0 1.714l8 4.8A1 1 0 0 0 12 12.6V11h2c1.93 0 4.99 1.697 4.99 6.25a1 1 0 0 0 1.864.503A8.48 8.48 0 0 0 14.12 5.037ZM14 9h-3a1 1 0 0 0-1 1v.833L4.944 7.8 10 4.767V6a1 1 0 0 0 1 1c.448 0 2.536-.016 2.938.028a6.478 6.478 0 0 1 6.02 5.726A7.019 7.019 0 0 0 14 9Z" fill="#f5deb3" class="color000000 svgShape"></path>
+        </svg>
+        
+        <span style="color: wheat">Reply</span>
+    </button>
+    <button class="menu-button" @onclick="Edit">
+        <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 32 32" viewBox="0 0 32 32" id="edit">
+            <path d="M12.82373,12.95898l-1.86279,6.21191c-0.1582,0.52832-0.01367,1.10156,0.37646,1.49121c0.28516,0.28516,0.66846,0.43945,1.06055,0.43945c0.14404,0,0.28906-0.02051,0.43066-0.06348l6.2124-1.8623c0.23779-0.07129,0.45459-0.2002,0.62988-0.37598L31.06055,7.41016C31.3418,7.12891,31.5,6.74707,31.5,6.34961s-0.1582-0.7793-0.43945-1.06055l-4.3501-4.34961c-0.58594-0.58594-1.53516-0.58594-2.12109,0L13.2002,12.3291C13.02441,12.50488,12.89551,12.7207,12.82373,12.95898z M15.58887,14.18262L25.6499,4.12109l2.22852,2.22852L17.81738,16.41113l-3.18262,0.9541L15.58887,14.18262z" fill="#f5deb3" class="color000000 svgShape"></path>
+            <path d="M30,14.5c-0.82861,0-1.5,0.67188-1.5,1.5v10c0,1.37891-1.12158,2.5-2.5,2.5H6c-1.37842,0-2.5-1.12109-2.5-2.5V6c0-1.37891,1.12158-2.5,2.5-2.5h10c0.82861,0,1.5-0.67188,1.5-1.5S16.82861,0.5,16,0.5H6C2.96729,0.5,0.5,2.96777,0.5,6v20c0,3.03223,2.46729,5.5,5.5,5.5h20c3.03271,0,5.5-2.46777,5.5-5.5V16C31.5,15.17188,30.82861,14.5,30,14.5z" fill="#f5deb3" class="color000000 svgShape"></path>
+        </svg>
+
+        <span style="color: wheat">Edit</span>
+    </button>
+    <button class="menu-button" @onclick="Delete">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" id="Delete">
+            <path d="M24.2,12.193,23.8,24.3a3.988,3.988,0,0,1-4,3.857H12.2a3.988,3.988,0,0,1-4-3.853L7.8,12.193a1,1,0,0,1,2-.066l.4,12.11a2,2,0,0,0,2,1.923h7.6a2,2,0,0,0,2-1.927l.4-12.106a1,1,0,0,1,2,.066Zm1.323-4.029a1,1,0,0,1-1,1H7.478a1,1,0,0,1,0-2h3.1a1.276,1.276,0,0,0,1.273-1.148,2.991,2.991,0,0,1,2.984-2.694h2.33a2.991,2.991,0,0,1,2.984,2.694,1.276,1.276,0,0,0,1.273,1.148h3.1A1,1,0,0,1,25.522,8.164Zm-11.936-1h4.828a3.3,3.3,0,0,1-.255-.944,1,1,0,0,0-.994-.9h-2.33a1,1,0,0,0-.994.9A3.3,3.3,0,0,1,13.586,7.164Zm1.007,15.151V13.8a1,1,0,0,0-2,0v8.519a1,1,0,0,0,2,0Zm4.814,0V13.8a1,1,0,0,0-2,0v8.519a1,1,0,0,0,2,0Z" fill="#f5deb3" class="color000000 svgShape"></path>
+        </svg>
+        
+        <span style="color: wheat">Delete</span>
+    </button>
+</div>
+
+
+@code {
+    [Parameter] public EventCallback<Guid> EditMessage { get; set; }
+    [Parameter] public EventCallback<Guid> DeleteMessage { get; set; }
+    [Parameter] public EventCallback<Guid> ReplayMessage { get; set; }
+    [Parameter] public EventCallback<Guid> CopyMessage { get; set; }
+    
+    private IJSObjectReference? module;
+    private Guid? _clickedMessageId=null;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        module = await Js.InvokeAsync<IJSObjectReference>("import", "../Components/Message/MessageToolsMenu.razor.js");
+    }
+
+    // this will be called from parent component
+    public async Task OpenMenuAsync(Guid messageId)
+    {
+        _clickedMessageId = messageId;
+        await module.InvokeVoidAsync("MessageToolsMenu",messageId+"-message");
+    }
+
+    private void Copy()
+    {
+        if (_clickedMessageId !=null) {
+            CopyMessage.InvokeAsync((Guid)_clickedMessageId);
+        }
+    }
+
+    private void Reply()
+    {
+        if (_clickedMessageId !=null) {
+            ReplayMessage.InvokeAsync((Guid)_clickedMessageId);
+        }
+    }
+
+    private void Edit()
+    {
+        if (_clickedMessageId !=null) {
+            EditMessage.InvokeAsync((Guid)_clickedMessageId);
+        }
+    }
+
+    private void Delete()
+    {
+        if (_clickedMessageId !=null) {
+            DeleteMessage.InvokeAsync((Guid)_clickedMessageId);
+        }
+    }
+    
+    
+    
+
+
+    private async Task CloseMenuAsync()
+    {
+        _clickedMessageId = null;
+        await module.InvokeVoidAsync("MessageToolsMenu");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (module != null)
+        {
+            await module.InvokeVoidAsync("EnableScroll");
+            await module.DisposeAsync();
+        }
+    }
+
+}

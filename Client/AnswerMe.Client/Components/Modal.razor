@@ -22,7 +22,7 @@
             </form>
         </div>
 
-        <div class="h-full px-3 pb-4 overflow-y-auto ">
+        <div class="h-full px-3 pb-4 overflow-y-auto @Class">
            @if (_shouldRender)
            {
                <div class="animate__animated animate__fadeIn">
@@ -37,6 +37,8 @@
 @code {
     [Parameter]
     public  RenderFragment? Content { get; set; }
+    [Parameter] 
+    public string? Class { get; set; }
     private bool _shouldRender = false;
 
     public class ElementIdsModel

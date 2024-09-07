@@ -1,0 +1,73 @@
+@using Models.Shared.Responses.Media
+@using AnswerMe.Client.Components.Media
+
+<div class="grid gap-2 w-96 sm:w-64 md:w-96 lg:w-96" style="max-width: 500px">
+    @foreach (var group in ImageGroups)
+    {
+        var columns = group.Count == 1 ? "grid-cols-1" : (group.Count == 2 ? "grid-cols-2" : "grid-cols-3");
+        <div class="grid @columns gap-2">
+            @foreach (var media in group)
+            {
+                <ImageMedia OpenGallery="()=>_modalGalleryRef?.ShowModal()" Media="media"/>
+            }
+        </div>
+    }
+</div>
+
+<Modal @ref="_modalGalleryRef" Class="overflow-y-hidden overflow-x-hidden">
+    <Content>
+        <ImageSlider Images="MediaList.Select(x=>x.Path).ToList()"/>
+    </Content>
+</Modal>
+
+@code {
+    [Parameter] 
+    public required List<MediaResponse> MediaList { get; set; }
+
+
+    private Modal? _modalGalleryRef;
+    
+    private List<List<MediaResponse>> ImageGroups { get; set; } = new ();
+
+    protected override void OnParametersSet()
+    {
+        ImageGroups = GenerateImageGroups(MediaList);
+    }
+
+    private List<List<MediaResponse>> GenerateImageGroups(List<MediaResponse> images)
+    {
+        var groups = new List<List<MediaResponse>>();
+        int i = 0;
+
+        while (i < images.Count)
+        {
+            if (i == 0 || (i % 9 == 0 && i != 0))
+            {
+                groups.Add(new List<MediaResponse> { images[i++] }); // 1 Image full width
+            }
+            else if (i % 9 == 1)
+            {
+                groups.Add(images.Skip(i).Take(2).ToList());
+                i += 2;
+            }
+            else if (i % 9 == 3)
+            {
+                groups.Add(images.Skip(i).Take(3).ToList());
+                i += 3;
+            }
+            else if (i % 9 == 6)
+            {
+                groups.Add(images.Skip(i).Take(3).ToList());
+                i += 3;
+            }
+            else if (i % 9 == 8)
+            {
+                groups.Add(new List<MediaResponse> { images[i++] });
+                groups.Add(images.Skip(i).Take(2).ToList());
+                i += 2;
+            }
+        }
+
+        return groups;
+    }
+}

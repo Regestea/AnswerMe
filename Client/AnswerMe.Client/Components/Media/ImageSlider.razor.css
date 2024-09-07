@@ -1,0 +1,79 @@
+.image-container {
+    position: relative;
+    width: 100%;
+}
+
+.image {
+    width: 100%;
+    height: auto;
+    display: none;
+    border-radius: 20px;
+}
+
+.overlay-button {
+    position: absolute;
+    background-color: rgba(31, 41, 55, 1);
+    opacity: 0;
+    color: white;
+    border: none;
+    padding: 5px;
+    transition: opacity 0.5s ease;
+}
+
+.overlay-button:hover {
+    opacity: 0.9;
+}
+
+.left-button {
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 10%;
+    border-radius: 20px 15px 15px 20px;
+}
+
+.right-button {
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 10%;
+    border-radius: 15px 20px 20px 15px;
+}
+
+.bottom-button {
+    overflow: hidden;
+    border-radius: 15px 15px 0 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 15%;
+}
+
+.overlay-button.bottom-button {
+    border-radius: 15px 15px 0 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 15%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+}
+
+.overlay-button.bottom-button button {
+    background-color: rgba(31, 41, 55, 1);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.overlay-button.bottom-button button:hover {
+    background-color: rgba(31, 41, 55, 0.8);
+}

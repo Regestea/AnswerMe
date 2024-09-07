@@ -100,9 +100,14 @@ public static class FileExtension
         return blurHash;
     }
 
-    public static string ConvertBlurHashToBase64(string blurhash)
+    public static string ConvertBlurHashToBase64(string? blurHash)
     {
-        var image = Blurhasher.Decode(blurhash, 4, 3);
+        if (string.IsNullOrWhiteSpace(blurHash))
+        {
+            blurHash = "L03l5Oj[fQj[offQfQfQfQfQfQfQ";
+        }
+        
+        var image = Blurhasher.Decode(blurHash, 4, 3);
         using var ms = new MemoryStream();
         image.Save(ms, new PngEncoder());
 

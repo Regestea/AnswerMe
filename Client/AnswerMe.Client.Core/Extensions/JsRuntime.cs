@@ -12,6 +12,11 @@ public static class JsRuntime
     {
         return await jsRuntime.InvokeAsync<string>("GenerateVideoBase64Thumbnail", elementId);
     }
+
+    public static async Task CopyToClipboardAsync(this IJSRuntime jsRuntime, string text)
+    {
+        await jsRuntime.InvokeVoidAsync("CopyTextToClipboard", text);
+    }
     
     public static async Task<string> GenerateImageBase64(this IJSRuntime jsRuntime, string elementId, int filePosition=0)
     {

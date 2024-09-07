@@ -1,0 +1,51 @@
+﻿.chat {
+    position: relative;
+}
+
+.menu-content {
+    position: fixed;
+    background-color: rgba(31, 41, 55, 0.3); 
+    border: solid 1px #34455d;
+    (255, 255, 255, 0.3); 
+    border-radius: 10px;
+    backdrop-filter: blur(10px); 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); 
+    display: none; 
+    width: auto; 
+    padding: 0;
+    white-space: nowrap; 
+    overflow: hidden;
+    z-index: 1000; 
+}
+
+.menu-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: none;
+    border: none;
+    padding: 5px 2px;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+    margin-right: 10px; 
+    width: 50px;
+    height: 50px; 
+}
+
+.menu-button:last-child {
+    margin-right: 0; 
+}
+
+.menu-button:hover {
+    background-color: rgba(255, 255, 255, 0.2); 
+}
+
+.menu-button svg {
+    margin-bottom: 5px; 
+}
+
+.menu-button span {
+    font-size: 12px; 
+}

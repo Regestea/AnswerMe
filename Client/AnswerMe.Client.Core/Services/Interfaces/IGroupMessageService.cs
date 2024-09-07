@@ -9,6 +9,7 @@ namespace AnswerMe.Client.Core.Services.Interfaces;
 public interface IGroupMessageService
 {
     Task<ReadResponse<PagedListResponse<MessageResponse>>> GetGroupMessagesAsync(Guid roomId, bool jumpToUnRead, PaginationRequest request);
+    Task<ReadResponse<MessageResponse>> GetGroupMessageAsync(Guid messageId);
     Task<CreateResponse<IdResponse>> SendMessageAsync(Guid roomId, SendMessageRequest request);
     Task<UpdateResponse> EditMessageTextAsync(Guid messageId, EditMessageRequest request);
     Task<DeleteResponse> DeleteMessageAsync(Guid messageId);

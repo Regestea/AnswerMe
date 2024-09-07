@@ -18,9 +18,9 @@
     }
     <ChatLayout Class="@(AudioUrl != null ? "top-[8em] sm:top-[8em] md:top-[7em] lg:top-[6em] xl:top-[6em] 2xl:top-[5em];":"")"  CallLoadNewMessages="LoadNewMessages" CallLoadOldMessages="LoadOldMessages">
         <ChatContent>
-            <GroupMessage OpenAudio="(x)=>AudioUrl=x" @ref="_groupMessageRef" @key="RoomId" RoomId="RoomId" UserLastRoomVisit="_userLastRoomVisit" LoggedInUserId="_loggedInUserId" />
+            <GroupMessage EditMessage="(id)=>_sendMessageRef.SetEditMessageId(id)" ReplayMessage="(id)=>_sendMessageRef.SetReplayMessageId(id)"  OpenAudio="(x)=>AudioUrl=x" @ref="_groupMessageRef" @key="RoomId" RoomId="RoomId" UserLastRoomVisit="_userLastRoomVisit" LoggedInUserId="_loggedInUserId" />
             
-            <SendMessage CurrentRoomType="RoomType.Group" RoomId="RoomId"/>
+            <SendMessage @ref="_sendMessageRef" CurrentRoomType="RoomType.Group" RoomId="RoomId"/>
         </ChatContent>
     </ChatLayout>
 
@@ -33,7 +33,8 @@
     private GroupMessage _groupMessageRef;
     private bool _isGroupAdmin;
     private string? AudioUrl;
-
+    private SendMessage? _sendMessageRef;
+    
 
     protected override async Task OnInitializedAsync()
     {

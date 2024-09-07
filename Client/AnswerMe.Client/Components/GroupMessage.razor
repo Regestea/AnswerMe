@@ -1,11 +1,10 @@
 @using Models.Shared.Responses.Message
-@using AnswerMe.Client.Core.Extensions
-@using AnswerMe.Client.Core.Enums
 @using AnswerMe.Client.Core.Services
 @using Models.Shared.Requests.Shared
 @using Models.Shared.Responses.Shared
 @using Models.Shared.Responses.Media
 @using AnswerMe.Client.Components.Media
+@using AnswerMe.Client.Core.Enums
 @inject IGroupMessageService GroupMessageService
 @inject AuthStateProvider AuthStateProvider
 @inject IUserService UserService
@@ -36,7 +35,12 @@
             }
 
 
-            <div class="chat-bubble @(message.UserSender.Id == LoggedInUserId ? "primary-liner-gradient" : "dark-liner-gradient")">
+            <div class="chat-bubble @(message.UserSender.Id == LoggedInUserId ? "primary-liner-gradient" : "dark-liner-gradient")" @onclick="() => OpenMessageToolsMenu(message.id)">
+                @if (message.ReplyMessageId != null)
+                {
+                    <ReplayedMessage RoomType="RoomType.Group" ReplayedMessageId="(Guid)message.ReplyMessageId"/>
+                }
+                
                 @if (message.UserSender.Id != LoggedInUserId)
                 {
                     <div class="chat-header text-neutral-content/90 ">
@@ -58,18 +62,17 @@
                         switch (media.Type)
                         {
                             case MediaTypeResponse.audio:
-                                <div @onclick="()=>OpenAudio.InvokeAsync(media.Path)">
+                                <div @onclick="() => OpenAudio.InvokeAsync(media.Path)">
                                     <AudioFile Url="@media.Path" Name="@media.FileName"/>
                                 </div>
                                 break;
                             case MediaTypeResponse.video:
-                                <button @onclick="()=>_videoPlayerModal.ShowModal()">test</button>
-                                <Modal @ref="_videoPlayerModal">
+                                <button @onclick="() => _videoPlayerModal.ShowModal()">test</button>
+                                <Modal @ref="_videoPlayerModal" Class="overflow-y-hidden overflow-x-hidden">
                                     <Content>
                                         <VideoPlayer Url="@media.Path"></VideoPlayer>
                                     </Content>
                                 </Modal>
-                                
                                 break;
                             case MediaTypeResponse.other:
                                 <div>
@@ -77,6 +80,11 @@
                                 </div>
                                 break;
                         }
+                    }
+
+                    @if (message.MediaList.Any(x => x.Type == MediaTypeResponse.image || x.Type == MediaTypeResponse.gif))
+                    {
+                        <ImageGallery MediaList="@message.MediaList.Where(x => x.Type == MediaTypeResponse.image || x.Type == MediaTypeResponse.gif).ToList()"/>
                     }
                 }
 
@@ -92,22 +100,28 @@
             </div>
         </div>
     }
-</div>
 
+   
+</div>
+<MessageToolsMenu DeleteMessage="DeleteMessage" ReplayMessage="(id)=>ReplayMessage.InvokeAsync(id)" EditMessage="(id)=>EditMessage.InvokeAsync(id)" CopyMessage="CopyMessage" @ref="_messageToolsMenuRef"/>
 @code {
     [Parameter] public Guid RoomId { get; set; }
     [Parameter] public DateTimeOffset? UserLastRoomVisit { get; set; }
     [Parameter] public Guid LoggedInUserId { get; set; }
     [Parameter] public EventCallback<string> OpenAudio { get; set; }
+    [Parameter] public EventCallback<Guid> ReplayMessage { get; set; }
+    [Parameter] public EventCallback<Guid> EditMessage { get; set; }
     private Modal? _videoPlayerModal;
     private List<MessageResponse> _messageList = new();
+
+    private MessageToolsMenu? _messageToolsMenuRef;
 
     internal static class ElementIds
     {
         public static string NewMessageBanner { get; } = Guid.NewGuid().ToString();
     }
 
-    private string _lastLook = "";
+
 
 
     private PaginationRequest _oldMessagePaginationRequest = new() { PageSize = 10, CurrentPage = 1 };
@@ -147,6 +161,8 @@
         }
 
         GrHubService.NewGrMessage(AddNewMessage);
+        GrHubService.EditGrMessage(UpdateMessage);
+        GrHubService.RemoveGrMessage(RemoveMessage);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -165,6 +181,10 @@
         }
     }
 
+    private async Task OpenMessageToolsMenu(Guid messageId)
+    {
+        await _messageToolsMenuRef?.OpenMenuAsync(messageId)!;
+    }
 
     private async Task CalculateDisableLoadMessage(PaginationResponse? pagination)
     {
@@ -214,7 +234,6 @@
 
     public async Task LoadOldMessagesAsync()
     {
-        var _lastLook = _messageList.First().id + "-message";
         _oldMessagePaginationRequest.CurrentPage++;
 
         var result = await GroupMessageService.GetGroupMessagesAsync(RoomId, false, _oldMessagePaginationRequest);
@@ -255,4 +274,51 @@
         }
     }
 
+    private void RemoveMessage(IdResponse messageId)
+    {
+        var message = _messageList.FirstOrDefault(x => x.id == messageId.Id);
+        if (message != null)
+        {
+            _messageList.Remove(message);
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateMessage(MessageResponse messageResponse)
+    {
+       
+            // var messageClass = "";
+            // if (messageResponse.UserSender.Id == LoggedInUserId)
+            // {
+            //     messageClass = "backInRight";
+            // }
+            // else
+            // {
+            //     messageClass = "backInLeft";
+            // }
+
+            var isExist = _messageList.Any(x => x.id == messageResponse.id);
+            if (isExist)
+            {
+                 _messageList.First(x => x.id == messageResponse.id).Text=messageResponse.Text;
+                 StateHasChanged();
+            }
+            // _ = JsRuntime.AddClassAsync(messageResponse.id + "-message", messageClass);
+            // JsRuntime.InvokeVoidAsync("ScrollToEnd", ChatLayout.ElementIds.ChatScroll.ToString());
+        
+    }
+
+    private async Task CopyMessage(Guid messageId)
+    {
+        var text= _messageList.FirstOrDefault(x => x.id == messageId)?.Text;
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+           await JsRuntime.CopyToClipboardAsync(text);
+        }
+    }
+    
+    private async Task DeleteMessage(Guid messageId)
+    { 
+        await GroupMessageService.DeleteMessageAsync(messageId);
+    }
 }

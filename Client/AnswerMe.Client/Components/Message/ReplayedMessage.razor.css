@@ -1,0 +1,19 @@
+.Replayed{
+    background-color: rgba(31, 41, 55, 0.3);
+    border-radius: 10px;
+    backdrop-filter: blur(15px);
+    display: block;
+    width: auto;
+    padding: 10px;
+
+}
+.Replayed Title{
+    color: wheat;
+    font-weight: bold;
+    font-size: medium;
+}
+
+.Replayed Content{
+    font-size: small;
+    margin-left: 5px;
+}

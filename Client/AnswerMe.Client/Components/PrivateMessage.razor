@@ -3,13 +3,14 @@
 @using AnswerMe.Client.Core.Enums
 @using AnswerMe.Client.Core.Services
 @using Models.Shared.Requests.Shared
+@using Models.Shared.Responses.Media
 @using Models.Shared.Responses.Shared
+@using AnswerMe.Client.Components.Media
 @inject IPrivateMessageService PrivateMessageService
 @inject IJSRuntime JsRuntime
 @inject PvHubService PvHubService
 
 <div class="chat-content mb-60">
-
 
     @foreach (var message in _messageList)
     {
@@ -20,55 +21,71 @@
             <div id="@ElementIds.NewMessageBanner" class="divider divider-info text-info">New Messages</div>
         }
 
+
         <div id="@message.id-message" class="chat  @(message.UserSender.Id == LoggedInUserId ? "chat-end" : "chat-start")">
 
-            <div class="chat-bubble @(message.UserSender.Id == LoggedInUserId ? "primary-liner-gradient" : "dark-liner-gradient")">
+            <div class="chat-bubble @(message.UserSender.Id == LoggedInUserId ? "primary-liner-gradient" : "dark-liner-gradient")" >
+                @if (message.ReplyMessageId != null)
+                {
+                    <ReplayedMessage RoomType="RoomType.Group" ReplayedMessageId="(Guid)message.ReplyMessageId"/>
+                }
+
+                @if (message.UserSender.Id != LoggedInUserId)
+                {
+                    <div class="chat-header text-neutral-content/90 ">
+
+                        @message.UserSender.Name
+
+                    </div>
+                }
+
+
                 @if (!string.IsNullOrWhiteSpace(message.GroupInviteToken))
                 {
-                    <GroupInvitePreview GroupInviteToken="@message.GroupInviteToken"/>
-                    
+                    <GroupInvitePreview @key="@message.GroupInviteToken" GroupInviteToken="@message.GroupInviteToken"/>
+                }
+                @if (message.MediaList != null && message.MediaList.Any())
+                {
+                    @foreach (var media in message.MediaList)
+                    {
+                        switch (media.Type)
+                        {
+                            case MediaTypeResponse.audio:
+                                <div @onclick="() => OpenAudio.InvokeAsync(media.Path)">
+                                    <AudioFile Url="@media.Path" Name="@media.FileName"/>
+                                </div>
+                                break;
+                            case MediaTypeResponse.video:
+                                <VideoFile Media="media"/>
+                                break;
+                            case MediaTypeResponse.other:
+                                <div>
+                                    <OtherFile Url="@media.Path" Name="@media.FileName"/>
+                                </div>
+                                break;
+                        }
+                    }
+
+                    @if (message.MediaList.Any(x => x.Type == MediaTypeResponse.image || x.Type == MediaTypeResponse.gif))
+                    {
+                        <ImageGallery MediaList="@message.MediaList.Where(x => x.Type == MediaTypeResponse.image || x.Type == MediaTypeResponse.gif).ToList()"/>
+                    }
                 }
                 
-                @message.Text
-
-                <div class="chat-footer " style="display: grid;margin-top: 2px">
-
-                    @if (message.UserSender.Id == LoggedInUserId)
-                    {
-                        @if (ContactLastRoomVisit >= message.CreatedDate || IsContactInRoom)
-                        {
-                            <span class="opacity-80" style="display: flex;justify-self: end">
-                                <svg style="width: 20px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="done">
-                                    <path fill="none" d="M0 0h24v24H0V0z"></path><path d="M17.3 6.3c-.39-.39-1.02-.39-1.41 0l-5.64 5.64 1.41 1.41L17.3 7.7c.38-.38.38-1.02 0-1.4zm4.24-.01l-9.88 9.88-3.48-3.47c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l4.18 4.18c.39.39 1.02.39 1.41 0L22.95 7.71c.39-.39.39-1.02 0-1.41h-.01c-.38-.4-1.01-.4-1.4-.01zM1.12 14.12L5.3 18.3c.39.39 1.02.39 1.41 0l.7-.7-4.88-4.9c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.03 0 1.42z" fill="#7fffd4" class="color000000 svgShape"></path>
-                                </svg>
-                                <time class="text-xs ">@message.CreatedDate.Value.LocalDateTime.ToString("HH:mm")</time>
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="opacity-80" style="display: flex;justify-self: end">
-                                <svg style="width: 20px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="done">
-                                    <path fill="none" d="M0 0h24v24H0V0z"></path><path d="M9 16.2l-3.5-3.5c-.39-.39-1.01-.39-1.4 0-.39.39-.39 1.01 0 1.4l4.19 4.19c.39.39 1.02.39 1.41 0L20.3 7.7c.39-.39.39-1.01 0-1.4-.39-.39-1.01-.39-1.4 0L9 16.2z" fill="#7fffd4" class="color000000 svgShape"></path>
-                                </svg>
-                                <time class="text-xs ">@message.CreatedDate!.Value.LocalDateTime.ToString("HH:mm")</time>
-
-                            </span>
-                        }
-                    }
-                    else
-                    {
-                        <span class="opacity-80" style="display: flex;justify-self: start">
-                            <time class="text-xs ">@message.CreatedDate!.Value.LocalDateTime.ToString("HH:mm")</time>
-                        </span>
-                    }
-
+                <div @onclick="() => OpenMessageToolsMenu(message.id)">
+                    @message.Text
                 </div>
-            </div>
+                
 
+                <MessageFooter RoomType="RoomType.Group" MessageCreateDate="@message.CreatedDate"/>
+            </div>
         </div>
     }
 
+
 </div>
+<MessageToolsMenu DeleteMessage="DeleteMessage" ReplayMessage="(id) => ReplayMessage.InvokeAsync(id)" EditMessage="(id) => EditMessage.InvokeAsync(id)" CopyMessage="CopyMessage" @ref="_messageToolsMenuRef"/>
+
 
 @code {
     [Parameter] public Guid RoomId { get; set; }
@@ -76,8 +93,13 @@
     [Parameter] public Guid LoggedInUserId { get; set; }
     [Parameter] public DateTimeOffset? ContactLastRoomVisit { get; set; }
     [Parameter] public DateTimeOffset? UserLastRoomVisit { get; set; }
+    [Parameter] public EventCallback<string> OpenAudio { get; set; }
+    [Parameter] public EventCallback<Guid> ReplayMessage { get; set; }
+    [Parameter] public EventCallback<Guid> EditMessage { get; set; }
+    private Modal? _videoPlayerModal;
     private List<MessageResponse> _messageList = new();
     private bool _isNewMessageBannerPlaced = false;
+    private MessageToolsMenu? _messageToolsMenuRef;
     private string _lastLook = "";
 
 
@@ -114,7 +136,9 @@
         {
         }
 
-        PvHubService.NewPvMessage(AddNewMessageAsync);
+        PvHubService.NewPvMessage(AddNewMessage);
+        PvHubService.EditPvMessage(UpdateMessage);
+        PvHubService.RemovePvMessage(RemoveMessage);
     }
 
 
@@ -122,61 +146,90 @@
     {
         if (_firstLoad && _isNewMessageBannerPlaced == false && _messageList.Any())
         {
-            await JsRuntime.InvokeVoidAsync("ScrollToView", _messageList.Last().id + "-message");
+            await JsRuntime.ScrollToEndAsync(ChatLayout.ElementIds.ChatScroll.ToString());
             _firstLoad = false;
         }
         else
         {
-            if (_isNewMessageBannerPlaced )
+            if (_isNewMessageBannerPlaced && _messageList.Count() > _newMessagePaginationRequest.PageSize)
             {
-                await JsRuntime.ScrollToViewAsync(_messageList[5].id + "-message");
+                await JsRuntime.ScrollToViewAsync(ElementIds.NewMessageBanner.ToString());
             }
         }
-       
     }
 
-    public async Task LoadNewMessages()
+    private async Task OpenMessageToolsMenu(Guid messageId)
+    {
+        await _messageToolsMenuRef?.OpenMenuAsync(messageId)!;
+    }
+
+    private async Task CalculateDisableLoadMessage(PaginationResponse? pagination)
+    {
+        if (pagination != null)
+        {
+            if (pagination.TotalPages == pagination.CurrentPage || pagination.TotalCount == 0)
+            {
+                await JsRuntime.InvokeVoidAsync("DisableLoadOldMessage");
+            }
+
+            if (pagination.TotalPages <= 1)
+            {
+                await JsRuntime.InvokeVoidAsync("DisableLoadOldMessage");
+                await JsRuntime.InvokeVoidAsync("DisableLoadNewMessage");
+            }
+
+            if (pagination.CurrentPage == 1)
+            {
+                await JsRuntime.InvokeVoidAsync("DisableLoadNewMessage");
+            }
+        }
+        else
+        {
+            await JsRuntime.InvokeVoidAsync("DisableLoadOldMessage");
+            await JsRuntime.InvokeVoidAsync("DisableLoadNewMessage");
+        }
+    }
+
+    public async Task LoadNewMessagesAsync()
     {
         if (_newMessagePaginationRequest.CurrentPage > 1)
         {
             _newMessagePaginationRequest.CurrentPage--;
-            Console.WriteLine(_newMessagePaginationRequest.CurrentPage);
             var result = await PrivateMessageService.GetPrivateMessagesAsync(RoomId, false, _newMessagePaginationRequest);
+
+            if (result.IsSuccess)
+            {
+                await CalculateDisableLoadMessage(result.AsSuccess.Value.Pagination);
+            }
 
             if (result.IsSuccess && result.AsSuccess.Value.Items.Any())
             {
                 _messageList.AddRange(result.AsSuccess.Value.Items);
-                StateHasChanged();
             }
         }
     }
 
-    public async Task LoadOldMessages()
+    public async Task LoadOldMessagesAsync()
     {
-        var lastLook = _messageList.First().id + "-message";
-        _lastLook = lastLook;
-
         _oldMessagePaginationRequest.CurrentPage++;
-        Console.WriteLine(_oldMessagePaginationRequest.CurrentPage);
-        Console.WriteLine("AAAAAAA Old");
+
         var result = await PrivateMessageService.GetPrivateMessagesAsync(RoomId, false, _oldMessagePaginationRequest);
+
+        if (result.IsSuccess)
+        {
+            await CalculateDisableLoadMessage(result.AsSuccess.Value.Pagination);
+        }
 
         if (result.IsSuccess && result.AsSuccess.Value.Items.Any())
         {
             _messageList.InsertRange(0, result.AsSuccess.Value.Items);
-            StateHasChanged();
         }
-
-        await JsRuntime.ScrollToViewAsync(_lastLook);
     }
 
-    //here is the new logic , so if scroll was at one three , load old data util the scroll kik from one three
-    //the point is when you load new data the scroll will be smaller and smaller so it could be kicked from one three 
-    //if it doesn't work when user scroll to view first 5 div in chat box try to load another old chat data
-    // maybe we too much account on scroll and because the size of it always change (cause of the amount of data) 
-    private void AddNewMessageAsync(MessageResponse messageResponse)
+    private void AddNewMessage(MessageResponse messageResponse)
     {
         _isNewMessageBannerPlaced = true;
+        if (_newMessagePaginationRequest.CurrentPage == 1)
         {
             var messageClass = "";
             if (messageResponse.UserSender.Id == LoggedInUserId)
@@ -191,9 +244,41 @@
             _messageList.Add(messageResponse);
             StateHasChanged();
             _ = JsRuntime.AddClassAsync(messageResponse.id + "-message", messageClass);
-            _ = JsRuntime.InvokeVoidAsync("ScrollToEnd", ChatLayout.ElementIds.ChatScroll.ToString());
         }
     }
 
+    private void RemoveMessage(IdResponse messageId)
+    {
+        var message = _messageList.FirstOrDefault(x => x.id == messageId.Id);
+        if (message != null)
+        {
+            _messageList.Remove(message);
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateMessage(MessageResponse messageResponse)
+    {
+        var isExist = _messageList.Any(x => x.id == messageResponse.id);
+        if (isExist)
+        {
+            _messageList.First(x => x.id == messageResponse.id).Text = messageResponse.Text;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CopyMessage(Guid messageId)
+    {
+        var text = _messageList.FirstOrDefault(x => x.id == messageId)?.Text;
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            await JsRuntime.CopyToClipboardAsync(text);
+        }
+    }
+
+    private async Task DeleteMessage(Guid messageId)
+    {
+        await PrivateMessageService.DeleteMessageAsync(messageId);
+    }
 
 }

@@ -4,6 +4,7 @@
 @using AnswerMe.Client.Core.Services
 @using Models.Shared.Responses.Message
 @using Models.Shared.Responses.PrivateRoom
+@using AnswerMe.Client.Components.Media
 @inject AuthStateProvider AuthStateProvider
 @inject IPrivateRoomService PrivateRoomService
 @inject IUserService UserService
@@ -14,10 +15,13 @@
 <div class="p-4 sm:ml-64 body-content element">
 
     <PvNavHeader @key="RoomId" RoomId="RoomId" IsContactInRoom="_isContactInRoom" ContactLastRoomVisit="_contactLastRoomVisit" />
-    
-    <ChatLayout CallLoadNewMessages="LoadNewMessages" CallLoadOldMessages="LoadOldMessages">
+    @if (AudioUrl != null)
+    {
+    <AudioPlayer @key="@AudioUrl" Close="()=>AudioUrl=null" Url="@AudioUrl" />
+    }
+    <ChatLayout Class="@(AudioUrl != null ? "top-[8em] sm:top-[8em] md:top-[7em] lg:top-[6em] xl:top-[6em] 2xl:top-[5em];":"")" CallLoadNewMessages="LoadNewMessages" CallLoadOldMessages="LoadOldMessages">
         <ChatContent>
-            <PrivateMessage @ref="_privateMessageRef" @key="RoomId"  RoomId="RoomId" UserLastRoomVisit="_userLastRoomVisit" ContactLastRoomVisit="_contactLastRoomVisit" IsContactInRoom="_isContactInRoom" LoggedInUserId="_loggedInUserId"/>
+            <PrivateMessage @ref="_privateMessageRef" @key="RoomId"  RoomId="RoomId" UserLastRoomVisit="_userLastRoomVisit" ContactLastRoomVisit="_contactLastRoomVisit" IsContactInRoom="_isContactInRoom" LoggedInUserId="_loggedInUserId" OpenAudio="(x)=>AudioUrl=x"/>
             <SendMessage CurrentRoomType="RoomType.Private" RoomId="RoomId"/>
         </ChatContent>
     </ChatLayout>
@@ -31,6 +35,7 @@
     private PrivateRoomResponse? _privateRoomResponse;
     private bool _isContactInRoom = false;
     private Guid _loggedInUserId;
+    private string? AudioUrl;
     private DateTimeOffset _contactLastRoomVisit;
     private DateTimeOffset? _userLastRoomVisit;
 
@@ -87,13 +92,13 @@
     public async Task LoadNewMessages()
     {
         Console.WriteLine("load new one");
-        await _privateMessageRef.LoadNewMessages();
+        await _privateMessageRef.LoadNewMessagesAsync();
     }
 
     public async Task LoadOldMessages()
     {
         Console.WriteLine("load old one");
-        await _privateMessageRef.LoadOldMessages();
+        await _privateMessageRef.LoadOldMessagesAsync();
     }
 
     private void UserJoinedRoom(Guid userId)

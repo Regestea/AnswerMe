@@ -35,12 +35,18 @@
             }
 
 
-            <div class="chat-bubble @(message.UserSender.Id == LoggedInUserId ? "primary-liner-gradient" : "dark-liner-gradient")" @onclick="() => OpenMessageToolsMenu(message.id)">
+            <div class="chat-bubble @(message.UserSender.Id == LoggedInUserId ? "primary-liner-gradient" : "dark-liner-gradient")">
+
+                @if (!string.IsNullOrWhiteSpace(message.GroupInviteToken))
+                {
+                <GroupInvitePreview @key="@message.GroupInviteToken" GroupInviteToken="@message.GroupInviteToken"/>
+                }
+                
                 @if (message.ReplyMessageId != null)
                 {
                     <ReplayedMessage RoomType="RoomType.Group" ReplayedMessageId="(Guid)message.ReplyMessageId"/>
                 }
-                
+
                 @if (message.UserSender.Id != LoggedInUserId)
                 {
                     <div class="chat-header text-neutral-content/90 ">
@@ -51,10 +57,7 @@
                 }
 
 
-                @if (!string.IsNullOrWhiteSpace(message.GroupInviteToken))
-                {
-                    <GroupInvitePreview @key="@message.GroupInviteToken" GroupInviteToken="@message.GroupInviteToken"/>
-                }
+              
                 @if (message.MediaList != null && message.MediaList.Any())
                 {
                     @foreach (var media in message.MediaList)
@@ -67,12 +70,7 @@
                                 </div>
                                 break;
                             case MediaTypeResponse.video:
-                                <button @onclick="() => _videoPlayerModal.ShowModal()">test</button>
-                                <Modal @ref="_videoPlayerModal" Class="overflow-y-hidden overflow-x-hidden">
-                                    <Content>
-                                        <VideoPlayer Url="@media.Path"></VideoPlayer>
-                                    </Content>
-                                </Modal>
+                                <VideoFile Media="media"/>
                                 break;
                             case MediaTypeResponse.other:
                                 <div>
@@ -88,22 +86,19 @@
                     }
                 }
 
-                @message.Text
-
-                <div class="chat-footer " style="display: grid;margin-top: 2px">
-
-                    <span class="opacity-80" style="display: flex;justify-self: start">
-                        <time class="text-xs ">@message.CreatedDate!.Value.LocalDateTime.ToString("HH:mm")</time>
-                    </span>
-
+                <div @onclick="() => OpenMessageToolsMenu(message.id)">
+                    @message.Text
                 </div>
+
+                <MessageFooter RoomType="RoomType.Group" MessageCreateDate="@message.CreatedDate"/>
             </div>
         </div>
     }
 
-   
+
 </div>
-<MessageToolsMenu DeleteMessage="DeleteMessage" ReplayMessage="(id)=>ReplayMessage.InvokeAsync(id)" EditMessage="(id)=>EditMessage.InvokeAsync(id)" CopyMessage="CopyMessage" @ref="_messageToolsMenuRef"/>
+<MessageToolsMenu DeleteMessage="DeleteMessage" ReplayMessage="(id) => ReplayMessage.InvokeAsync(id)" EditMessage="(id) => EditMessage.InvokeAsync(id)" CopyMessage="CopyMessage" @ref="_messageToolsMenuRef"/>
+
 @code {
     [Parameter] public Guid RoomId { get; set; }
     [Parameter] public DateTimeOffset? UserLastRoomVisit { get; set; }
@@ -120,8 +115,6 @@
     {
         public static string NewMessageBanner { get; } = Guid.NewGuid().ToString();
     }
-
-
 
 
     private PaginationRequest _oldMessagePaginationRequest = new() { PageSize = 10, CurrentPage = 1 };
@@ -247,8 +240,6 @@
         {
             _messageList.InsertRange(0, result.AsSuccess.Value.Items);
         }
-
-        // await JsRuntime.ScrollToViewAsync(_lastLook);
     }
 
 
@@ -270,7 +261,6 @@
             _messageList.Add(messageResponse);
             StateHasChanged();
             _ = JsRuntime.AddClassAsync(messageResponse.id + "-message", messageClass);
-            // JsRuntime.InvokeVoidAsync("ScrollToEnd", ChatLayout.ElementIds.ChatScroll.ToString());
         }
     }
 
@@ -286,39 +276,26 @@
 
     private void UpdateMessage(MessageResponse messageResponse)
     {
-       
-            // var messageClass = "";
-            // if (messageResponse.UserSender.Id == LoggedInUserId)
-            // {
-            //     messageClass = "backInRight";
-            // }
-            // else
-            // {
-            //     messageClass = "backInLeft";
-            // }
-
-            var isExist = _messageList.Any(x => x.id == messageResponse.id);
-            if (isExist)
-            {
-                 _messageList.First(x => x.id == messageResponse.id).Text=messageResponse.Text;
-                 StateHasChanged();
-            }
-            // _ = JsRuntime.AddClassAsync(messageResponse.id + "-message", messageClass);
-            // JsRuntime.InvokeVoidAsync("ScrollToEnd", ChatLayout.ElementIds.ChatScroll.ToString());
-        
+        var isExist = _messageList.Any(x => x.id == messageResponse.id);
+        if (isExist)
+        {
+            _messageList.First(x => x.id == messageResponse.id).Text = messageResponse.Text;
+            StateHasChanged();
+        }
     }
 
     private async Task CopyMessage(Guid messageId)
     {
-        var text= _messageList.FirstOrDefault(x => x.id == messageId)?.Text;
+        var text = _messageList.FirstOrDefault(x => x.id == messageId)?.Text;
         if (!string.IsNullOrWhiteSpace(text))
         {
-           await JsRuntime.CopyToClipboardAsync(text);
+            await JsRuntime.CopyToClipboardAsync(text);
         }
     }
-    
+
     private async Task DeleteMessage(Guid messageId)
-    { 
+    {
         await GroupMessageService.DeleteMessageAsync(messageId);
     }
+
 }

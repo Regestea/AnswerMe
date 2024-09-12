@@ -1,0 +1,44 @@
+@using AnswerMe.Client.Core.Enums
+<div class="chat-footer " style="display: grid;margin-top: 2px">
+
+    @if (RoomType == RoomType.Private && UserSenderId == LoggedInUserId)
+    {
+            if (ContactLastRoomVisit >= MessageCreateDate || IsContactInRoom)
+            {
+                <span class="opacity-80" style="display: flex;justify-self: end">
+                    <svg style="width: 20px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="done">
+                        <path fill="none" d="M0 0h24v24H0V0z"></path><path d="M17.3 6.3c-.39-.39-1.02-.39-1.41 0l-5.64 5.64 1.41 1.41L17.3 7.7c.38-.38.38-1.02 0-1.4zm4.24-.01l-9.88 9.88-3.48-3.47c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l4.18 4.18c.39.39 1.02.39 1.41 0L22.95 7.71c.39-.39.39-1.02 0-1.41h-.01c-.38-.4-1.01-.4-1.4-.01zM1.12 14.12L5.3 18.3c.39.39 1.02.39 1.41 0l.7-.7-4.88-4.9c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.03 0 1.42z" fill="#7fffd4" class="color000000 svgShape"></path>
+                    </svg>
+                    <time class="text-xs ">@MessageCreateDate?.LocalDateTime.ToString("HH:mm")</time>
+                </span>
+            }
+            else
+            {
+                <span class="opacity-80" style="display: flex;justify-self: end">
+                    <svg style="width: 20px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="done">
+                        <path fill="none" d="M0 0h24v24H0V0z"></path><path d="M9 16.2l-3.5-3.5c-.39-.39-1.01-.39-1.4 0-.39.39-.39 1.01 0 1.4l4.19 4.19c.39.39 1.02.39 1.41 0L20.3 7.7c.39-.39.39-1.01 0-1.4-.39-.39-1.01-.39-1.4 0L9 16.2z" fill="#7fffd4" class="color000000 svgShape"></path>
+                    </svg>
+                    <time class="text-xs ">@MessageCreateDate?.LocalDateTime.ToString("HH:mm")</time>
+
+                </span>
+            }
+        
+        
+    }
+    else
+    {
+        <span class="opacity-80" style="display: flex;justify-self: start">
+            <time class="text-xs ">@MessageCreateDate?.LocalDateTime.ToString("HH:mm")</time>
+        </span>
+    }
+
+</div>
+
+@code {
+    [Parameter] public RoomType RoomType { get; set; }
+    [Parameter] public bool IsContactInRoom { get; set; }
+    [Parameter] public Guid? UserSenderId { get; set; }
+    [Parameter] public DateTimeOffset? MessageCreateDate { get; set; }
+    [Parameter] public DateTimeOffset? ContactLastRoomVisit { get; set; }
+    [Parameter] public Guid LoggedInUserId { get; set; }
+}

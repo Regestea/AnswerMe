@@ -120,6 +120,8 @@
         if (result.IsSuccess)
         {
             var groupId = result.AsSuccess.Value.Id;
+            _createGroupRequest = new();
+            ImageUrl = null;
             NavigationManager.NavigateTo($"/GR/{groupId}");
             await JsRuntime.InvokeVoidAsync("ResizeComponent");
             await OnSave.InvokeAsync();
@@ -167,10 +169,6 @@
         if (tokenResult.IsValidationFailure)
         {
             await JsRuntime.ShowErrorAsync(tokenResult.AsValidationFailure.Error);
-        }
-        else
-        {
-            await JsRuntime.ShowErrorAsync("there is an Unknown error");
         }
     }
 

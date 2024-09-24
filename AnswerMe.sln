@@ -25,7 +25,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnswerMe.Infrastructure", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ObjectStorage.Api", "Services\ObjectStorage\ObjectStorage.Api\ObjectStorage.Api.csproj", "{FCB5BC8C-18C0-4C3B-9716-E2D833746A26}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ObjectStorage.Api.Test", "Services\ObjectStorage\ObjectStorage.Api.Test\ObjectStorage.Api.Test.csproj", "{0E2EC366-855A-4E49-BF22-603A16FB2C7C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ObjectStorage.Api.Tests.Integration", "Services\ObjectStorage\ObjectStorage.Api.Tests.Integration\ObjectStorage.Api.Tests.Integration.csproj", "{0E2EC366-855A-4E49-BF22-603A16FB2C7C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "IdentityServer", "IdentityServer", "{3781BF6E-B193-4F1E-A905-D5D62C25F76F}"
 EndProject

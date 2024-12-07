@@ -1,15 +1,19 @@
 using AnswerMe.Aspire.AppHost;
+using Json.More;
 
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-
-var answerMeDb=builder.AddPostgres("answerme", password: builder.CreateStablePassword("AnswerMeDB-password"))
+var username = "postgres";
+var password = "Password123";
+var answerMeDb=builder.AddPostgres("answerme")
+    .WithPgWeb()
     .WithDataVolume()
     .WithPgAdmin()
     .AddDatabase("AnswerMeDB");
 
-var identityServerDb=builder.AddPostgres("identityserver", password: builder.CreateStablePassword("AnswerMeDB-password"))
+var identityServerDb=builder.AddPostgres("identityserver")
+    .WithPgWeb()
     .WithDataVolume()
     .WithPgAdmin()
     .AddDatabase("IdentityServerDb");
@@ -22,6 +26,8 @@ var table = builder.AddAzureStorage("azureobjectindextable")
     .RunAsEmulator(emulator =>
     {
         emulator.WithTablePort(9000);
+        emulator.WithArgs("azurite", "-l", "/data", "--blobHost", "0.0.0.0", "--queueHost", "0.0.0.0", "--tableHost",
+            "0.0.0.0", "--skipApiVersionCheck");
         emulator.WithDataVolume();
     })
     .AddTables("ObjectIndexTable");
@@ -30,6 +36,8 @@ var blobs = builder.AddAzureStorage("azureobjectstorage")
     .RunAsEmulator(emulator =>
     {
         emulator.WithBlobPort(10000);
+        emulator.WithArgs("azurite", "-l", "/data", "--blobHost", "0.0.0.0", "--queueHost", "0.0.0.0", "--tableHost",
+            "0.0.0.0", "--skipApiVersionCheck");
         emulator.WithDataVolume();
     })
     .AddBlobs("ObjectStorage");
@@ -37,25 +45,40 @@ var blobs = builder.AddAzureStorage("azureobjectstorage")
 
 
 var identityServerApi= builder.AddProject<Projects.IdentityServer_Api>("IdentityServerApi")
-    .WithReference(identityServerDb);
+    .WithReference(identityServerDb)
+    .WaitFor(identityServerDb);
 
-var objectStorageApi= builder.AddProject<Projects.ObjectStorage_Api>("ObjectStorageApi")
+var objectStorageApi = builder.AddProject<Projects.ObjectStorage_Api>("ObjectStorageApi")
     .WithReference(redisCache)
     .WithReference(table)
     .WithReference(blobs)
-    .WithReference(identityServerApi);
+    .WithReference(identityServerApi)
+    .WaitFor(redisCache)
+    .WaitFor(table)
+    .WaitFor(blobs)
+    .WaitFor(identityServerApi);
+
 
 var answerMeApi = builder.AddProject<Projects.AnswerMe_Api>("AnswerMeApi")
     .WithReference(answerMeDb)
     .WithReference(redisCache)
     .WithReference(blobs)
     .WithReference(objectStorageApi)
-    .WithReference(identityServerApi);
+    .WithReference(identityServerApi)
+    .WaitFor(answerMeDb)
+    .WaitFor(redisCache)
+    .WaitFor(blobs)
+    .WaitFor(objectStorageApi)
+    .WaitFor(identityServerApi);
+
 
 var client = builder.AddProject<Projects.AnswerMe_Client>("AnswerMeClient")
     .WithReference(answerMeApi)
     .WithReference(identityServerApi)
-    .WithReference(objectStorageApi);
+    .WithReference(objectStorageApi)
+    .WaitFor(answerMeApi)
+    .WaitFor(identityServerApi)
+    .WaitFor(objectStorageApi);
 
 
 

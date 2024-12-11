@@ -46,7 +46,6 @@ public class AuthService:IAuthService
         var requestStringContent = await JsonConverter.ToStringContent(request);
 
         var response = await _httpClient.SendRequestAsync("Auth/Login", HttpMethod.Post, requestStringContent);
-        Console.WriteLine(_httpClient.BaseAddress);
         if (response.StatusCode == HttpStatusCode.OK)
         {
             var token =await JsonConverter.ToObject<TokenResponse>(response.Content);

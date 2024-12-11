@@ -1,7 +1,10 @@
 ﻿@inherits LayoutComponentBase
+@using System.Text.Json
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
+@inject IUserService UserService
+@inject ILocalStorageService LocalStorage
 
 <dialog id="Modal-Message" class="modal">
     <div class="modal-box glass-box ">
@@ -19,14 +22,20 @@
 <AuthorizeView>
     <Authorized>
         <div class="nav-section transition-transform @AccountMenuClass">
-            <aside id="AccountMenu" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 " style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
-                <AccountMenu AccountMenuClass="AccountMenuClass" ChatsMenuClass="NavMenuClass" AccountMenuClassChanged="AccountMenuChanged" ChatsMenuClassChanged="ChatsMenuChanged"/>
+            <aside id="AccountMenu"
+                   class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 "
+                   style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
+                <AccountMenu AccountMenuClass="AccountMenuClass" ChatsMenuClass="NavMenuClass"
+                             AccountMenuClassChanged="AccountMenuChanged" ChatsMenuClassChanged="ChatsMenuChanged"/>
             </aside>
         </div>
 
         <div class="nav-section transition-transform @NavMenuClass">
-            <aside id="SidebarMenu" class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 " style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
-                <NavMenu @ref="_navMenuRef" AccountMenuClass="AccountMenuClass" ChatsMenuClass="NavMenuClass" AccountMenuClassChanged="AccountMenuChanged" ChatsMenuClassChanged="ChatsMenuChanged"/>
+            <aside id="SidebarMenu"
+                   class="fixed top-0 left-0 z-40 w-1/4 h-screen pt-20 transition-transform @_sidebarClass xl:-translate-x-0 2xl:-translate-x-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 "
+                   style="background-color: #1d232a;margin-top: -65px" aria-label="Sidebar">
+                <NavMenu @ref="_navMenuRef" AccountMenuClass="AccountMenuClass" ChatsMenuClass="NavMenuClass"
+                         AccountMenuClassChanged="AccountMenuChanged" ChatsMenuClassChanged="ChatsMenuChanged"/>
 
                 <ToolBar RefreshNavMenu="RefreshNavMenu"/>
             </aside>
@@ -46,6 +55,7 @@
 </AuthorizeView>
 
 @code
+
 {
     private NavMenu _navMenuRef;
     private bool IsAtHome = false;
@@ -56,18 +66,18 @@
     private string AccountMenuClass = "-translate-x-full";
     private string NavMenuClass = "-translate-x-0";
 
-   
 
     private async Task RefreshNavMenu()
     {
-       await _navMenuRef.RefreshNavMenuData();
+        await _navMenuRef.RefreshNavMenuData();
     }
 
     protected override async Task OnInitializedAsync()
     {
+        await CheckUserAuth();
         var lDotNetReference = DotNetObjectReference.Create(typeof(MainLayout));
         await JsRuntime.InvokeVoidAsync("GLOBAL.SetDotnetReference", lDotNetReference);
-        
+
         if (NavigationManager.Uri == NavigationManager.BaseUri)
         {
             IsAtHome = true;
@@ -94,6 +104,31 @@
         }
 
         await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await CheckUserAuth();
+    }
+
+    private async Task CheckUserAuth()
+    {
+        var authToken = await LocalStorage.GetItemAsStringAsync("authToken");
+        if (!string.IsNullOrEmpty(authToken))
+        {
+            Console.WriteLine("the token is not null");
+            var user=await UserService.GetUserAsync();
+            if (user.AsSuccess.Value.id == Guid.Empty)
+            {
+                Console.WriteLine("remove the fucking token");
+                await LocalStorage.RemoveItemAsync("authToken");
+                NavigationManager.NavigateTo("/", true);
+            }
+
+            Console.WriteLine("user is success and token is not null");
+        }
+
+        Console.WriteLine("the token in null");
     }
 
     private void AccountMenuChanged(string updateClass)

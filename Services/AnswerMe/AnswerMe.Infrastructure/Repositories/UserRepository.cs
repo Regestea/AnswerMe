@@ -130,7 +130,6 @@ namespace AnswerMe.Infrastructure.Repositories
                     user.ProfileImage = response.FilePath;
                     if (!string.IsNullOrWhiteSpace(oldProfileImage))
                     {
-                        Console.WriteLine("try to remove " + oldProfileImage);
                         await _fileStorageService.DeleteObjectAsync(loggedInUserId, oldProfileImage);
                     }
                 }

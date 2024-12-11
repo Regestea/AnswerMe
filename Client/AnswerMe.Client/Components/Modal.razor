@@ -51,7 +51,6 @@
 
     protected override void OnInitialized()
     {
-        Console.WriteLine(_shouldRender);
         base.OnInitialized();
     }
 
@@ -63,7 +62,6 @@
 
     public void CloseModal()
     {
-        Console.WriteLine("Close Modal called");
         _shouldRender = false;
         StateHasChanged();
          _= JsRuntime.InvokeVoidAsync("eval", $"document.getElementById('{ElementIds.ModalClose}').submit()");

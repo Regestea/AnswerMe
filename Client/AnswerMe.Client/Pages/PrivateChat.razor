@@ -66,8 +66,6 @@
 
         _isContactInRoom = isContactInRoom.AsSuccess.Value.Result;
 
-        Console.WriteLine("is contact online in room" + _isContactInRoom);
-
         if (!_isContactInRoom)
         {
             _contactLastRoomVisit = await GetLastVisit(_privateRoomResponse!.Contact.Id);
@@ -91,20 +89,17 @@
     
     public async Task LoadNewMessages()
     {
-        Console.WriteLine("load new one");
         await _privateMessageRef.LoadNewMessagesAsync();
     }
 
     public async Task LoadOldMessages()
     {
-        Console.WriteLine("load old one");
         await _privateMessageRef.LoadOldMessagesAsync();
     }
 
     private void UserJoinedRoom(Guid userId)
     {
         if (_loggedInUserId == userId) return;
-        Console.WriteLine("user joined room");
         _isContactInRoom = true;
         StateHasChanged();
     }

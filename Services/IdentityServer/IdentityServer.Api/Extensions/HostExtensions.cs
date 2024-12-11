@@ -34,7 +34,6 @@ namespace IdentityServer.Api.Extensions
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
                     throw;
                 }
             }

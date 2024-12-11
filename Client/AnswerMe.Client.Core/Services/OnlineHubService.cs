@@ -70,7 +70,6 @@ public class OnlineHubService
     {
         _hubConnection.On<Guid>("UserWentOnline",  (userId) =>
         {
-            Console.WriteLine("Online"+userId);
             handler.Invoke(userId);
         });
     }
@@ -79,7 +78,6 @@ public class OnlineHubService
     {
         _hubConnection.On<Guid>("UserWentOffline",  (userId) =>
         {
-            Console.WriteLine("Offline"+userId);
             handler.Invoke(userId);
         });
     }

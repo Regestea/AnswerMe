@@ -98,10 +98,10 @@ namespace AnswerMe.Api.Controllers
         /// <response code="400">Bad Request: Invalid input data.</response>
         /// <response code="404">Not Found: The invite token or group could not be found.</response>
         [HttpPost("Join")]
-        [ProducesResponseType(typeof(IdResponse), StatusCodes.Status200OK)] // Specify the expected response type
-        [ProducesResponseType(StatusCodes.Status400BadRequest)] // Specify another expected response type
+        [ProducesResponseType(typeof(IdResponse), StatusCodes.Status200OK)] 
+        [ProducesResponseType(StatusCodes.Status400BadRequest)] 
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> JoinGroupAsync([FromQuery] TokenRequest request)
+        public async Task<IActionResult> JoinGroupAsync([FromBody] TokenRequest request)
         {
             var requestToken = _jwtTokenRepository.GetJwtToken();
             var loggedInUser = _jwtTokenRepository.ExtractUserDataFromToken(requestToken);

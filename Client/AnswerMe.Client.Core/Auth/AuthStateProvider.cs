@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using AnswerMe.Client.Core.DTOs.User;
 using AnswerMe.Client.Core.Services;
+using AnswerMe.Client.Core.Services.Interfaces;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 
@@ -14,13 +15,16 @@ namespace AnswerMe.Client.Core.Auth
         private readonly OnlineHubService _onlineService;
         private readonly PvHubService _pvHubService;
         private readonly GrHubService _grHubService;
+        private readonly IUserService _userService;
 
-        public AuthStateProvider(ILocalStorageService localStorageService, OnlineHubService onlineService, PvHubService pvHubService, GrHubService grHubService)
+        public AuthStateProvider(ILocalStorageService localStorageService, OnlineHubService onlineService,
+            PvHubService pvHubService, GrHubService grHubService, IUserService userService)
         {
             _localStorageService = localStorageService;
             _onlineService = onlineService;
             _pvHubService = pvHubService;
             _grHubService = grHubService;
+            _userService = userService;
         }
 
 
@@ -33,7 +37,7 @@ namespace AnswerMe.Client.Core.Auth
             {
                 try
                 {
-                    identity = new ClaimsIdentity(ParseClaimsFromJwt(authToken), "jwt");
+                    identity = new ClaimsIdentity(ParseClaimsFromJwt(authToken), "jwt");      
                 }
                 catch
                 {
@@ -41,11 +45,11 @@ namespace AnswerMe.Client.Core.Auth
                     identity = new ClaimsIdentity();
                 }
             }
-           
+
             var user = new ClaimsPrincipal(identity);
             var state = new AuthenticationState(user);
-            
-            
+
+
             //TODO: task when all
             await _onlineService.SetTokenAsync(_localStorageService);
             await _pvHubService.SetTokenAsync(_localStorageService);
@@ -54,18 +58,17 @@ namespace AnswerMe.Client.Core.Auth
             NotifyAuthenticationStateChanged(Task.FromResult(state));
 
             return state;
-
         }
 
         public async Task<UserDto> ExtractUserDataFromLocalTokenAsync()
         {
-             var authToken = await _localStorageService.GetItemAsStringAsync("authToken");
-             var tokenHandler = new JwtSecurityTokenHandler();
-             var jwtToken = tokenHandler.ReadJwtToken(authToken);
-             var id = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.id))?.Value;
-             var idName = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.IdName))?.Value;
-             var phoneNumber = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.PhoneNumber))?.Value;
-             
+            var authToken = await _localStorageService.GetItemAsStringAsync("authToken");
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwtToken = tokenHandler.ReadJwtToken(authToken);
+            var id = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.id))?.Value;
+            var idName = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.IdName))?.Value;
+            var phoneNumber = jwtToken.Claims.FirstOrDefault(c => c.Type == nameof(UserDto.PhoneNumber))?.Value;
+
             var user = new UserDto()
             {
                 id = Guid.Parse(id),
@@ -74,7 +77,6 @@ namespace AnswerMe.Client.Core.Auth
             };
 
             return user;
-
         }
 
         private static byte[] ParseBase64WithoutPadding(string base64)
@@ -103,6 +105,5 @@ namespace AnswerMe.Client.Core.Auth
 
             return claims!;
         }
-
     }
 }

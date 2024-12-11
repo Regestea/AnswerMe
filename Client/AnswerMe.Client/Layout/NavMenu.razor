@@ -243,7 +243,6 @@
 
     private void SetPvLastMessage(RoomNotifyResponse response)
     {
-        Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         var pv = _privateRoomResponseList.FirstOrDefault(x => x.RoomNotify.RoomId == response.RoomId);
         SetUrlIdIfExist();
         if (pv != null)

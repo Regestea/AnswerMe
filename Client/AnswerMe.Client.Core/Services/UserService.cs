@@ -31,8 +31,6 @@ public class UserService : IUserService
 
         var user = await JsonConverter.ToObject<UserResponse>(response.Content);
 
-        Console.WriteLine(user.FullName);
-
         return new Success<UserResponse>(user);
     }
 

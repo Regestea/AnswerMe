@@ -74,8 +74,10 @@ public class GroupInviteService : IGroupInviteService
     public async Task<CreateResponse<IdResponse>> JoinGroupAsync(string inviteToken)
     {
         await _httpClient.AddAuthHeader(_localStorageService);
+        var request = new TokenRequest() { Token = inviteToken };
+        var requestStringContent = await JsonConverter.ToStringContent(request);
 
-        var response = await _httpClient.SendRequestAsync($"GroupInvite/Join?".AddQuery("inviteToken",inviteToken), HttpMethod.Post);
+        var response = await _httpClient.SendRequestAsync($"GroupInvite/Join", HttpMethod.Post,requestStringContent);
 
         if (response.StatusCode == HttpStatusCode.OK)
         {

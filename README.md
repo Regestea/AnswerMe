@@ -1,15 +1,16 @@
 # AnswerMe
 
-#A Chat web app like Telegram or WhatsApp with .net 9
+# A Chat web app like Telegram or WhatsApp with .net 9
 
-[PreviewImage](https://github.com/Regestea/AnswerMe/blob/master/Assert/Preview-Image.png)
 
-[PreviewVideo](https://github.com/Regestea/AnswerMe/blob/master/Assert/preview.mp4)
+![Preview-Image](https://github.com/Regestea/AnswerMe/blob/master/Assert/Preview-Image.png)
+
+
 
 
 ## Architecture Diagram
 
-[Diagram]([https://github.com/Regestea/GlowingNews/assets/53250527/19253a5b-7e13-4967-80e7-a87c70dc31b4](https://github.com/Regestea/AnswerMe/blob/master/Assert/Diagram.png))
+![Diagram](https://github.com/Regestea/AnswerMe/blob/master/Assert/Diagram.png))
 
 
 ## Technologies Used
